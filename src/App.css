@@ -1,37 +1,97 @@
-.login-container {
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 16px;
+}
+
+.card {
+  width: 100%;
   max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  border-radius: 10px;
-  background-color: #1e1e1e;
-  color: white;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.header {
   text-align: center;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin-bottom: 5px;
+}
+
+.sub {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  background: #eee;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.tabs .active {
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-}
-
-.form label {
-  margin-top: 10px;
-  text-align: left;
+  gap: 10px;
 }
 
 .form input,
 .form select {
-  padding: 8px;
-  margin-top: 5px;
-  border-radius: 5px;
-  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
 }
 
-button {
-  margin-top: 15px;
-  padding: 10px;
-  background-color: #646cff;
-  color: white;
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.btn {
+  margin-top: 10px;
+  padding: 12px;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  color: white;
+  background: linear-gradient(to right, #3b82f6, #9333ea);
   cursor: pointer;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.terms {
+  font-size: 14px;
 }

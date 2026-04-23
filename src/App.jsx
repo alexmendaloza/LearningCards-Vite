@@ -1,88 +1,97 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    fechaNac: '',
-    genero: ''
-  })
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value
-    })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Datos del usuario:", formData)
-    alert("Formulario enviado")
-  }
+export default function App() {
+  const [tab, setTab] = useState("login");
 
   return (
-    <div className="login-container">
-      <h1>Login / Registro</h1>
+    <div className="container">
+      <div className="card">
 
-      <form onSubmit={handleSubmit} className="form">
-        
-        <label>Username</label>
-        <input
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
+        <div className="header">
+          <p>¡Bienvenido de vuelta! Continúa tu camino de aprendizaje.</p>
+        </div>
 
-        <label>Email</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+        <h2>Comenzar</h2>
+        <p className="sub">Inicia sesión o crea una cuenta nueva</p>
 
-        <label>Contraseña</label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        {/* Tabs */}
+        <div className="tabs">
+          <button
+            className={tab === "login" ? "active" : ""}
+            onClick={() => setTab("login")}
+          >
+            Iniciar sesión
+          </button>
+          <button
+            className={tab === "register" ? "active" : ""}
+            onClick={() => setTab("register")}
+          >
+            Registrarse
+          </button>
+        </div>
 
-        <label>Fecha de nacimiento</label>
-        <input
-          type="date"
-          name="fechaNac"
-          value={formData.fechaNac}
-          onChange={handleChange}
-          required
-        />
+        {/* LOGIN */}
+        {tab === "login" && (
+          <form className="form">
+            <label>Correo electrónico</label>
+            <input type="email" placeholder="estudiante@ejemplo.com" />
 
-        <label>Género</label>
-        <select
-          name="genero"
-          value={formData.genero}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Selecciona una opción</option>
-          <option value="masculino">Masculino</option>
-          <option value="femenino">Femenino</option>
-          <option value="otro">Otro</option>
-        </select>
+            <label>Contraseña</label>
+            <input type="password" placeholder="••••••••" />
 
-        <button type="submit">Enviar</button>
-      </form>
+            <div className="row">
+              <label>
+                <input type="checkbox" /> Recordarme
+              </label>
+              <a href="#">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" className="btn">
+              Iniciar sesión
+            </button>
+          </form>
+        )}
+
+        {/* REGISTER */}
+        {tab === "register" && (
+          <form className="form">
+            <label>Usuario</label>
+            <input type="text" placeholder="usuario123" />
+
+            <label>Nombre completo</label>
+            <input type="text" placeholder="Juan Pérez" />
+
+            <label>Correo electrónico</label>
+            <input type="email" placeholder="estudiante@ejemplo.com" />
+
+            <label>Contraseña</label>
+            <input type="password" placeholder="••••••••" />
+
+            <label>Fecha de nacimiento</label>
+            <input type="date" />
+
+            <label>Género</label>
+            <select>
+              <option>Selecciona una opción</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+              <option value="O">Otro</option>
+            </select>
+
+            <label>Foto de perfil</label>
+            <input type="file" />
+
+            <label className="terms">
+              <input type="checkbox" /> Acepto términos
+            </label>
+
+            <button type="submit" className="btn">
+              Crear cuenta
+            </button>
+          </form>
+        )}
+      </div>
     </div>
-  )
+  );
 }
-
-export default App
