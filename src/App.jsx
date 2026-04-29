@@ -1,88 +1,74 @@
-import { useState } from 'react'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import AppLayout from './layouts/AppLayout';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import AdminLogin from './pages/AdminLogin';
+import Marketplace from './pages/Marketplace';
+import api from './api/axios';
 
 function App() {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    fechaNac: '',
-    genero: ''
-  })
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value
-    })
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Intentar obtener el dashboard para ver si la sesión está activa
+        const response = await api.get('/user/dashboard');
+        if (response.data && response.data.usuario) {
+          setUser(response.data.usuario);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.warn("Auth check failed (likely not logged in or CORS issue):", err.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Datos del usuario:", formData)
-    alert("Formulario enviado")
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 gap-4">
+        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p className="text-slate-500 font-medium animate-pulse">Cargando...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="login-container">
-      <h1>Login / Registro</h1>
-
-      <form onSubmit={handleSubmit} className="form">
-        
-        <label>Username</label>
-        <input
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Email</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Contraseña</label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Fecha de nacimiento</label>
-        <input
-          type="date"
-          name="fechaNac"
-          value={formData.fechaNac}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Género</label>
-        <select
-          name="genero"
-          value={formData.genero}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Selecciona una opción</option>
-          <option value="masculino">Masculino</option>
-          <option value="femenino">Femenino</option>
-          <option value="otro">Otro</option>
-        </select>
-
-        <button type="submit">Enviar</button>
-      </form>
-    </div>
-  )
+    <Router>
+      <AppLayout user={user}>
+        <Routes>
+          {/* Ruta Pública: Landing */}
+          <Route path="/" element={<Home />} />
+          
+          {/* Ruta de Auth */}
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login initialTab="login" />} />
+          <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Login initialTab="register" />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          
+          {/* Rutas Protegidas */}
+          <Route 
+            path="/dashboard" 
+            element={user ? <Dashboard /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/marketplace" 
+            element={user ? <Marketplace /> : <Navigate to="/login" />} 
+          />
+          
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </AppLayout>
+    </Router>
+  );
 }
 
-export default App
+export default App;
