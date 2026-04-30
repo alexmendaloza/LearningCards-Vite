@@ -179,7 +179,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   );
 };
 
-const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '' }) => (
+const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', ...props }) => (
   <label className="block">
     <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
     <input
@@ -189,11 +189,12 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
+      {...props}
     />
   </label>
 );
 
-const TextArea = ({ label, value, onChange, placeholder = '', required = false }) => (
+const TextArea = ({ label, value, onChange, placeholder = '', required = false, ...props }) => (
   <label className="block">
     <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
     <textarea
@@ -202,14 +203,15 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false }
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
       className="min-h-28 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
+      {...props}
     />
   </label>
 );
 
-const Select = ({ label, value, onChange, options }) => (
+const Select = ({ label, value, onChange, options, required = false }) => (
   <label className="block">
     <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
-    <select value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400">
+    <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400">
       {options.map((option) => Array.isArray(option)
         ? <option key={option[0]} value={option[0]}>{option[1]}</option>
         : <option key={option} value={option}>{option}</option>)}
@@ -1070,28 +1072,49 @@ export const PublishPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 px-4 py-10">
       <div className="container mx-auto max-w-2xl">
-        <PageTitle title={editing ? 'Editar publicacion' : 'Publicar en Marketplace'} subtitle={`Comparte tu mazo ${data.mazo.titulo} con la comunidad`} />
+        <div className="mb-8">
+          <div className="mb-1 flex items-center gap-3">
+            <span className="text-3xl">🚀</span>
+            <h1 className="text-3xl font-bold text-gray-900">{editing ? 'Editar publicación' : 'Publicar en Marketplace'}</h1>
+          </div>
+          <p className="ml-12 text-gray-500">
+            Comparte tu mazo <span className="font-semibold text-indigo-600">{data.mazo.titulo}</span> con la comunidad
+          </p>
+        </div>
         <ErrorBox message={submitError} />
         <div className="mb-6 mt-4 flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 text-white">LC</div>
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 text-2xl">📚</div>
           <div><div className="font-bold text-gray-800">{data.mazo.titulo}</div><div className="text-sm text-gray-400">{data.mazo.descripcion || empty}</div><div className="mt-0.5 text-xs text-gray-400">{data.tarjetas_count} tarjetas</div></div>
         </div>
         <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <Select label="Categoria" value={form.categoria} onChange={(value) => setForm({ ...form, categoria: value })} options={['', ...data.categorias].map((cat) => cat ? [cat, cat] : ['', 'Selecciona una categoria'])} />
-          <TextArea label="Descripcion para el Marketplace" value={form.descripcion_publica} onChange={(value) => setForm({ ...form, descripcion_publica: value })} />
-          <Field label="URL de imagen de portada" type="url" value={form.imagen_url} onChange={(value) => setForm({ ...form, imagen_url: value })} />
-          {form.imagen_url && <img src={form.imagen_url} alt="Preview" className="h-28 w-full rounded-xl border border-gray-200 object-cover" />}
+          <Select label="Categoría" required value={form.categoria} onChange={(value) => setForm({ ...form, categoria: value })} options={['', ...data.categorias].map((cat) => cat ? [cat, cat] : ['', 'Selecciona una categoría'])} />
+          <TextArea
+            label="Descripción para el Marketplace"
+            value={form.descripcion_publica}
+            onChange={(value) => setForm({ ...form, descripcion_publica: value })}
+            placeholder="Describe qué aprenderán los usuarios con este mazo..."
+            maxLength={500}
+          />
+          <Field
+            label="URL de imagen de portada"
+            type="url"
+            value={form.imagen_url}
+            onChange={(value) => setForm({ ...form, imagen_url: value })}
+            placeholder="https://ejemplo.com/imagen.jpg"
+            maxLength={300}
+          />
+          {form.imagen_url?.startsWith('http') && <img src={form.imagen_url} alt="Preview" className="h-28 w-full rounded-xl border border-gray-200 object-cover" />}
           <div>
-            <span className="mb-3 block text-sm font-semibold text-gray-700">Tipo de precio</span>
+            <span className="mb-3 block text-sm font-semibold text-gray-700">Tipo de precio <span className="text-red-500">*</span></span>
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setForm({ ...form, pago: '0' })} className={`rounded-xl border-2 p-4 ${form.pago === '0' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}><span className="block font-semibold text-gray-700">Gratis</span><span className="text-xs text-gray-400">Cualquier usuario puede agregarlo</span></button>
-              <button type="button" onClick={() => setForm({ ...form, pago: '1' })} className={`rounded-xl border-2 p-4 ${form.pago === '1' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}><span className="block font-semibold text-gray-700">De pago</span><span className="text-xs text-gray-400">Establece un precio</span></button>
+              <button type="button" onClick={() => setForm({ ...form, pago: '0' })} className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${form.pago === '0' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-300'}`}><span className="text-3xl">🆓</span><span className="font-semibold text-gray-700">Gratis</span><span className="text-center text-xs text-gray-400">Cualquier usuario puede agregarlo sin costo</span></button>
+              <button type="button" onClick={() => setForm({ ...form, pago: '1' })} className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${form.pago === '1' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}><span className="text-3xl">💰</span><span className="font-semibold text-gray-700">De pago</span><span className="text-center text-xs text-gray-400">Establece un precio para tu mazo</span></button>
             </div>
           </div>
-          {form.pago === '1' && <Field label="Precio USD" type="number" value={form.precio} onChange={(value) => setForm({ ...form, precio: value })} required />}
+          {form.pago === '1' && <Field label="Precio (USD)" type="number" value={form.precio} onChange={(value) => setForm({ ...form, precio: value })} required step="0.01" min="0.01" max="999.99" placeholder="9.99" />}
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => navigate('/dashboard')} className="flex-1 rounded-xl border-2 border-gray-200 py-3 font-semibold text-gray-600">Cancelar</button>
-            <button className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 font-bold text-white">{editing ? 'Actualizar publicacion' : 'Publicar en Marketplace'}</button>
+            <button className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-200">{editing ? '💾 Actualizar publicación' : '🚀 Publicar en Marketplace'}</button>
           </div>
         </form>
       </div>

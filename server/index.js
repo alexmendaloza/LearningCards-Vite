@@ -158,6 +158,46 @@ const hasErrors = (res, errors) => {
   return true;
 };
 
+const isValidUrl = (value) => {
+  if (!value) return true;
+  try {
+    const parsed = new URL(String(value));
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const removeLegacyPublicacionConstraints = async () => {
+  const [foreignKeys] = await pool.query(
+    `SELECT CONSTRAINT_NAME
+       FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = 'Publicacion'
+        AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        AND CONSTRAINT_NAME IN ('publicacion_mazo_fk', 'publicacion_usuario_fk')`,
+    [databaseName],
+  );
+
+  for (const key of foreignKeys) {
+    await pool.query(`ALTER TABLE Publicacion DROP FOREIGN KEY ${quoteIdentifier(key.CONSTRAINT_NAME)}`);
+  }
+
+  const [indexes] = await pool.query(
+    `SELECT INDEX_NAME
+       FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = 'Publicacion'
+        AND INDEX_NAME = 'publicacion_mazo_unique'
+      LIMIT 1`,
+    [databaseName],
+  );
+
+  if (indexes.length > 0) {
+    await pool.query('ALTER TABLE Publicacion DROP INDEX publicacion_mazo_unique');
+  }
+};
+
 const initSchema = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS NivelRacha (
@@ -246,12 +286,11 @@ const initSchema = async () => {
       num_valoraciones INT UNSIGNED NOT NULL DEFAULT 0,
       num_compras INT UNSIGNED NOT NULL DEFAULT 0,
       fecha_publicacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (id_Publ),
-      UNIQUE KEY publicacion_mazo_unique (fk_id_mazo),
-      CONSTRAINT publicacion_mazo_fk FOREIGN KEY (fk_id_mazo) REFERENCES Mazo(IDMazo) ON DELETE CASCADE,
-      CONSTRAINT publicacion_usuario_fk FOREIGN KEY (fk_id_usuario) REFERENCES Usuario(IDUsuario) ON DELETE CASCADE
+      PRIMARY KEY (id_Publ)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  await removeLegacyPublicacionConstraints();
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS Compra (
@@ -942,34 +981,99 @@ app.get('/api/mazos/:id/publicar', requireUser, async (req, res, next) => {
 
 app.post('/api/mazos/:id/publicar', requireUser, async (req, res, next) => {
   try {
-    const errors = validate({ categoria: ['required', 'max:60'], pago: ['required'] }, req.body);
-    if (Number(req.body.pago) === 1 && (!req.body.precio || Number(req.body.precio) < 0.01 || Number(req.body.precio) > 999.99)) {
-      errors.precio = 'El precio es obligatorio para publicaciones de pago.';
+    const errors = validate({
+      categoria: ['required', 'max:60'],
+      descripcion_publica: ['max:500'],
+      imagen_url: ['max:300'],
+      pago: ['required'],
+    }, req.body);
+
+    const pago = String(req.body.pago);
+    const precio = req.body.precio === '' || req.body.precio === null || req.body.precio === undefined
+      ? null
+      : Number(req.body.precio);
+
+    if (!['0', '1'].includes(pago)) {
+      errors.pago = 'El tipo de pago debe ser 0 o 1.';
     }
+
+    if (req.body.imagen_url && !isValidUrl(req.body.imagen_url)) {
+      errors.imagen_url = 'La URL de imagen no es valida.';
+    }
+
+    if (pago === '1' && (precio === null || Number.isNaN(precio) || precio < 0.01 || precio > 999.99)) {
+      errors.precio = 'El precio es obligatorio para publicaciones de pago y debe estar entre 0.01 y 999.99.';
+    }
+
+    if (pago === '0' && precio !== null && (Number.isNaN(precio) || precio < 0.01 || precio > 999.99)) {
+      errors.precio = 'El precio debe ser numerico y estar entre 0.01 y 999.99.';
+    }
+
     if (hasErrors(res, errors)) return;
 
     const [mazos] = await pool.query('SELECT * FROM Mazo WHERE IDMazo = ? AND IDUsuario = ? LIMIT 1', [req.params.id, req.usuario.IDUsuario]);
     if (!mazos[0]) return res.status(403).json({ message: 'No autorizado.' });
 
-    await pool.query(
+    const datos = {
+      publico: 1,
+      pago: Number(pago),
+      precio: pago === '1' ? precio : 0.00,
+      categoria: req.body.categoria,
+      descripcion_publica: req.body.descripcion_publica || null,
+      imagen_url: req.body.imagen_url || null,
+      fk_id_mazo: Number(req.params.id),
+      fk_id_usuario: req.usuario.IDUsuario,
+      fecha_publicacion: nowSql(),
+    };
+
+    const [existing] = await pool.query('SELECT id_Publ FROM Publicacion WHERE fk_id_mazo = ? LIMIT 1', [req.params.id]);
+
+    if (existing[0]) {
+      await pool.query(
+        `UPDATE Publicacion
+            SET publico = ?,
+                pago = ?,
+                precio = ?,
+                categoria = ?,
+                descripcion_publica = ?,
+                imagen_url = ?,
+                fk_id_mazo = ?,
+                fk_id_usuario = ?,
+                fecha_publicacion = ?
+          WHERE id_Publ = ?`,
+        [
+          datos.publico,
+          datos.pago,
+          datos.precio,
+          datos.categoria,
+          datos.descripcion_publica,
+          datos.imagen_url,
+          datos.fk_id_mazo,
+          datos.fk_id_usuario,
+          datos.fecha_publicacion,
+          existing[0].id_Publ,
+        ],
+      );
+      return res.json({ success: true, id_Publ: existing[0].id_Publ, action: 'updated' });
+    }
+
+    const [result] = await pool.query(
       `INSERT INTO Publicacion
         (publico, pago, precio, categoria, descripcion_publica, imagen_url, fk_id_mazo, fk_id_usuario, fecha_publicacion)
-       VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE publico = 1, pago = VALUES(pago), precio = VALUES(precio),
-       categoria = VALUES(categoria), descripcion_publica = VALUES(descripcion_publica),
-       imagen_url = VALUES(imagen_url), fk_id_usuario = VALUES(fk_id_usuario), fecha_publicacion = VALUES(fecha_publicacion)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        Number(req.body.pago),
-        Number(req.body.pago) === 1 ? Number(req.body.precio) : 0,
-        req.body.categoria,
-        req.body.descripcion_publica || null,
-        req.body.imagen_url || null,
-        req.params.id,
-        req.usuario.IDUsuario,
-        nowSql(),
+        datos.publico,
+        datos.pago,
+        datos.precio,
+        datos.categoria,
+        datos.descripcion_publica,
+        datos.imagen_url,
+        datos.fk_id_mazo,
+        datos.fk_id_usuario,
+        datos.fecha_publicacion,
       ],
     );
-    return res.json({ success: true });
+    return res.json({ success: true, id_Publ: result.insertId, action: 'created' });
   } catch (error) {
     return next(error);
   }
