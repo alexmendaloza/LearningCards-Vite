@@ -1,4 +1,5 @@
 // ── Simple SPA Router ──────────────────────────────────────────
+import './toast.jsx'                                 // expone window.showToast globalmente
 import { renderLanding  } from './pages/landing.jsx'
 import { renderAuth     } from './pages/auth.jsx'
 import { renderDashboard} from './pages/dashboard.jsx'

@@ -156,7 +156,7 @@ function injectModalStyles() {
       background: rgba(13,13,18,0.55);
       backdrop-filter: blur(4px);
       z-index: 500;
-      display: flex !important;
+      display: flex;
       align-items: center;
       justify-content: center;
       padding: 1rem;
