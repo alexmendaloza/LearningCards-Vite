@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, CreditCard, LockKeyhole, Sparkles } from 'lucide-react';
 import api from '../api/axios';
 
 const empty = 'Sin descripcion';
@@ -39,6 +40,74 @@ const Alert = ({ children, tone = 'green' }) => (
 const Loading = ({ text = 'Cargando...' }) => (
   <div className="py-16 text-center text-sm font-semibold text-slate-500 animate-pulse">{text}</div>
 );
+
+const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, cardCount, onDashboard, onMarketplace }) => {
+  const paid = mode === 'pago';
+  const particles = [
+    ['left-[9%] top-[16%]', 'bg-emerald-300', '0s'],
+    ['left-[20%] top-[72%]', 'bg-indigo-300', '.15s'],
+    ['left-[35%] top-[10%]', 'bg-fuchsia-300', '.3s'],
+    ['left-[62%] top-[18%]', 'bg-amber-300', '.45s'],
+    ['left-[78%] top-[76%]', 'bg-sky-300', '.6s'],
+    ['left-[90%] top-[31%]', 'bg-purple-300', '.75s'],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 py-8 backdrop-blur-sm">
+      <div className="success-burst pointer-events-none absolute inset-0 overflow-hidden">
+        {particles.map(([position, color, delay]) => (
+          <span key={`${position}-${color}`} className={`success-particle absolute h-2.5 w-2.5 rounded-full ${position} ${color}`} style={{ animationDelay: delay }} />
+        ))}
+      </div>
+
+      <div className="success-card relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-indigo-950/20">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-400 via-indigo-500 to-fuchsia-500" />
+        <div className="px-7 pb-7 pt-9 text-center sm:px-9">
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50">
+            <div className="success-check-ring flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-xl shadow-emerald-200">
+              <CheckCircle2 className="h-11 w-11" />
+            </div>
+          </div>
+
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600">
+            <Sparkles className="h-3.5 w-3.5" />
+            {paid ? 'Compra completada' : 'Descarga completada'}
+          </div>
+
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Mazo agregado exitosamente al dashboard
+          </h2>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+            {paid ? 'El pago simulado fue aprobado y tu copia ya quedo registrada.' : 'Tu mazo gratuito ya fue agregado a tu coleccion.'}
+          </p>
+
+          <div className="my-7 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-sm">
+                <BookOpen className="h-7 w-7" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-extrabold text-slate-900">{deckTitle}</h3>
+                <p className="mt-0.5 truncate text-sm text-slate-500">por {creatorName || 'Desconocido'}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-400">{cardCount || 0} tarjetas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <button onClick={onDashboard} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-indigo-200">
+              Ir al Dashboard
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <button onClick={onMarketplace} className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+              Seguir explorando
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PageTitle = ({ title, subtitle, action }) => (
   <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -869,6 +938,7 @@ export const MarketplaceDetailPage = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [message, setMessage] = useState('');
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
     if (data?.miValoracion) {
@@ -878,8 +948,23 @@ export const MarketplaceDetailPage = () => {
   }, [data]);
 
   const acquire = async () => {
-    await api.post(`/user/marketplace/${id}/adquirir`);
-    navigate('/dashboard');
+    try {
+      await api.post(`/user/marketplace/${id}/adquirir`);
+      setSuccess({
+        mode: 'gratis',
+        deckTitle: data?.mazo?.titulo || 'Mazo',
+        creatorName: data?.creador?.NombreCompleto || data?.creador?.UserName || 'Desconocido',
+        cardCount: data?.tarjetas?.length || 0,
+      });
+      setRefresh((value) => value + 1);
+    } catch (err) {
+      const redirect = err.response?.data?.redirect;
+      if (redirect) {
+        navigate(redirect);
+        return;
+      }
+      setMessage(err.response?.data?.message || 'No fue posible adquirir el mazo.');
+    }
   };
 
   const sendRating = async (event) => {
@@ -892,11 +977,18 @@ export const MarketplaceDetailPage = () => {
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
 
-  const { publicacion, mazo, tarjetas, valoraciones, yaAdquirido } = data;
-  const own = publicacion.fk_id_usuario === mazo.IDUsuario;
+  const { publicacion, creador, mazo, tarjetas, valoraciones, yaAdquirido, esPropio } = data;
+  const creatorName = creador?.NombreCompleto || creador?.UserName || mazo.NombreCompleto || 'Desconocido';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
+      {success && (
+        <AcquisitionSuccessModal
+          {...success}
+          onDashboard={() => navigate('/dashboard')}
+          onMarketplace={() => navigate('/marketplace')}
+        />
+      )}
       <div className="container mx-auto max-w-5xl px-4 py-8">
         {message && <div className="mb-6"><Alert>{message}</Alert></div>}
         <div className="grid gap-8 lg:grid-cols-3">
@@ -912,7 +1004,7 @@ export const MarketplaceDetailPage = () => {
               <div className="p-6">
                 <h1 className="mb-2 text-2xl font-bold text-gray-900">{mazo.titulo}</h1>
                 <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                  <span>por {mazo.NombreCompleto}</span><span>•</span>
+                  <span>por {creatorName}</span><span>•</span>
                   <span className="flex items-center gap-1"><StarRow value={publicacion.promedio_valoracion} /> {Number(publicacion.promedio_valoracion || 0).toFixed(1)} ({publicacion.num_valoraciones} valoraciones)</span><span>•</span>
                   <span>{publicacion.num_compras} adquiridos</span>
                 </div>
@@ -971,7 +1063,7 @@ export const MarketplaceDetailPage = () => {
           <aside className="space-y-4">
             <div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="mb-5 text-center">{Number(publicacion.pago) ? <><div className="mb-1 text-4xl font-bold text-gray-900">{money(publicacion.precio)}</div><p className="text-sm text-gray-400">Pago unico</p></> : <><div className="mb-1 text-4xl font-bold text-green-600">GRATIS</div><p className="text-sm text-gray-400">Sin costo</p></>}</div>
-              {yaAdquirido ? <><div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3 text-center font-semibold text-green-700">Ya tienes este mazo</div><button onClick={() => navigate('/dashboard')} className="w-full rounded-xl border-2 border-indigo-200 py-3 font-semibold text-indigo-600">Ver en Mi Dashboard</button></> : own ? <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700">Este es tu mazo publicado</div> : Number(publicacion.pago) ? <button onClick={() => navigate(`/marketplace/${id}/pagar`)} className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 text-lg font-bold text-white">Comprar ahora</button> : <button onClick={acquire} className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3.5 text-lg font-bold text-white">Agregar gratis</button>}
+              {yaAdquirido ? <><div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3 text-center font-semibold text-green-700">Ya tienes este mazo</div><button onClick={() => navigate('/dashboard')} className="w-full rounded-xl border-2 border-indigo-200 py-3 font-semibold text-indigo-600">Ver en Mi Dashboard</button></> : esPropio ? <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700">Este es tu mazo publicado</div> : Number(publicacion.pago) ? <button onClick={() => navigate(`/marketplace/${id}/pagar`)} className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 text-lg font-bold text-white">Comprar ahora</button> : <button onClick={acquire} className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3.5 text-lg font-bold text-white">Agregar gratis</button>}
               <div className="mt-5 space-y-2.5 text-sm text-gray-500">
                 <p>{tarjetas.length} tarjetas incluidas</p>
                 <p>El mazo se clona a tu coleccion</p>
@@ -991,43 +1083,116 @@ export const PaymentPage = () => {
   const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, [id]);
   const [form, setForm] = useState({ nombre_titular: '', numero_tarjeta: '', vencimiento: '', cvv: '' });
   const [submitError, setSubmitError] = useState('');
+  const [success, setSuccess] = useState(null);
+  const redirected = useRef(false);
+
+  useEffect(() => {
+    if (!data || redirected.current) return;
+    if (data.yaAdquirido) {
+      redirected.current = true;
+      navigate('/dashboard');
+      return;
+    }
+    if (!Number(data.publicacion.pago)) {
+      redirected.current = true;
+      api.post(`/user/marketplace/${id}/adquirir`)
+        .then(() => setSuccess({
+          mode: 'gratis',
+          deckTitle: data.mazo?.titulo || 'Mazo',
+          creatorName: data.creador?.NombreCompleto || data.creador?.UserName || 'Desconocido',
+          cardCount: data.tarjetas?.length || 0,
+        }))
+        .catch((err) => setSubmitError(err.response?.data?.message || 'No fue posible adquirir el mazo.'));
+    }
+  }, [data, id, navigate]);
+
+  const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  const formatExpiry = (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    return digits.length >= 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+  };
+
+  const validatePayment = () => {
+    const errors = [];
+    const cardNumber = form.numero_tarjeta.replace(/\s/g, '');
+    if (!form.nombre_titular.trim()) errors.push('El nombre del titular es obligatorio.');
+    if (!/^\d{16}$/.test(cardNumber)) errors.push('El numero de tarjeta debe tener 16 digitos.');
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(form.vencimiento)) errors.push('El vencimiento debe tener formato MM/AA.');
+    if (!/^\d{3}$/.test(form.cvv)) errors.push('El CVV debe tener 3 digitos.');
+    return errors;
+  };
 
   const submit = async (event) => {
     event.preventDefault();
     setSubmitError('');
+    const errors = validatePayment();
+    if (errors.length) {
+      setSubmitError(errors.join(' '));
+      return;
+    }
     try {
-      await api.post(`/user/marketplace/${id}/confirmar`, form);
-      navigate('/dashboard');
+      await api.post(`/user/marketplace/${id}/confirmar`, {
+        ...form,
+        numero_tarjeta: form.numero_tarjeta.replace(/\s/g, ''),
+      });
+      setSuccess({
+        mode: 'pago',
+        deckTitle: data?.mazo?.titulo || 'Mazo',
+        creatorName: data?.creador?.NombreCompleto || data?.creador?.UserName || 'Desconocido',
+        cardCount: data?.tarjetas?.length || 0,
+      });
     } catch (err) {
-      setSubmitError(err.response?.data?.message || 'No fue posible confirmar la compra.');
+      const serverErrors = err.response?.data?.errors ? Object.values(err.response.data.errors).join(' ') : '';
+      setSubmitError(serverErrors || err.response?.data?.message || 'No fue posible confirmar la compra.');
     }
   };
 
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
 
-  const { publicacion, mazo, tarjetas } = data;
+  const { publicacion, creador, mazo, tarjetas } = data;
+  const creatorName = creador?.NombreCompleto || creador?.UserName || mazo.NombreCompleto || 'Desconocido';
   return (
     <div className="flex min-h-screen items-start justify-center bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 px-4 py-12">
+      {success && (
+        <AcquisitionSuccessModal
+          {...success}
+          onDashboard={() => navigate('/dashboard')}
+          onMarketplace={() => navigate('/marketplace')}
+        />
+      )}
       <div className="w-full max-w-2xl">
         <ErrorBox message={submitError} />
         <div className="mb-6 mt-4 flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 text-white">LC</div>
-          <div className="flex-1"><h2 className="text-lg font-bold text-gray-900">{mazo.titulo}</h2><p className="text-sm text-gray-500">por {mazo.NombreCompleto} · {tarjetas.length} tarjetas</p></div>
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 text-white">
+            <BookOpen className="h-8 w-8" />
+          </div>
+          <div className="flex-1"><h2 className="text-lg font-bold text-gray-900">{mazo.titulo}</h2><p className="text-sm text-gray-500">por {creatorName} · {tarjetas.length} tarjetas</p></div>
           <div className="text-right"><div className="text-2xl font-bold text-indigo-600">{money(publicacion.precio)}</div><div className="text-xs text-gray-400">Pago unico</div></div>
         </div>
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-5"><h1 className="text-xl font-bold text-white">Datos de pago</h1><p className="text-sm text-indigo-200">Entorno de demostracion, no se cobraran cargos reales</p></div>
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <CreditCard className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Datos de pago</h1>
+                <p className="text-sm text-indigo-200">Entorno de demostracion, no se cobraran cargos reales</p>
+              </div>
+            </div>
+          </div>
           <form onSubmit={submit} className="space-y-5 p-6">
             <Field label="Nombre del titular" value={form.nombre_titular} onChange={(value) => setForm({ ...form, nombre_titular: value })} required />
-            <Field label="Numero de tarjeta" value={form.numero_tarjeta} onChange={(value) => setForm({ ...form, numero_tarjeta: value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim() })} required />
+            <Field label="Numero de tarjeta" value={form.numero_tarjeta} onChange={(value) => setForm({ ...form, numero_tarjeta: formatCardNumber(value) })} placeholder="1234 5678 9012 3456" maxLength="19" required />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Vencimiento" value={form.vencimiento} onChange={(value) => setForm({ ...form, vencimiento: value.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2') })} required />
-              <Field label="CVV" value={form.cvv} onChange={(value) => setForm({ ...form, cvv: value.replace(/\D/g, '').slice(0, 4) })} required />
+              <Field label="Vencimiento" value={form.vencimiento} onChange={(value) => setForm({ ...form, vencimiento: formatExpiry(value) })} placeholder="MM/AA" maxLength="5" required />
+              <Field label="CVV" value={form.cvv} onChange={(value) => setForm({ ...form, cvv: value.replace(/\D/g, '').slice(0, 3) })} placeholder="123" maxLength="3" required />
             </div>
             <div className="border-t border-gray-100 pt-4"><div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>{money(publicacion.precio)}</span></div><div className="flex justify-between text-base font-bold text-gray-900"><span>Total</span><span className="text-indigo-600">{money(publicacion.precio)} USD</span></div></div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">Este es un entorno de demostracion. Usa cualquier numero de tarjeta de 16 digitos, fecha futura y CVV de 3 digitos.</div>
-            <button className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-4 text-lg font-bold text-white">Confirmar compra - {money(publicacion.precio)}</button>
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700"><AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>Este es un entorno de demostracion. Usa cualquier numero de tarjeta de 16 digitos, fecha futura y CVV de 3 digitos. No se realizaran cargos reales.</span></div>
+            <button className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-4 text-lg font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-200"><span className="inline-flex items-center justify-center gap-2"><CreditCard className="h-5 w-5" />Confirmar compra - {money(publicacion.precio)}</span></button>
+            <p className="flex items-center justify-center gap-1 text-center text-xs text-gray-400"><LockKeyhole className="h-3.5 w-3.5" />Pago seguro simulado · Al confirmar, el mazo se agregara a tu coleccion</p>
           </form>
         </div>
       </div>

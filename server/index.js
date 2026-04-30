@@ -388,9 +388,16 @@ const getPublicationDetail = async (id, userId) => {
 
   return {
     publicacion,
+    creador: {
+      IDUsuario: publicacion.fk_id_usuario,
+      UserName: publicacion.UserName,
+      NombreCompleto: publicacion.NombreCompleto,
+      fotoruta: publicacion.fotoruta,
+    },
     mazo: mazo[0],
     tarjetas,
     valoraciones,
+    esPropio: Boolean(userId && Number(publicacion.fk_id_usuario) === Number(userId)),
     yaAdquirido: Boolean(compra[0]),
     miValoracion: miValoracion[0] || null,
   };
@@ -894,7 +901,9 @@ app.post('/api/user/marketplace/:id/adquirir', requireUser, async (req, res, nex
   try {
     const publicacion = await getPublication(req.params.id);
     if (!publicacion) return res.status(404).json({ message: 'Publicacion no encontrada.' });
-    if (Number(publicacion.pago) === 1) return res.status(400).json({ message: 'Este mazo requiere pago.' });
+    if (Number(publicacion.pago) === 1) {
+      return res.status(409).json({ message: 'Este mazo requiere pago.', redirect: `/marketplace/${req.params.id}/pagar` });
+    }
 
     const [exists] = await pool.query('SELECT id_Compra FROM Compra WHERE fk_id_usuario = ? AND fk_id_publicacion = ? LIMIT 1', [req.usuario.IDUsuario, req.params.id]);
     if (exists[0]) return res.status(409).json({ message: 'Ya tienes este mazo en tu coleccion.' });
@@ -923,6 +932,7 @@ app.post('/api/user/marketplace/:id/confirmar', requireUser, async (req, res, ne
       cvv: ['required'],
     }, { ...req.body, numero_tarjeta: cardNumber });
     if (!/^\d{16}$/.test(cardNumber)) errors.numero_tarjeta = 'El numero de tarjeta debe tener 16 digitos.';
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(String(req.body.vencimiento || ''))) errors.vencimiento = 'La fecha debe tener formato MM/AA.';
     if (!/^\d{3,4}$/.test(String(req.body.cvv || ''))) errors.cvv = 'El CVV debe tener entre 3 y 4 digitos.';
     if (hasErrors(res, errors)) return;
 
