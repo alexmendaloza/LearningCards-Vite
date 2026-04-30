@@ -9,6 +9,8 @@ const AppLayout = ({ children, user, onAuth }) => {
 
   const isAdminLogin = location.pathname === '/admin/login';
   const isAdmin = user?.rol === 'admin';
+  const isDashboard = location.pathname === '/dashboard';
+  const isLanding = location.pathname === '/';
   const nombre = user?.NombreCompleto || 'Usuario';
   const iniciales = nombre.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
   const foto = user?.fotoruta ? (String(user.fotoruta).startsWith('http') ? user.fotoruta : `/storage/${user.fotoruta}`) : '';
@@ -53,11 +55,20 @@ const AppLayout = ({ children, user, onAuth }) => {
                       <NavLink to="/admin/mazos" current={location.pathname}>Mazos</NavLink>
                       <NavLink to="/admin/ventas" current={location.pathname}>Ventas</NavLink>
                     </>
-                  ) : (
-                    <>
-                      <NavLink to="/dashboard" current={location.pathname}>Dashboard</NavLink>
-                      <NavLink to="/marketplace" current={location.pathname}>Marketplace</NavLink>
-                    </>
+                  ) : !isLanding && (
+                    <div className="flex items-center gap-4">
+                      {!isDashboard ? (
+                        <Link to="/dashboard" className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800">
+                          <HomeIcon className="h-5 w-5" />
+                          Volver al Dashboard
+                        </Link>
+                      ) : (
+                        <Link to="/marketplace" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600">
+                          <BagIcon className="h-5 w-5" />
+                          Marketplace
+                        </Link>
+                      )}
+                    </div>
                   )}
 
                   <div className="relative">
@@ -104,6 +115,18 @@ const NavLink = ({ to, current, children }) => (
   <Link to={to} className={`text-sm font-medium transition-colors ${current === to ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>
     {children}
   </Link>
+);
+
+const HomeIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
+);
+
+const BagIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+  </svg>
 );
 
 export default AppLayout;

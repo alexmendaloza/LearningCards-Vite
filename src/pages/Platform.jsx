@@ -220,30 +220,36 @@ const Select = ({ label, value, onChange, options }) => (
 export const DashboardPage = () => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const [refresh, setRefresh] = useState(0);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [form, setForm] = useState({
     search: params.get('search') || '',
     origin: params.get('origin') || '',
     cards_count: params.get('cards_count') || '',
+    category: params.get('category') || '',
   });
 
   const query = params.toString();
   const { loading, error, data } = useResource(async () => {
     const { data: payload } = await api.get(`/user/dashboard${query ? `?${query}` : ''}`);
     return payload;
-  }, [query, refresh]);
+  }, [query]);
 
   const applyFilters = (event) => {
     event.preventDefault();
     const next = {};
     Object.entries(form).forEach(([key, value]) => { if (value) next[key] = value; });
     setParams(next);
+    setFilterOpen(false);
   };
 
-  const deleteDeck = async (id) => {
-    if (!confirm('Seguro que deseas eliminar este mazo?')) return;
-    await api.delete(`/mazos/${id}`);
-    setRefresh((value) => value + 1);
+  const updateFilter = (key, value, submit = false) => {
+    const nextForm = { ...form, [key]: value };
+    setForm(nextForm);
+    if (submit) {
+      const next = {};
+      Object.entries(nextForm).forEach(([name, item]) => { if (item) next[name] = item; });
+      setParams(next);
+    }
   };
 
   if (loading) return <Loading text="Cargando dashboard..." />;
@@ -251,93 +257,211 @@ export const DashboardPage = () => {
 
   const usuario = data.usuario || {};
   const saludo = usuario.genero === 'F' ? 'Bienvenida' : 'Bienvenido';
+  const hasFilters = ['search', 'origin', 'cards_count', 'category'].some((key) => params.get(key));
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageTitle
-        title={`${saludo} de vuelta, ${usuario.NombreCompleto || 'Usuario'}!`}
-        subtitle="Continuemos tu camino de aprendizaje"
-        action={<Link to="/mazos/create" className="rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-purple-100">+ Nuevo Mazo</Link>}
-      />
+      <div className="mb-8">
+        <h1 className="mb-2 text-3xl font-bold md:text-4xl">
+          ¡{saludo} de vuelta, {usuario.NombreCompleto || 'Usuario'}! 👋
+        </h1>
+        <p className="text-gray-600">Continuemos tu camino de aprendizaje</p>
+      </div>
 
       <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-        <StatCard title="Racha de estudio activa" value={`${usuario.rachaActual || 0} dias`} tone="orange" badge={usuario.nombreNivel || 'Novato'} />
-        <StatCard title="Tarjetas estudiadas" value={data.totalEstudiadas || 0} tone="indigo" />
-        <StatCard title="Precision promedio" value={`${data.precision || 0}%`} tone="emerald" />
+        <StreakCard days={usuario.rachaActual || 0} level={usuario.nombreNivel || 'Novato'} />
+        <StudiedCard value={data.totalEstudiadas || 0} />
+        <PrecisionCard value={data.precision || 0} />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
-          <form onSubmit={applyFilters} className="rounded-3xl border border-slate-100 bg-white/80 p-5 shadow-sm">
-            <div className="grid gap-3 md:grid-cols-[1fr_170px_190px_auto]">
-              <input value={form.search} onChange={(event) => setForm({ ...form, search: event.target.value })} placeholder="Buscar mazos..." className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-300" />
-              <select value={form.origin} onChange={(event) => setForm({ ...form, origin: event.target.value })} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm">
-                <option value="">Todos</option>
-                <option value="mine">Mis Mazos</option>
-                <option value="marketplace">Marketplace</option>
-              </select>
-              <select value={form.cards_count} onChange={(event) => setForm({ ...form, cards_count: event.target.value })} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm">
-                <option value="">Cualquier tamano</option>
-                <option value="small">Pequeno (1-9)</option>
-                <option value="medium">Mediano (10-50)</option>
-                <option value="large">Grande (&gt; 50)</option>
-              </select>
-              <button className="rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white">Aplicar</button>
-            </div>
-          </form>
+          <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+            <h2 className="shrink-0 text-2xl font-black tracking-tight text-slate-800">Mis Mazos</h2>
 
-          {data.mazos?.length ? data.mazos.map((mazo) => (
-            <div key={mazo.IDMazo} className="overflow-hidden rounded-2xl border border-slate-100 bg-white/80 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-              <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="truncate text-xl font-extrabold text-slate-900">{mazo.titulo}</h3>
-                  <p className="truncate text-sm font-medium text-slate-500">{mazo.descripcion || empty}</p>
-                  <div className="mt-2 flex gap-2">
-                    <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-indigo-500">{mazo.tarjetas_count || 0} Tarjetas</span>
-                    {Number(mazo.original) === 0 && <span className="rounded-full border border-amber-100 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-500">Copia</span>}
+            <div className="relative w-full max-w-2xl flex-1">
+              <form onSubmit={applyFilters} className="relative">
+                <div className="group relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 transition-colors group-focus-within:text-indigo-500">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={form.search}
+                    onChange={(event) => updateFilter('search', event.target.value)}
+                    placeholder="Buscar mazos..."
+                    className="w-full rounded-full border border-slate-200 bg-white/70 py-3 pl-11 pr-24 text-sm shadow-sm outline-none backdrop-blur-sm transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+                    {hasFilters && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ search: '', origin: '', cards_count: '', category: '' });
+                          setParams({});
+                        }}
+                        className="rounded-full p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        title="Limpiar todo"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setFilterOpen(!filterOpen)}
+                      className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-slate-500 transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 ${filterOpen ? 'border-indigo-100 bg-indigo-50 text-indigo-600' : 'border-transparent'}`}
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                    </button>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/edit`)} className="rounded-full bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-600">Editar</button>
-                  {Number(mazo.original) === 1 && <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/publicar`)} className="rounded-full bg-purple-50 px-3 py-2 text-sm font-bold text-purple-600">Publicar</button>}
-                  <button onClick={() => deleteDeck(mazo.IDMazo)} className="rounded-full bg-red-50 px-3 py-2 text-sm font-bold text-red-500">Eliminar</button>
-                  <button onClick={() => navigate(`/estudiar/${mazo.IDMazo}`)} className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white">Estudiar</button>
+
+                {filterOpen && (
+                  <div className="absolute right-0 z-50 mt-3 w-full overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl transition duration-200 sm:w-80">
+                    <div className="space-y-5">
+                      <FilterSelect
+                        label="Origen del Mazo"
+                        value={form.origin}
+                        onChange={(value) => updateFilter('origin', value, true)}
+                        options={[['', 'Todos los orígenes'], ['mine', 'Mis Mazos'], ['marketplace', 'Marketplace']]}
+                      />
+                      <FilterSelect
+                        label="Cantidad de Tarjetas"
+                        value={form.cards_count}
+                        onChange={(value) => updateFilter('cards_count', value, true)}
+                        options={[['', 'Cualquier tamaño'], ['small', 'Pequeño (1-9)'], ['medium', 'Mediano (10-50)'], ['large', 'Grande (> 50)']]}
+                      />
+                      <FilterSelect
+                        label="Categoría"
+                        value={form.category}
+                        onChange={(value) => updateFilter('category', value, true)}
+                        options={[['', 'Todas las categorías'], ...(data.categorias || []).map((category) => [category, category])]}
+                      />
+                      <button type="submit" className="w-full rounded-xl bg-slate-900 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-slate-100 transition-colors hover:bg-indigo-600">
+                        Aplicar Filtros
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </div>
+
+            <div className="shrink-0">
+              <Link to="/mazos/create" className="group">
+                <button className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-purple-100 transition-all duration-300 hover:scale-105 hover:shadow-purple-300 active:scale-95 lg:w-auto">
+                  <span className="text-xl leading-none transition-transform duration-300 group-hover:rotate-90">+</span>
+                  Nuevo Mazo
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {data.mazos?.length ? data.mazos.map((mazo) => (
+            <div key={mazo.IDMazo} className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-90" />
+              <div className="flex items-center justify-between gap-4 p-4">
+                <div className="flex min-w-0 flex-1 items-center gap-4">
+                  <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 transition-colors duration-300 group-hover:bg-indigo-50 group-hover:text-indigo-500 sm:flex">
+                    <DeckIcon className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="mb-0.5 truncate text-xl font-extrabold leading-tight text-slate-900">{mazo.titulo}</h3>
+                    <p className="mb-2 truncate text-sm font-medium text-slate-500">{mazo.descripcion || empty}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full border border-indigo-100/50 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-500">{mazo.tarjetas_count || 0} Tarjetas</span>
+                      {Number(mazo.original) === 0 && <span className="rounded-full border border-amber-100/50 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500">Copia</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1 sm:flex-row">
+                    <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/edit`)} className="rounded-full p-2 text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600 active:scale-90" title="Editar">
+                      <EditIcon className="h-5 w-5" />
+                    </button>
+                    {Number(mazo.original) === 1 && (
+                      <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/publicar`)} className="rounded-full p-2 text-slate-400 transition-all hover:bg-purple-50 hover:text-purple-600 active:scale-90" title="Publicar">
+                        <ShareIcon className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  <button onClick={() => navigate(`/estudiar/${mazo.IDMazo}`)} className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition-all hover:bg-indigo-600 hover:shadow-indigo-200 active:scale-95">
+                    <PlayIcon className="h-4 w-4" />
+                    Estudiar
+                  </button>
                 </div>
               </div>
             </div>
           )) : (
-            <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white/80 p-16 text-center">
-              <h3 className="text-xl font-bold text-slate-800">Tu coleccion esta vacia</h3>
-              <p className="mt-2 text-slate-500">Crea tu primer mazo o explora el marketplace.</p>
+            <div className="rounded-[2rem] border border-slate-100 bg-white/80 p-16 text-center shadow-sm backdrop-blur-md">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-50 text-4xl shadow-inner">🔍</div>
+              {hasFilters ? (
+                <>
+                  <h3 className="mb-2 text-xl font-bold text-slate-800">Sin coincidencias</h3>
+                  <p className="mx-auto mb-8 max-w-xs text-slate-500">No se encontraron mazos con esos criterios. Intenta ajustar los filtros.</p>
+                  <button onClick={() => setParams({})} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-slate-200 transition-all hover:bg-indigo-600 hover:shadow-indigo-100">
+                    <CloseIcon className="h-4 w-4" />
+                    Limpiar todos los filtros
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="mb-2 text-xl font-bold text-slate-800">Tu colección está vacía</h3>
+                  <p className="mx-auto mb-8 max-w-xs text-slate-500">Aún no tienes mazos creados. ¡Comienza tu aventura de aprendizaje ahora!</p>
+                  <Link to="/mazos/create" className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-purple-100 transition-all hover:scale-105 active:scale-95">
+                    <span className="text-lg">+</span>
+                    Crear tu primer mazo
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </section>
 
         <aside className="space-y-6">
           <div className="rounded-2xl bg-white p-6 shadow-lg">
-            <h3 className="mb-4 font-bold">Logros</h3>
-            <div className="rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50 to-red-50 p-3">
-              <p className="font-semibold text-gray-800">{usuario.nombreNivel || 'Novato'}</p>
-              <p className="text-xs text-gray-500">Racha de {usuario.rachaActual || 0} dias</p>
-            </div>
+            <h3 className="mb-4 font-bold">🏆 Logros</h3>
+            {usuario.nombreNivel ? (
+              <div className="flex items-center gap-3 rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50 to-red-50 p-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-lg">🔥</div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{usuario.nombreNivel}</p>
+                  <p className="text-xs text-gray-500">Racha de {usuario.rachaActual || 0} días</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Completa tu primera sesión de estudio para desbloquear logros.</p>
+            )}
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-bold text-gray-800">Explorar Marketplace</h3>
+              <h3 className="flex items-center gap-2 font-bold text-gray-800">
+                <BagIcon className="h-5 w-5 text-indigo-500" />
+                Explorar Marketplace
+              </h3>
               <Link to="/marketplace" className="text-xs font-semibold text-indigo-600">Ver todo</Link>
             </div>
             <div className="space-y-3">
               {data.mazosPopulares?.length ? data.mazosPopulares.map((mazo) => (
-                <Link key={mazo.id_Publ} to={`/marketplace/${mazo.id_Publ}`} className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-indigo-50">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white">{mazo.titulo?.[0] || 'M'}</div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-gray-800">{mazo.titulo}</p>
-                    <p className="text-[10px] text-gray-400">{mazo.tarjetas_count} tarjetas por {mazo.NombreCompleto || mazo.UserName}</p>
+                <div key={mazo.id_Publ} className="group relative flex items-center gap-3 rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-indigo-100 hover:bg-indigo-50/30">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-sm">
+                    {(mazo.titulo || 'M').slice(0, 1)} 📚
                   </div>
-                </Link>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="truncate text-sm font-bold text-gray-800 transition-colors group-hover:text-indigo-700">{mazo.titulo}</h4>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">{mazo.tarjetas_count} tarjetas</span>
+                      <span className="text-[10px] text-gray-400">por {String(mazo.NombreCompleto || mazo.UserName || 'Usuario').split(' ')[0]}</span>
+                    </div>
+                  </div>
+                  <Link to={`/marketplace/${mazo.id_Publ}`} className="rounded-full bg-gray-50 p-1.5 text-gray-400 transition-all group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white">
+                    <PlusIcon className="h-4 w-4" />
+                  </Link>
+                </div>
               )) : <p className="py-6 text-center text-xs italic text-gray-400">No hay mazos publicos disponibles.</p>}
+            </div>
+            <div className="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3 text-center">
+              <p className="text-[10px] text-gray-500">¿Sabías que puedes publicar tus propios mazos para ayudar a otros?</p>
             </div>
           </div>
         </aside>
@@ -346,23 +470,93 @@ export const DashboardPage = () => {
   );
 };
 
-const StatCard = ({ title, value, tone, badge }) => {
-  const styles = {
-    orange: 'from-orange-500 to-red-600 text-white',
-    indigo: 'bg-white text-gray-800',
-    emerald: 'bg-white text-gray-800',
-  };
-  return (
-    <div className={`rounded-[2rem] p-7 shadow-lg ${styles[tone]}`}>
-      <div className="mb-4 flex items-center justify-between">
-        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${tone === 'orange' ? 'bg-white/20' : `bg-${tone}-50 text-${tone}-600`}`}>LC</div>
-        {badge && <span className="rounded-full border border-white/20 bg-black/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">{badge}</span>}
+const FilterSelect = ({ label, value, onChange, options }) => (
+  <div className="space-y-2">
+    <label className="text-xs font-black uppercase tracking-widest text-slate-800">{label}</label>
+    <select value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border-none bg-slate-50 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500/20">
+      {options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}
+    </select>
+  </div>
+);
+
+const StreakCard = ({ days, level }) => (
+  <div className={`group relative rounded-[2rem] bg-gradient-to-br from-orange-500 to-red-600 p-7 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/20 ${days >= 5 ? 'shadow-[0_0_25px_rgba(249,115,22,0.4)]' : ''}`}>
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
+        <FlameIcon className="h-8 w-8 animate-flame text-white" />
       </div>
-      <h3 className="text-4xl font-black tracking-tighter">{value}</h3>
-      <p className={`${tone === 'orange' ? 'text-orange-100/80' : 'text-gray-400'} text-sm font-medium`}>{title}</p>
+      <span className="rounded-full border border-white/20 bg-black/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md">{level}</span>
     </div>
-  );
+    <div className="space-y-1">
+      <h3 className="text-4xl font-black italic tracking-tighter text-white">{days} <span className="text-xl font-bold not-italic text-orange-100">días</span></h3>
+      <p className="text-sm font-medium text-orange-100/80">Racha de estudio activa</p>
+    </div>
+  </div>
+);
+
+const StudiedCard = ({ value }) => (
+  <div className="glass-stat group rounded-[2rem] p-7 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/5">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-transform group-hover:rotate-12">
+        <DeckIcon className="h-8 w-8" />
+      </div>
+    </div>
+    <div className="space-y-1">
+      <h3 className="text-4xl font-black tracking-tighter text-gray-800"><AnimatedNumber value={value} /></h3>
+      <p className="text-sm font-medium text-gray-400">Tarjetas estudiadas</p>
+    </div>
+  </div>
+);
+
+const PrecisionCard = ({ value }) => (
+  <div className="glass-stat group rounded-[2rem] p-7 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/5">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+        <TargetIcon className="h-8 w-8" />
+      </div>
+    </div>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-4xl font-black tracking-tighter text-gray-800">{value}<span className="text-2xl text-emerald-500">%</span></h3>
+        <p className="text-sm font-medium text-gray-400">Precisión promedio</p>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full border border-emerald-100/50 bg-emerald-50 p-[1px]">
+        <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-[1.5s] ease-out" style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  </div>
+);
+
+const AnimatedNumber = ({ value }) => {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    let frame;
+    let start;
+    const duration = 800;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      setShown(Math.floor(progress * Number(value || 0)));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+    const timer = setTimeout(() => { frame = requestAnimationFrame(step); }, 200);
+    return () => {
+      clearTimeout(timer);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [value]);
+  return shown;
 };
+
+const DeckIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>;
+const TargetIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><circle cx="12" cy="12" r="6" strokeWidth="2" /><circle cx="12" cy="12" r="2" strokeWidth="2" fill="currentColor" /></svg>;
+const FlameIcon = ({ className }) => <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M17.5,12c0,3.04-2.46,5.5-5.5,5.5s-5.5-2.46-5.5-5.5c0-1.03,0.28-2,0.77-2.83c0.14-0.24,0.11-0.54-0.08-0.74 c-0.22-0.23-0.58-0.24-0.82-0.04C5.54,9.08,5,10.48,5,12c0,3.87,3.13,7,7,7s7-3.13,7-7c0-1.91-0.76-3.65-2-4.93 c-0.19-0.2-0.52-0.22-0.73-0.03c-0.21,0.19-0.25,0.51-0.08,0.74C16.92,8.87,17.5,10.37,17.5,12z" /><path d="M12,3c0,0-3,3.5-3,6.5c0,1.66,1.34,3,3,3s3-1.34,3-3C15,6.5,12,3,12,3z" /></svg>;
+const EditIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
+const ShareIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>;
+const PlayIcon = ({ className }) => <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>;
+const BagIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
+const PlusIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>;
+const CloseIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
 
 export const MazoFormPage = () => {
   const { id } = useParams();
