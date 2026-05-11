@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -8,12 +8,40 @@ const AppLayout = ({ children, user, onAuth }) => {
   const [open, setOpen] = useState(false);
 
   const isAdminLogin = location.pathname === '/admin/login';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isAdmin = user?.rol === 'admin';
   const isDashboard = location.pathname === '/dashboard';
   const isLanding = location.pathname === '/';
   const nombre = user?.NombreCompleto || 'Usuario';
   const iniciales = nombre.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
   const foto = user?.fotoruta ? (String(user.fotoruta).startsWith('http') ? user.fotoruta : `/storage/${user.fotoruta}`) : '';
+
+  useEffect(() => {
+    try {
+      document.body.classList.toggle('dark-theme', localStorage.getItem('novalearn-theme') === 'dark');
+    } catch {
+      document.body.classList.remove('dark-theme');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextIsDark = !document.body.classList.contains('dark-theme');
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+      toggle.classList.remove('theme-burst-day', 'theme-burst-night', 'theme-liquid-pop');
+      void toggle.offsetWidth;
+      toggle.classList.add(nextIsDark ? 'theme-burst-night' : 'theme-burst-day', 'theme-liquid-pop');
+      window.setTimeout(() => {
+        toggle.classList.remove('theme-burst-day', 'theme-burst-night', 'theme-liquid-pop');
+      }, 920);
+    }
+    document.body.classList.toggle('dark-theme', nextIsDark);
+    try {
+      localStorage.setItem('novalearn-theme', nextIsDark ? 'dark' : 'light');
+    } catch {
+      // Theme persistence is optional when storage is unavailable.
+    }
+  };
 
   const logout = async () => {
     await api.post(isAdmin ? '/admin/logout' : '/logout');
@@ -23,23 +51,35 @@ const AppLayout = ({ children, user, onAuth }) => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isAdminLogin && (
+      {!isAdminLogin && !isAuthPage && (
         <header className="sticky top-0 z-50 border-b bg-white/80 shadow-sm backdrop-blur-sm">
           <div className="container mx-auto flex items-center justify-between px-4 py-4">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+            <Link to="/" className="nav-brand flex items-center gap-3">
+              <div className="nav-brand-logo flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
                 <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422A12 12 0 0112 21.5a12 12 0 01-6.16-4.922L12 14z" />
                 </svg>
               </div>
               <div>
-                <div className="text-xs font-medium text-gray-600">NovaLearn</div>
-                <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-lg font-bold text-transparent">LearningCards</div>
+                <div className="nav-brand-kicker text-xs font-medium text-gray-600">NovaLearn</div>
+                <div className="nav-brand-title bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-lg font-bold text-transparent">LearningCards</div>
               </div>
             </Link>
 
             <nav className="flex items-center gap-4">
+              <button
+                type="button"
+                id="themeToggle"
+                className="theme-toggle flex-shrink-0"
+                aria-label="Cambiar tema"
+                aria-pressed={document.body.classList.contains('dark-theme') ? 'true' : 'false'}
+                onClick={toggleTheme}
+              >
+                <span className="theme-knob" />
+                <span className="moon-icon" />
+              </button>
+
               {!user ? (
                 <div className="flex items-center gap-3">
                   <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600">Iniciar Sesion</Link>
@@ -100,7 +140,7 @@ const AppLayout = ({ children, user, onAuth }) => {
 
       <main className="flex-grow">{children}</main>
 
-      {!isAdminLogin && (
+      {!isAdminLogin && !isAuthPage && (
         <footer className="mt-auto border-t bg-white/70 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-6 text-center text-sm text-gray-600">
             © 2026 NovaLearn. Empowering students worldwide.
