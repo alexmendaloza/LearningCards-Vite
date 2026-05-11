@@ -30,7 +30,7 @@ const Home = () => {
           <div>
             <h1 className="text-5xl md:text-6xl font-black mb-6 leading-[1.1] tracking-tight text-gray-900">
               Domina cualquier
-              <span className="text-indigo-600"> materia</span>
+              <span className="animated-gradient-text"> materia</span>
               <br />con tarjetas inteligentes
             </h1>
           </div>
@@ -168,7 +168,7 @@ const Home = () => {
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">
             ¿Por qué
-            <span className="text-indigo-600"> LearningCards</span>?
+            <span className="animated-gradient-text"> LearningCards</span>?
           </h2>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">Todo lo que necesitas para estudiar mejor, en un solo lugar</p>
         </motion.div>

@@ -144,6 +144,7 @@ const useResource = (loader, deps = []) => {
 
 export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const navigate = useNavigate();
+  const authToggleRef = useRef(null);
   const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -160,6 +161,47 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   });
 
   useEffect(() => setTab(initialTab), [initialTab]);
+
+  useEffect(() => {
+    document.body.classList.add('auth-screen');
+    try {
+      document.body.classList.toggle('dark-theme', localStorage.getItem('novalearn-theme') === 'dark');
+    } catch {
+      document.body.classList.remove('dark-theme');
+    }
+    return () => document.body.classList.remove('auth-screen');
+  }, []);
+
+  const selectTab = (nextTab) => {
+    setTab(nextTab);
+    setError('');
+    const tabs = document.getElementById('auth-tabs');
+    if (tabs) {
+      tabs.classList.remove('slider-moving');
+      void tabs.offsetWidth;
+      tabs.classList.add('slider-moving');
+      window.setTimeout(() => tabs.classList.remove('slider-moving'), 700);
+    }
+  };
+
+  const toggleAuthTheme = () => {
+    const nextIsDark = !document.body.classList.contains('dark-theme');
+    const toggle = authToggleRef.current;
+    if (toggle) {
+      toggle.classList.remove('theme-burst-day', 'theme-burst-night', 'theme-liquid-pop');
+      void toggle.offsetWidth;
+      toggle.classList.add(nextIsDark ? 'theme-burst-night' : 'theme-burst-day', 'theme-liquid-pop');
+      window.setTimeout(() => {
+        toggle.classList.remove('theme-burst-day', 'theme-burst-night', 'theme-liquid-pop');
+      }, 900);
+    }
+    document.body.classList.toggle('dark-theme', nextIsDark);
+    try {
+      localStorage.setItem('novalearn-theme', nextIsDark ? 'dark' : 'light');
+    } catch {
+      // Storage can be blocked in some browser modes.
+    }
+  };
 
   const submitLogin = async (event) => {
     event.preventDefault();
@@ -192,57 +234,98 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-150px)] items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl">
+    <div className="auth-page relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-4">
+      <Link to="/" className="auth-back-link">
+        <span aria-hidden="true">&larr;</span>
+        Volver al inicio
+      </Link>
+
+      <button
+        type="button"
+        ref={authToggleRef}
+        id="authThemeToggle"
+        className="auth-theme-toggle"
+        aria-label="Cambiar tema"
+        aria-pressed={document.body.classList.contains('dark-theme') ? 'true' : 'false'}
+        onClick={toggleAuthTheme}
+      >
+        <span className="auth-theme-icon auth-theme-sun" aria-hidden="true">&#9728;</span>
+        <span className="auth-theme-icon auth-theme-moon" aria-hidden="true">&#9790;</span>
+        <span className="auth-theme-knob" aria-hidden="true" />
+      </button>
+
+      <div className="my-auto w-full max-w-md">
+        <div className="mb-6 text-center">
+          <p className="auth-kicker text-sm italic">Bienvenido de vuelta. Continua tu camino de aprendizaje.</p>
+        </div>
+
+        <div className="auth-card flex max-h-[80vh] flex-col overflow-hidden rounded-3xl shadow-2xl">
           <div className="p-8 pb-4">
-            <h1 className="text-3xl font-black text-gray-900">Comenzar</h1>
-            <p className="mb-6 mt-1 text-sm text-gray-500">Inicia sesion o crea una cuenta nueva</p>
-            <div className="mb-4 flex rounded-xl bg-gray-100 p-1.5">
-              <button className={`flex-1 rounded-lg py-2 text-sm font-bold ${tab === 'login' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`} onClick={() => setTab('login')}>Iniciar sesion</button>
-              <button className={`flex-1 rounded-lg py-2 text-sm font-bold ${tab === 'register' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`} onClick={() => setTab('register')}>Registrarse</button>
+            <h1 className="auth-title mb-1 text-3xl font-black tracking-tight">Comenzar</h1>
+            <p className="auth-subtitle mb-6 mt-1 text-sm">Inicia sesion o crea una cuenta nueva</p>
+            <div id="auth-tabs" className={`auth-tabs mb-4 ${tab === 'register' ? 'register-active' : ''}`} role="tablist" aria-label="Acceso a cuenta">
+              <span className="auth-tab-slider" aria-hidden="true" />
+              <button type="button" className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => selectTab('login')} role="tab" aria-selected={tab === 'login'}>
+                Iniciar sesion
+              </button>
+              <button type="button" className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => selectTab('register')} role="tab" aria-selected={tab === 'register'}>
+                Registrarse
+              </button>
             </div>
             <ErrorBox message={error} />
           </div>
 
-          <div className="max-h-[65vh] overflow-y-auto px-8 pb-8">
+          <div className="custom-scrollbar overflow-y-auto px-8 pb-8">
             {tab === 'login' ? (
-              <form className="space-y-4" onSubmit={submitLogin}>
-                <Field label="Correo electronico" type="email" value={login.email} onChange={(value) => setLogin({ ...login, email: value })} required />
-                <Field label="Contrasena" type="password" value={login.password} onChange={(value) => setLogin({ ...login, password: value })} required />
-                <button disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-3 font-bold text-white shadow-lg shadow-indigo-100 disabled:opacity-60">
+              <form className="space-y-4 py-2" onSubmit={submitLogin}>
+                <Field label="Correo electronico" type="email" value={login.email} onChange={(value) => setLogin({ ...login, email: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <Field label="Contrasena" type="password" value={login.password} onChange={(value) => setLogin({ ...login, password: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <div className="flex items-center justify-between text-xs">
+                  <label className="group flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" className="auth-checkbox rounded text-indigo-600 focus:ring-indigo-500" />
+                    <span className="auth-muted transition-colors group-hover:text-indigo-600">Recordarme</span>
+                  </label>
+                  <a href="#" className="auth-help-link font-semibold transition-colors">Olvidaste tu contrasena?</a>
+                </div>
+                <button disabled={loading} className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60">
                   {loading ? 'Cargando...' : 'Iniciar sesion'}
                 </button>
               </form>
             ) : (
-              <form className="space-y-4" onSubmit={submitRegister}>
+              <form className="space-y-4 py-2" onSubmit={submitRegister}>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Usuario" value={register.UserName} onChange={(value) => setRegister({ ...register, UserName: value })} required />
-                  <Select label="Genero" value={register.genero} onChange={(value) => setRegister({ ...register, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} />
+                  <Field label="Usuario" value={register.UserName} onChange={(value) => setRegister({ ...register, UserName: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Select label="Genero" value={register.genero} onChange={(value) => setRegister({ ...register, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
-                <Field label="Nombre completo" value={register.NombreCompleto} onChange={(value) => setRegister({ ...register, NombreCompleto: value })} required />
-                <Field label="Correo electronico" type="email" value={register.email} onChange={(value) => setRegister({ ...register, email: value })} required />
+                <Field label="Nombre completo" value={register.NombreCompleto} onChange={(value) => setRegister({ ...register, NombreCompleto: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                <Field label="Correo electronico" type="email" value={register.email} onChange={(value) => setRegister({ ...register, email: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Contrasena" type="password" value={register.password} onChange={(value) => setRegister({ ...register, password: value })} required />
-                  <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} required />
+                  <Field label="Contrasena" type="password" value={register.password} onChange={(value) => setRegister({ ...register, password: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">Foto de perfil</span>
+                  <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">Foto de perfil</span>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/jpg"
                     onChange={async (event) => setRegister({ ...register, ...(await readImageFile(event.target.files?.[0])) })}
-                    className="w-full text-xs text-gray-400"
+                    className="auth-file w-full cursor-pointer text-xs transition-all"
                   />
                 </label>
-                <button disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 font-bold text-white shadow-lg shadow-purple-100 disabled:opacity-60">
+                <div className="flex items-start gap-2 pt-2">
+                  <input type="checkbox" required className="auth-checkbox mt-1 rounded text-indigo-600" />
+                  <span className="auth-muted text-[10px] leading-tight">Acepto los Terminos de Servicio y la Politica de Privacidad de LearningCards.</span>
+                </div>
+                <button disabled={loading} className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60">
                   {loading ? 'Procesando...' : 'Crear cuenta gratis'}
                 </button>
               </form>
             )}
           </div>
         </div>
-        <Link to="/" className="mt-8 block text-center text-sm font-semibold text-gray-400 hover:text-indigo-500">Volver al inicio</Link>
+        <div className="mt-8 text-center">
+          <Link to="/" className="auth-footer-link text-sm font-medium transition-colors">Necesitas ayuda? Contactanos</Link>
+        </div>
       </div>
     </div>
   );
@@ -250,7 +333,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
 
 const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', ...props }) => (
   <label className="block">
-    <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
+    <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
     <input
       type={type}
       value={value ?? ''}
@@ -277,10 +360,10 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false, 
   </label>
 );
 
-const Select = ({ label, value, onChange, options, required = false }) => (
+const Select = ({ label, value, onChange, options, required = false, ...props }) => (
   <label className="block">
-    <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
-    <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400">
+    <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
+    <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400" {...props}>
       {options.map((option) => Array.isArray(option)
         ? <option key={option[0]} value={option[0]}>{option[1]}</option>
         : <option key={option} value={option}>{option}</option>)}
