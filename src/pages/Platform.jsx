@@ -340,7 +340,7 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
       required={required}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
+      className="w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
       {...props}
     />
   </label>
@@ -354,7 +354,7 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false, 
       required={required}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
-      className="min-h-28 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
+      className="min-h-28 w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
       {...props}
     />
   </label>
@@ -363,7 +363,7 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false, 
 const Select = ({ label, value, onChange, options, required = false, ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
-    <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400" {...props}>
+    <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400" {...props}>
       {options.map((option) => Array.isArray(option)
         ? <option key={option[0]} value={option[0]}>{option[1]}</option>
         : <option key={option} value={option}>{option}</option>)}
@@ -723,9 +723,13 @@ export const MazoFormPage = () => {
 
   const load = async () => {
     if (!editing) return;
-    const { data } = await api.get(`/mazos/${id}`);
-    setDeck({ titulo: data.mazo.titulo, descripcion: data.mazo.descripcion || '' });
-    setCards(data.tarjetas || []);
+    try {
+      const { data } = await api.get(`/mazos/${id}`);
+      setDeck({ titulo: data.mazo.titulo, descripcion: data.mazo.descripcion || '' });
+      setCards(data.tarjetas || []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al cargar los datos del mazo.');
+    }
   };
 
   useEffect(() => { load().catch((err) => setError(err.response?.data?.message || err.message)); }, [id]);
@@ -747,9 +751,26 @@ export const MazoFormPage = () => {
 
   const saveCard = async (event) => {
     event.preventDefault();
-    await api.post('/tarjetas', { ...cardModal, IDMazo: id });
-    setCardModal(null);
-    await load();
+    try {
+      if (cardModal.tipo === 'opcion_multiple') {
+        const validOptions = (cardModal.opciones || []).filter((o) => o.trim() !== '');
+        if (validOptions.length < 2) {
+          alert('Debes incluir al menos 2 opciones.');
+          return;
+        }
+        if (!validOptions.includes(cardModal.reverso)) {
+          alert('La respuesta correcta debe estar entre las opciones.');
+          return;
+        }
+      }
+      console.log('FRONTEND SENDING:', JSON.stringify({ ...cardModal, IDMazo: id }, null, 2));
+      const res = await api.post('/tarjetas', { ...cardModal, IDMazo: id });
+      console.log('SERVER RESPONSE:', res.data);
+      setCardModal(null);
+      await load();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error al guardar la tarjeta.');
+    }
   };
 
   const deleteCard = async (cardId) => {
@@ -793,18 +814,33 @@ export const MazoFormPage = () => {
 
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">FLASHCARDS</h2>
-            <button onClick={() => setCardModal({ frente: '', reverso: '' })} className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-2 font-semibold text-white">+ Anadir tarjeta</button>
+            <button onClick={() => setCardModal({ frente: '', reverso: '', tipo: 'basica', opciones: ['', '', '', ''] })} className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-2 font-semibold text-white">+ Anadir tarjeta</button>
           </div>
-
           {cards.length ? cards.map((card, index) => (
             <div key={card.IDTarjeta} className="group relative mb-3 rounded-2xl bg-white p-4 shadow">
               <div className="absolute -left-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-sm text-white">{index + 1}</div>
               <div className="ml-6 grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl bg-gray-50 p-3">{card.frente}</div>
-                <div className="rounded-xl bg-purple-50 p-3">{card.reverso}</div>
+                <div>
+                  <div className="mb-1 text-[10px] font-black uppercase text-gray-400">Pregunta</div>
+                  <div className="rounded-xl bg-gray-50 p-3">{card.frente}</div>
+                </div>
+                <div>
+                  <div className="mb-1 text-[10px] font-black uppercase text-purple-400">
+                    {card.tipo === 'opcion_multiple' ? 'Respuesta Correcta' : 'Respuesta'}
+                    <span className="ml-2 rounded bg-purple-100 px-1 text-[8px] text-purple-600">{(card.tipo || 'basica').toUpperCase()}</span>
+                  </div>
+                  <div className="rounded-xl bg-purple-50 p-3">{card.reverso}</div>
+                  {card.tipo === 'opcion_multiple' && card.opciones && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {(typeof card.opciones === 'string' ? JSON.parse(card.opciones) : (card.opciones || [])).map((opt, i) => (
+                        <span key={i} className="rounded-lg bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">{opt}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex">
-                <button onClick={() => setCardModal(card)} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
+                <button onClick={() => setCardModal({ ...card, tipo: card.tipo || 'basica', opciones: typeof card.opciones === 'string' ? JSON.parse(card.opciones) : (card.opciones || ['', '', '', '']) })} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
                 <button onClick={() => deleteCard(card.IDTarjeta)} className="rounded-lg bg-red-500 p-2 text-sm text-white">Eliminar</button>
               </div>
             </div>
@@ -817,15 +853,84 @@ export const MazoFormPage = () => {
       )}
 
       {cardModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <form onSubmit={saveCard} className="w-full max-w-lg rounded-2xl bg-white p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <form onSubmit={saveCard} className="my-auto w-full max-w-lg rounded-2xl bg-white p-6">
             <h2 className="mb-1 text-2xl font-bold">{cardModal.IDTarjeta ? 'Editar tarjeta' : 'Anade nueva tarjeta'}</h2>
-            <p className="mb-4 text-sm text-gray-500">Anade el contenido por ambos lados</p>
-            <TextArea label="Frente" value={cardModal.frente} onChange={(value) => setCardModal({ ...cardModal, frente: value })} required />
-            <div className="mt-2">
-              <TextArea label="Reverso" value={cardModal.reverso} onChange={(value) => setCardModal({ ...cardModal, reverso: value })} required />
+            <p className="mb-4 text-sm text-gray-500">Configura el tipo y contenido de tu tarjeta</p>
+
+            <div className="mb-4">
+              <Select
+                label="Tipo de tarjeta"
+                value={cardModal.tipo || 'basica'}
+                onChange={(value) => setCardModal({ ...cardModal, tipo: value, opciones: value === 'opcion_multiple' ? (cardModal.opciones?.length ? cardModal.opciones : ['', '', '', '']) : null })}
+                options={[
+                  ['basica', 'Básica (Frente y Reverso)'],
+                  ['opcion_multiple', 'Opción Múltiple'],
+                  ['escritura', 'Escritura (Teclear respuesta)'],
+                ]}
+              />
             </div>
-            <div className="mt-4 flex justify-end gap-2">
+
+            <TextArea label={(cardModal.tipo || 'basica') === 'escritura' ? 'Pregunta / Enunciado' : 'Frente'} value={cardModal.frente} onChange={(value) => setCardModal({ ...cardModal, frente: value })} required />
+
+            {(cardModal.tipo || 'basica') === 'opcion_multiple' ? (
+              <div className="mt-4">
+                <span className="mb-2 block text-xs font-black uppercase tracking-wider text-gray-700">Opciones y Respuesta Correcta</span>
+                <div className="grid gap-2">
+                  {(cardModal.opciones || []).map((opt, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        type="radio"
+                        name="correct_answer"
+                        checked={cardModal.reverso === opt && opt !== ''}
+                        onChange={() => setCardModal({ ...cardModal, reverso: opt })}
+                        className="mt-3"
+                        disabled={opt === ''}
+                      />
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => {
+                          const newOpts = [...cardModal.opciones];
+                          newOpts[i] = e.target.value;
+                          setCardModal({ ...cardModal, opciones: newOpts });
+                        }}
+                        placeholder={`Opción ${i + 1}`}
+                        className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      {cardModal.opciones.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newOpts = cardModal.opciones.filter((_, idx) => idx !== i);
+                            setCardModal({ ...cardModal, opciones: newOpts });
+                          }}
+                          className="text-red-400 hover:text-red-600"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {cardModal.opciones.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={() => setCardModal({ ...cardModal, opciones: [...cardModal.opciones, ''] })}
+                    className="mt-2 text-xs font-bold text-purple-600"
+                  >
+                    + Añadir opción
+                  </button>
+                )}
+                <p className="mt-2 text-[10px] text-gray-400 italic">* Selecciona el círculo a la izquierda de la respuesta correcta.</p>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <TextArea label={(cardModal.tipo || 'basica') === 'escritura' ? 'Respuesta Exacta' : 'Reverso'} value={cardModal.reverso} onChange={(value) => setCardModal({ ...cardModal, reverso: value })} required />
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end gap-2">
               <button type="button" onClick={() => setCardModal(null)} className="rounded-xl border px-4 py-2">Cancelar</button>
               <button className="rounded-xl bg-purple-600 px-4 py-2 text-white">Guardar</button>
             </div>
@@ -846,6 +951,33 @@ export const StudyPage = () => {
   const [fail, setFail] = useState(0);
   const [finished, setFinished] = useState(null);
   const [startTime] = useState(() => new Date());
+
+  // Advanced card types state
+  const [userAnswer, setUserAnswer] = useState('');
+  const [feedback, setFeedback] = useState(null); // { correct: boolean, revealed: boolean }
+
+  const levenshtein = (a, b) => {
+    const tmp = [];
+    for (let i = 0; i <= a.length; i += 1) {
+      tmp[i] = [i];
+      if (i === 0) for (let j = 1; j <= b.length; j += 1) tmp[0][j] = j;
+      else {
+        for (let j = 1; j <= b.length; j += 1) {
+          tmp[i][j] = Math.min(tmp[i - 1][j] + 1, tmp[i][j - 1] + 1, tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        }
+      }
+    }
+    return tmp[a.length][b.length];
+  };
+
+  const isCorrect = (input, target) => {
+    const s1 = String(input).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const s2 = String(target).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (s1 === s2) return true;
+    const distance = levenshtein(s1, s2);
+    const threshold = Math.max(1, Math.floor(s2.length * 0.2));
+    return distance <= threshold;
+  };
 
   const cards = data?.tarjetas || [];
   const current = cards[index] || {};
@@ -872,7 +1004,24 @@ export const StudyPage = () => {
     } else {
       setIndex(index + 1);
       setFlipped(false);
+      setUserAnswer('');
+      setFeedback(null);
     }
+  };
+
+  const submitEscritura = (event) => {
+    event.preventDefault();
+    if (feedback) return;
+    const correct = isCorrect(userAnswer, current.reverso);
+    setFeedback({ correct, revealed: true });
+    setTimeout(() => answer(correct), 1500);
+  };
+
+  const selectOption = (opt) => {
+    if (feedback) return;
+    const correct = opt === current.reverso;
+    setFeedback({ correct, revealed: true, selected: opt });
+    setTimeout(() => answer(correct), 1500);
   };
 
   if (loading) return <Loading text="Preparando estudio..." />;
@@ -909,23 +1058,85 @@ export const StudyPage = () => {
         <div className="h-5 rounded-full bg-white/40 p-1 shadow-inner"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all" style={{ width: `${progress}%` }} /></div>
       </div>
 
-      <button onClick={() => setFlipped(!flipped)} className="relative flex h-[350px] w-full max-w-2xl items-center justify-center rounded-3xl border border-white/80 bg-white p-8 text-center shadow-xl">
-        <div>
-          <span className={`mb-4 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${flipped ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-500'}`}>{flipped ? 'Respuesta' : 'Pregunta'}</span>
-          <p className={`text-2xl font-bold md:text-3xl ${flipped ? 'text-white' : 'text-gray-800'}`}>{flipped ? current.reverso : current.frente}</p>
-        </div>
-        {flipped && <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700" />}
-      </button>
-
-      {flipped && (
-        <div className="mt-12 w-full max-w-md">
-          <p className="mb-6 text-center text-sm font-medium italic text-gray-400">Que tal te ha ido con esta tarjeta?</p>
-          <div className="flex gap-4">
-            <button onClick={() => answer(false)} className="flex-1 rounded-2xl border-2 border-red-100 bg-white py-5 text-sm font-black uppercase tracking-widest text-red-500">No lo sabia</button>
-            <button onClick={() => answer(true)} className="flex-1 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-green-200">Lo sabia</button>
+      <div className="w-full max-w-2xl">
+        {current.tipo === 'opcion_multiple' ? (
+          <div className="rounded-3xl border border-white/80 bg-white p-8 shadow-xl">
+            <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-500">Selecciona la opción correcta</span>
+            <p className="mb-8 text-2xl font-bold text-gray-800 md:text-3xl">{current.frente}</p>
+            <div className="grid gap-3">
+              {(typeof current.opciones === 'string' ? JSON.parse(current.opciones) : (current.opciones || [])).map((opt, i) => {
+                const isSelected = feedback?.selected === opt;
+                const isTheCorrectOne = opt === current.reverso;
+                let btnClass = 'border-gray-100 hover:border-indigo-200 hover:bg-indigo-50';
+                if (feedback?.revealed) {
+                  if (isTheCorrectOne) btnClass = 'border-green-500 bg-green-50 text-green-700';
+                  else if (isSelected) btnClass = 'border-red-500 bg-red-50 text-red-700';
+                  else btnClass = 'opacity-40';
+                }
+                return (
+                  <button
+                    key={i}
+                    onClick={() => selectOption(opt)}
+                    disabled={feedback?.revealed}
+                    className={`flex items-center justify-between rounded-2xl border-2 px-6 py-4 font-bold transition-all ${btnClass}`}
+                  >
+                    <span>{opt}</span>
+                    {feedback?.revealed && isTheCorrectOne && <span>✓</span>}
+                    {feedback?.revealed && isSelected && !isTheCorrectOne && <span>&times;</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        ) : current.tipo === 'escritura' ? (
+          <div className="rounded-3xl border border-white/80 bg-white p-8 shadow-xl">
+            <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-500">Escribe tu respuesta</span>
+            <p className="mb-8 text-2xl font-bold text-gray-800 md:text-3xl">{current.frente}</p>
+            <form onSubmit={submitEscritura}>
+              <input
+                autoFocus
+                type="text"
+                value={userAnswer}
+                disabled={feedback?.revealed}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                placeholder="Escribe aqui..."
+                className={`w-full rounded-2xl border-2 p-5 text-xl font-bold outline-none transition-all ${
+                  feedback ? (feedback.correct ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700') : 'border-gray-100 focus:border-indigo-400'
+                }`}
+              />
+              {!feedback && (
+                <button className="mt-4 w-full rounded-2xl bg-indigo-600 py-4 font-bold text-white shadow-lg shadow-indigo-100">Enviar respuesta</button>
+              )}
+              {feedback && !feedback.correct && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm font-bold text-gray-400">Respuesta correcta:</p>
+                  <p className="text-xl font-black text-green-600">{current.reverso}</p>
+                </div>
+              )}
+            </form>
+          </div>
+        ) : (
+          <>
+            <button onClick={() => setFlipped(!flipped)} className="relative flex min-h-[350px] w-full items-center justify-center rounded-3xl border border-white/80 bg-white p-8 text-center shadow-xl">
+              <div>
+                <span className={`mb-4 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${flipped ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-500'}`}>{flipped ? 'Respuesta' : 'Pregunta'}</span>
+                <p className={`text-2xl font-bold md:text-3xl ${flipped ? 'text-white' : 'text-gray-800'}`}>{flipped ? current.reverso : current.frente}</p>
+              </div>
+              {flipped && <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700" />}
+            </button>
+
+            {flipped && (
+              <div className="mx-auto mt-12 w-full max-w-md">
+                <p className="mb-6 text-center text-sm font-medium italic text-gray-400">Que tal te ha ido con esta tarjeta?</p>
+                <div className="flex gap-4">
+                  <button onClick={() => answer(false)} className="flex-1 rounded-2xl border-2 border-red-100 bg-white py-5 text-sm font-black uppercase tracking-widest text-red-500">No lo sabia</button>
+                  <button onClick={() => answer(true)} className="flex-1 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-green-200">Lo sabia</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <div className="mt-auto flex w-full max-w-2xl justify-around border-t border-gray-100 py-8">
         <Counter label="Aciertos" value={pass} color="text-green-500" />
@@ -971,10 +1182,10 @@ export const MarketplacePage = () => {
       <div className="container mx-auto px-4 py-8">
         <form onSubmit={apply} className="mb-8 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-[1fr_180px_170px_200px_auto]">
-            <input value={form.search} onChange={(event) => setForm({ ...form, search: event.target.value })} placeholder="Buscar por titulo, autor o tema..." className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400" />
-            <select value={form.categoria} onChange={(event) => setForm({ ...form, categoria: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm"><option value="">Todas</option>{(data?.categorias || []).map((cat) => <option key={cat} value={cat}>{cat}</option>)}</select>
-            <select value={form.precio} onChange={(event) => setForm({ ...form, precio: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm"><option value="">Todos</option><option value="gratis">Solo Gratis</option><option value="pago">Solo de Pago</option></select>
-            <select value={form.orden} onChange={(event) => setForm({ ...form, orden: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm"><option value="popular">Mas Populares</option><option value="valorados">Mejor Valorados</option><option value="precio_asc">Precio: Menor a Mayor</option><option value="precio_desc">Precio: Mayor a Menor</option></select>
+            <input value={form.search} onChange={(event) => setForm({ ...form, search: event.target.value })} placeholder="Buscar por titulo, autor o tema..." className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+            <select value={form.categoria} onChange={(event) => setForm({ ...form, categoria: event.target.value })} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm"><option value="">Todas</option>{(data?.categorias || []).map((cat) => <option key={cat} value={cat}>{cat}</option>)}</select>
+            <select value={form.precio} onChange={(event) => setForm({ ...form, precio: event.target.value })} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm"><option value="">Todos</option><option value="gratis">Solo Gratis</option><option value="pago">Solo de Pago</option></select>
+            <select value={form.orden} onChange={(event) => setForm({ ...form, orden: event.target.value })} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm"><option value="popular">Mas Populares</option><option value="valorados">Mejor Valorados</option><option value="precio_asc">Precio: Menor a Mayor</option><option value="precio_desc">Precio: Mayor a Menor</option></select>
             <button className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white">Buscar</button>
           </div>
         </form>

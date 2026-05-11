@@ -20,10 +20,12 @@ const config = {
 export const databaseName = config.database;
 
 const bootstrapPool = mysql.createPool(baseConfig);
+console.log(`[DB] Conectando a MySQL en ${baseConfig.host}:${baseConfig.port} como "${baseConfig.user}"...`);
 await bootstrapPool.query(
   `CREATE DATABASE IF NOT EXISTS ${mysql.escapeId(databaseName)}
    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
 );
+console.log(`[DB] Base de datos "${databaseName}" asegurada.`);
 await bootstrapPool.end();
 
 export const pool = mysql.createPool(config);

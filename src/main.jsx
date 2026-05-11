@@ -1,32 +1,20 @@
-// ── Simple SPA Router ──────────────────────────────────────────
-import './toast.jsx'                                 // expone window.showToast globalmente
-import { renderLanding  } from './pages/landing.jsx'
-import { renderAuth     } from './pages/auth.jsx'
-import { renderDashboard} from './pages/dashboard.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
 
-const routes = {
-  '/'         : renderLanding,
-  '/login'    : () => renderAuth('login'),
-  '/register' : () => renderAuth('register'),
-  '/dashboard': renderDashboard,
-}
+// ── Application Entry Point ─────────────────────────────────────
+// Initializes the React application into the #app container.
 
-function navigate(path) {
-  history.pushState({}, '', path)
-  render(path)
-}
+const container = document.getElementById('app');
 
-function render(path) {
-  const app = document.getElementById('app')
-  const handler = routes[path] || routes['/']
-  app.innerHTML = ''
-  handler()
-}
-
-// Expose globally
-window.navigate = navigate
-
-window.addEventListener('popstate', () => render(location.pathname))
-
-// Initial render
-render(location.pathname)
+if (container) {
+  const root = ReactDOM.createRoot(container);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} else {
+  console.error('No se pudo encontrar el contenedor #app en el DOM.');
+}

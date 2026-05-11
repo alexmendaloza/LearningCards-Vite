@@ -262,6 +262,14 @@ body.dark-theme .shadow-lg {
   box-shadow: var(--dark-shadow) !important;
 }
 
+body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+  background-color: var(--dark-card-soft);
+  color: var(--dark-text);
+  border-color: var(--dark-border);
+}
+
 body.dark-theme h1,
 body.dark-theme h2,
 body.dark-theme h3,

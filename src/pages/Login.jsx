@@ -117,8 +117,8 @@ const Login = ({ initialTab = 'login' }) => {
             {activeTab === 'login' ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4 py-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 ml-1">Correo electrónico</label>
-                  <input type="email" placeholder="estudiante@ejemplo.com" required value={loginData.email} onChange={(e) => setLoginData({...loginData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none transition-all" />
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 ml-1">Correo o Usuario</label>
+                  <input type="text" placeholder="estudiante@ejemplo.com o Zalo123" required value={loginData.email} onChange={(e) => setLoginData({...loginData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 ml-1">Contraseña</label>

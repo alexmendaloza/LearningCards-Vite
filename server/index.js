@@ -248,6 +248,8 @@ const initSchema = async () => {
       IDTarjeta BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       frente TEXT NOT NULL,
       reverso TEXT NOT NULL,
+      tipo VARCHAR(20) NOT NULL DEFAULT 'basica',
+      opciones JSON NULL,
       orden INT NOT NULL DEFAULT 1,
       IDMazo BIGINT UNSIGNED NOT NULL,
       PRIMARY KEY (IDTarjeta),
@@ -332,6 +334,19 @@ const initSchema = async () => {
     (4, 'Maestro', 15),
     (5, 'Leyenda', 30)
   `);
+
+  try {
+    const [columns] = await pool.query('SHOW COLUMNS FROM Tarjeta');
+    const names = columns.map((c) => c.Field);
+    if (!names.includes('tipo')) {
+      await pool.query("ALTER TABLE Tarjeta ADD COLUMN tipo VARCHAR(20) NOT NULL DEFAULT 'basica'");
+    }
+    if (!names.includes('opciones')) {
+      await pool.query('ALTER TABLE Tarjeta ADD COLUMN opciones JSON NULL');
+    }
+  } catch (error) {
+    console.warn('Error al migrar la tabla Tarjeta:', error.message);
+  }
 };
 
 const recalculateRating = async (publicationId) => {
@@ -417,8 +432,8 @@ const clonePublicationToUser = async (connection, publicacion, userId, payment =
   const [cards] = await connection.query('SELECT * FROM Tarjeta WHERE IDMazo = ? ORDER BY orden, IDTarjeta', [sourceDeck.IDMazo]);
   for (const card of cards) {
     await connection.query(
-      'INSERT INTO Tarjeta (frente, reverso, orden, IDMazo) VALUES (?, ?, ?, ?)',
-      [card.frente, card.reverso, card.orden, newDeck.insertId],
+      'INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo) VALUES (?, ?, ?, ?, ?, ?)',
+      [card.frente, card.reverso, card.tipo, card.opciones ? JSON.stringify(card.opciones) : null, card.orden, newDeck.insertId],
     );
   }
 
@@ -496,42 +511,83 @@ app.get('/api/me', requireUser, (req, res) => {
 
 app.post('/api/login', async (req, res, next) => {
   try {
-    const errors = validate({ email: ['required', 'email'], password: ['required'] }, req.body);
+    const { email: identifier, password } = req.body;
+    console.log(`[LOGIN] Intento de acceso: "${identifier}"`);
+
+    const errors = validate({ email: ['required'], password: ['required'] }, req.body);
     if (hasErrors(res, errors)) return;
 
-    const [users] = await pool.query('SELECT * FROM Usuario WHERE email = ? LIMIT 1', [req.body.email]);
-    const usuario = users[0];
-    const bcryptPassword = String(usuario?.contrasena || '').replace(/^\$2y\$/, '$2b$');
-    const passwordMatches = usuario && bcrypt.compareSync(String(req.body.password), bcryptPassword);
+    // Buscamos por email O por UserName
+    const [users] = await pool.query(
+      'SELECT * FROM Usuario WHERE email = ? OR UserName = ? LIMIT 1',
+      [identifier, identifier]
+    );
 
-    if (!passwordMatches) return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    const usuario = users[0];
+    if (!usuario) {
+      console.warn(`[LOGIN] Usuario no encontrado: "${identifier}"`);
+      return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    }
+
+    const bcryptPassword = String(usuario.contrasena || '').replace(/^\$2y\$/, '$2b$');
+    const passwordMatches = bcrypt.compareSync(String(password), bcryptPassword);
+
+    if (!passwordMatches) {
+      console.warn(`[LOGIN] Contraseña incorrecta para: "${identifier}"`);
+      return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    }
+
     if (usuario.rol === 'admin') {
+      console.warn(`[LOGIN] Admin intentando entrar por login normal: "${identifier}"`);
       return res.status(403).json({ message: 'Los administradores deben acceder por el panel de administracion.' });
     }
 
+    console.log(`[LOGIN] Éxito: "${usuario.UserName}" (${usuario.email})`);
     signIn(res, usuario);
     return res.json({ usuario: cleanUser(usuario), redirect: '/dashboard' });
   } catch (error) {
+    console.error('[LOGIN] Error interno:', error);
     return next(error);
   }
 });
 
 app.post('/api/admin/login', async (req, res, next) => {
   try {
-    const errors = validate({ email: ['required', 'email'], password: ['required'] }, req.body);
+    const { email: identifier, password } = req.body;
+    console.log(`[ADMIN-LOGIN] Intento de acceso: "${identifier}"`);
+
+    const errors = validate({ email: ['required'], password: ['required'] }, req.body);
     if (hasErrors(res, errors)) return;
 
-    const [users] = await pool.query('SELECT * FROM Usuario WHERE email = ? LIMIT 1', [req.body.email]);
+    const [users] = await pool.query(
+      'SELECT * FROM Usuario WHERE email = ? OR UserName = ? LIMIT 1',
+      [identifier, identifier]
+    );
+
     const usuario = users[0];
-    const bcryptPassword = String(usuario?.contrasena || '').replace(/^\$2y\$/, '$2b$');
-    const passwordMatches = usuario && bcrypt.compareSync(String(req.body.password), bcryptPassword);
+    if (!usuario) {
+      console.warn(`[ADMIN-LOGIN] Usuario no encontrado: "${identifier}"`);
+      return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    }
 
-    if (!passwordMatches) return res.status(401).json({ message: 'Credenciales incorrectas.' });
-    if (usuario.rol !== 'admin') return res.status(403).json({ message: 'No tienes permisos de administrador para acceder a este panel.' });
+    const bcryptPassword = String(usuario.contrasena || '').replace(/^\$2y\$/, '$2b$');
+    const passwordMatches = bcrypt.compareSync(String(password), bcryptPassword);
 
+    if (!passwordMatches) {
+      console.warn(`[ADMIN-LOGIN] Contraseña incorrecta para: "${identifier}"`);
+      return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    }
+
+    if (usuario.rol !== 'admin') {
+      console.warn(`[ADMIN-LOGIN] Usuario no admin intentando entrar: "${identifier}"`);
+      return res.status(403).json({ message: 'No tienes permisos de administrador para acceder a este panel.' });
+    }
+
+    console.log(`[ADMIN-LOGIN] Éxito: "${usuario.UserName}" (${usuario.email})`);
     signIn(res, usuario);
     return res.json({ usuario: cleanUser(usuario), redirect: '/admin/dashboard' });
   } catch (error) {
+    console.error('[ADMIN-LOGIN] Error interno:', error);
     return next(error);
   }
 });
@@ -756,18 +812,20 @@ app.post('/api/tarjetas', requireUser, async (req, res, next) => {
     const [mazos] = await pool.query('SELECT * FROM Mazo WHERE IDMazo = ? AND IDUsuario = ? LIMIT 1', [req.body.IDMazo, req.usuario.IDUsuario]);
     if (!mazos[0]) return res.status(403).json({ message: 'No autorizado.' });
 
+    console.log('SERVER RECEIVED:', JSON.stringify(req.body, null, 2));
+
     if (req.body.IDTarjeta) {
       await pool.query(
-        'UPDATE Tarjeta SET frente = ?, reverso = ? WHERE IDTarjeta = ? AND IDMazo = ?',
-        [req.body.frente, req.body.reverso, req.body.IDTarjeta, req.body.IDMazo],
+        'UPDATE Tarjeta SET frente = ?, reverso = ?, tipo = ?, opciones = ? WHERE IDTarjeta = ? AND IDMazo = ?',
+        [req.body.frente, req.body.reverso, req.body.tipo || 'basica', req.body.opciones ? JSON.stringify(req.body.opciones) : null, req.body.IDTarjeta, req.body.IDMazo],
       );
       return res.json({ success: true });
     }
 
     const [counts] = await pool.query('SELECT COUNT(*) AS total FROM Tarjeta WHERE IDMazo = ?', [req.body.IDMazo]);
     const [result] = await pool.query(
-      'INSERT INTO Tarjeta (frente, reverso, orden, IDMazo) VALUES (?, ?, ?, ?)',
-      [req.body.frente, req.body.reverso, Number(counts[0].total || 0) + 1, req.body.IDMazo],
+      'INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.body.frente, req.body.reverso, req.body.tipo || 'basica', req.body.opciones ? JSON.stringify(req.body.opciones) : null, Number(counts[0].total || 0) + 1, req.body.IDMazo],
     );
     return res.status(201).json({ IDTarjeta: result.insertId });
   } catch (error) {
