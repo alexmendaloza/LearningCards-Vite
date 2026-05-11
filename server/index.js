@@ -869,12 +869,12 @@ app.post('/api/estudiar/:id/finalizar', requireUser, async (req, res, next) => {
       const today = new Date(todaySql());
       let racha = Number(req.usuario.rachaActual || 0);
 
-      if (!ultimo) {
+      if (!ultimo || racha === 0) {
         racha = 1;
       } else {
         const diff = Math.floor((today - new Date(ultimo.toISOString().slice(0, 10))) / 86400000);
         if (diff === 1) racha += 1;
-        if (diff > 1) racha = 1;
+        else if (diff > 1) racha = 1;
       }
 
       await pool.query(

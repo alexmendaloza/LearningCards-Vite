@@ -238,6 +238,7 @@ body.dark-theme footer {
 body.dark-theme main,
 body.dark-theme .min-h-screen {
   color: var(--dark-text) !important;
+  background: transparent !important;
 }
 
 body.dark-theme [class*="bg-white"],
@@ -257,6 +258,7 @@ body.dark-theme .glass-stat,
 body.dark-theme .shadow-sm,
 body.dark-theme .shadow-lg {
   background-color: var(--dark-card-soft) !important;
+  background-image: none !important;
   color: var(--dark-text) !important;
   border-color: var(--dark-border) !important;
   box-shadow: var(--dark-shadow) !important;

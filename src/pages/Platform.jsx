@@ -533,8 +533,12 @@ export const DashboardPage = () => {
                       <EditIcon className="h-5 w-5" />
                     </button>
                     {Number(mazo.original) === 1 && (
-                      <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/publicar`)} className="rounded-full p-2 text-slate-400 transition-all hover:bg-purple-50 hover:text-purple-600 active:scale-90" title="Publicar">
-                        <ShareIcon className="h-5 w-5" />
+                      <button
+                        onClick={() => navigate(`/mazos/${mazo.IDMazo}/publicar`)}
+                        className={`rounded-full p-2 transition-all active:scale-90 ${mazo.id_Publ ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-purple-50 hover:text-purple-600'}`}
+                        title={mazo.id_Publ ? 'Editar Publicación' : 'Publicar'}
+                      >
+                        {mazo.id_Publ ? <GlobeIcon className="h-5 w-5" /> : <ShareIcon className="h-5 w-5" />}
                       </button>
                     )}
                   </div>
@@ -575,7 +579,7 @@ export const DashboardPage = () => {
           <div className="rounded-2xl bg-white p-6 shadow-lg">
             <h3 className="mb-4 font-bold">🏆 Logros</h3>
             {usuario.nombreNivel ? (
-              <div className="flex items-center gap-3 rounded-xl border border-orange-100 bg-gradient-to-r from-orange-50 to-red-50 p-3">
+              <div className="flex items-center gap-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-lg">🔥</div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{usuario.nombreNivel}</p>
@@ -711,6 +715,7 @@ const PlayIcon = ({ className }) => <svg className={className} fill="currentColo
 const BagIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
 const PlusIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>;
 const CloseIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
+const GlobeIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12h20M12 2a15.3 15.3 0 010 20 15.3 15.3 0 010-20" /></svg>;
 
 export const MazoFormPage = () => {
   const { id } = useParams();
