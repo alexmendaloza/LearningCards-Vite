@@ -757,6 +757,8 @@ export const MazoFormPage = () => {
   const saveCard = async (event) => {
     event.preventDefault();
     try {
+      const payload = { ...cardModal, IDMazo: id };
+      
       if (cardModal.tipo === 'opcion_multiple') {
         const validOptions = (cardModal.opciones || []).filter((o) => o.trim() !== '');
         if (validOptions.length < 2) {
@@ -764,12 +766,16 @@ export const MazoFormPage = () => {
           return;
         }
         if (!validOptions.includes(cardModal.reverso)) {
-          alert('La respuesta correcta debe estar entre las opciones.');
+          alert('La respuesta correcta debe estar entre las opciones seleccionadas.');
           return;
         }
+        payload.opciones = validOptions;
+      } else {
+        payload.opciones = null;
       }
-      console.log('FRONTEND SENDING:', JSON.stringify({ ...cardModal, IDMazo: id }, null, 2));
-      const res = await api.post('/tarjetas', { ...cardModal, IDMazo: id });
+
+      console.log('FRONTEND SENDING:', JSON.stringify(payload, null, 2));
+      const res = await api.post('/tarjetas', payload);
       console.log('SERVER RESPONSE:', res.data);
       setCardModal(null);
       await load();
@@ -896,9 +902,17 @@ export const MazoFormPage = () => {
                         type="text"
                         value={opt}
                         onChange={(e) => {
+                          const newValue = e.target.value;
                           const newOpts = [...cardModal.opciones];
-                          newOpts[i] = e.target.value;
-                          setCardModal({ ...cardModal, opciones: newOpts });
+                          const oldOpt = newOpts[i];
+                          newOpts[i] = newValue;
+                          
+                          const updates = { opciones: newOpts };
+                          if (cardModal.reverso === oldOpt && oldOpt !== '') {
+                            updates.reverso = newValue;
+                          }
+                          
+                          setCardModal({ ...cardModal, ...updates });
                         }}
                         placeholder={`Opción ${i + 1}`}
                         className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400"
