@@ -702,8 +702,8 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
     );
 
     const [sesiones] = await pool.query(
-      'SELECT COALESCE(SUM(totalTarjetas),0) AS totalEstudiadas, COALESCE(SUM(aciertos),0) AS totalAciertos FROM SesionEstudio WHERE IDUsuario = ?',
-      [req.usuario.IDUsuario],
+      'SELECT COALESCE(SUM(totalTarjetas),0) AS totalEstudiadas, COALESCE(SUM(aciertos),0) AS totalAciertos FROM SesionEstudio WHERE IDUsuario = ? AND DATE(fechaIni) = ?',
+      [req.usuario.IDUsuario, todaySql()],
     );
     const totalEstudiadas = Number(sesiones[0].totalEstudiadas || 0);
     const totalAciertos = Number(sesiones[0].totalAciertos || 0);
@@ -725,15 +725,40 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
 app.get('/api/user/report', requireUser, async (req, res, next) => {
   try {
     const userId = req.usuario.IDUsuario;
+    const { year, month, day } = req.query;
+
+    const sesionWhere = ['s.IDUsuario = ?'];
+    const sesionParams = [userId];
+    const statsWhere = ['IDUsuario = ?'];
+    const statsParams = [userId];
+
+    if (year) {
+      sesionWhere.push('YEAR(s.fechaIni) = ?');
+      sesionParams.push(year);
+      statsWhere.push('YEAR(fechaIni) = ?');
+      statsParams.push(year);
+    }
+    if (month) {
+      sesionWhere.push('MONTH(s.fechaIni) = ?');
+      sesionParams.push(month);
+      statsWhere.push('MONTH(fechaIni) = ?');
+      statsParams.push(month);
+    }
+    if (day) {
+      sesionWhere.push('DAY(s.fechaIni) = ?');
+      sesionParams.push(day);
+      statsWhere.push('DAY(fechaIni) = ?');
+      statsParams.push(day);
+    }
 
     const [sesionesRecientes] = await pool.query(
       `SELECT s.*, m.titulo AS mazo_titulo 
          FROM SesionEstudio s 
          LEFT JOIN Mazo m ON m.IDMazo = s.IDMazo 
-        WHERE s.IDUsuario = ? 
+        WHERE ${sesionWhere.join(' AND ')} 
         ORDER BY s.fechaIni DESC 
-        LIMIT 10`,
-      [userId]
+        LIMIT 50`,
+      sesionParams
     );
 
     const sesionesFormateadas = sesionesRecientes.map(s => ({
@@ -746,8 +771,8 @@ app.get('/api/user/report', requireUser, async (req, res, next) => {
               COALESCE(SUM(totalTarjetas), 0) AS totalTarjetasEstudiadas, 
               COALESCE(SUM(aciertos), 0) AS aciertosTotales 
          FROM SesionEstudio 
-        WHERE IDUsuario = ?`,
-      [userId]
+        WHERE ${statsWhere.join(' AND ')}`,
+      statsParams
     );
 
     const totalSesiones = Number(stats[0].totalSesiones || 0);
@@ -767,6 +792,15 @@ app.get('/api/user/report', requireUser, async (req, res, next) => {
     );
     const nombreNivel = niveles[0]?.nombreNivel || 'Novato';
 
+    let filtroEtiqueta = 'TODOS LOS TIEMPOS';
+    if (year || month || day) {
+      const parts = [];
+      if (day) parts.push(`DÍA: ${day}`);
+      if (month) parts.push(`MES: ${month}`);
+      if (year) parts.push(`AÑO: ${year}`);
+      filtroEtiqueta = parts.join(' | ');
+    }
+
     return res.json({
       usuario: {
         ...cleanUser(req.usuario),
@@ -778,7 +812,7 @@ app.get('/api/user/report', requireUser, async (req, res, next) => {
       promedioPrecision,
       totalMazos,
       sesionesRecientes: sesionesFormateadas,
-      filtroEtiqueta: 'Sin Filtros'
+      filtroEtiqueta
     });
   } catch (error) {
     return next(error);

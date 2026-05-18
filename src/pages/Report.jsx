@@ -149,9 +149,20 @@ export const ReportPage = () => {
   const [error, setError] = useState('');
   const [data, setData] = useState(null);
 
+  const [filterYear, setFilterYear] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterDay, setFilterDay] = useState('');
+
   useEffect(() => {
     let mounted = true;
-    api.get('/user/report')
+    setLoading(true);
+    
+    const params = new URLSearchParams();
+    if (filterYear) params.append('year', filterYear);
+    if (filterMonth) params.append('month', filterMonth);
+    if (filterDay) params.append('day', filterDay);
+
+    api.get(`/user/report?${params.toString()}`)
       .then(res => {
         if (mounted) {
           setData(res.data);
@@ -167,7 +178,7 @@ export const ReportPage = () => {
         }
       });
     return () => { mounted = false; };
-  }, []);
+  }, [filterYear, filterMonth, filterDay]);
 
   if (loading) return <Loading text="Generando tu reporte de progreso..." />;
   if (error) return (
@@ -212,7 +223,25 @@ export const ReportPage = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 print:hidden">
+              <div className="flex flex-wrap items-center gap-2 print:hidden mb-4 sm:mb-0">
+                <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                  <option value="">Cualquier Año</option>
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                </select>
+                <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                  <option value="">Cualquier Mes</option>
+                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase()}</option>)}
+                </select>
+                <select value={filterDay} onChange={e => setFilterDay(e.target.value)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                  <option value="">Cualquier Día</option>
+                  {[...Array(31)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-3 print:hidden">
               <div className="text-right hidden sm:block mr-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Fecha de Generación</p>
                 <p className="text-sm font-semibold text-slate-700">{new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</p>
