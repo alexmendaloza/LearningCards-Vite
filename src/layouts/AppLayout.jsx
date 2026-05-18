@@ -10,7 +10,7 @@ const AppLayout = ({ children, user, onAuth }) => {
   const isAdminLogin = location.pathname === '/admin/login';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isAdmin = user?.rol === 'admin';
-  const isDashboard = location.pathname === '/dashboard';
+  const isDashboard = location.pathname === '/user/dashboard';
   const isLanding = location.pathname === '/';
   const nombre = user?.NombreCompleto || 'Usuario';
   const iniciales = nombre.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
@@ -53,7 +53,7 @@ const AppLayout = ({ children, user, onAuth }) => {
     <div className="flex min-h-screen flex-col">
       {!isAdminLogin && !isAuthPage && (
         <header className="sticky top-0 z-50 border-b bg-white/80 shadow-sm backdrop-blur-sm">
-          <div className="container mx-auto flex items-center justify-between px-4 py-4">
+          <div className="mx-auto flex max-w-[1536px] items-center justify-between px-4 py-4">
             <Link to="/" className="nav-brand flex items-center gap-3">
               <div className="nav-brand-logo flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
                 <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,30 +84,32 @@ const AppLayout = ({ children, user, onAuth }) => {
                 <div className="flex items-center gap-3">
                   <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600">Iniciar Sesion</Link>
                   <Link to="/register" className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-200">Registrarse</Link>
-                  <Link to="/admin/login" className="text-xs font-semibold text-gray-400 hover:text-purple-600">Admin</Link>
                 </div>
               ) : (
                 <div className="flex items-center gap-6">
                   {isAdmin ? (
-                    <>
-                      <NavLink to="/admin/dashboard" current={location.pathname}>Dashboard Admin</NavLink>
-                      <NavLink to="/admin/users" current={location.pathname}>Usuarios</NavLink>
-                      <NavLink to="/admin/mazos" current={location.pathname}>Mazos</NavLink>
-                      <NavLink to="/admin/ventas" current={location.pathname}>Ventas</NavLink>
-                    </>
+                    !location.pathname.startsWith('/admin/dashboard') && (
+                      <Link to="/admin/dashboard" className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800">
+                        <HomeIcon className="h-5 w-5" />
+                        Volver al Dashboard Admin
+                      </Link>
+                    )
                   ) : !isLanding && (
                     <div className="flex items-center gap-4">
-                      {!isDashboard ? (
-                        <Link to="/dashboard" className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800">
+                      {!isDashboard && (
+                        <Link to="/user/dashboard" className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800">
                           <HomeIcon className="h-5 w-5" />
                           Volver al Dashboard
                         </Link>
-                      ) : (
-                        <Link to="/marketplace" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600">
-                          <BagIcon className="h-5 w-5" />
-                          Marketplace
-                        </Link>
                       )}
+                      <Link to="/user/creator/stats" className="group relative flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:text-violet-700 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-10 after:-translate-x-1/2 after:scale-x-0 after:rounded-full after:bg-violet-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100">
+                        <StatsIcon className="h-5 w-5 text-violet-500 transition-transform duration-300 group-hover:scale-110" />
+                        Mis Estadisticas
+                      </Link>
+                      <Link to="/user/marketplace" className="group relative flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:text-indigo-700 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-10 after:-translate-x-1/2 after:scale-x-0 after:rounded-full after:bg-indigo-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100">
+                        <BagIcon className="h-5 w-5 text-indigo-500 transition-transform duration-300 group-hover:scale-110" />
+                        Marketplace
+                      </Link>
                     </div>
                   )}
 
@@ -125,8 +127,7 @@ const AppLayout = ({ children, user, onAuth }) => {
                           <p className="text-xs text-gray-400">{isAdmin ? 'Administrador' : 'Mi Cuenta'}</p>
                           <p className="truncate text-sm font-bold text-gray-800">{nombre}</p>
                         </div>
-                        <Link to="/configuracion" className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">Configuracion</Link>
-                        {!isAdmin && <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">Dashboard</Link>}
+                        <Link to="/user/configuracion" className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">Configuracion</Link>
                         <button onClick={logout} className="block w-full border-t border-gray-50 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50">Cerrar Sesion</button>
                       </div>
                     )}
@@ -151,15 +152,15 @@ const AppLayout = ({ children, user, onAuth }) => {
   );
 };
 
-const NavLink = ({ to, current, children }) => (
-  <Link to={to} className={`text-sm font-medium transition-colors ${current === to ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600'}`}>
-    {children}
-  </Link>
-);
-
 const HomeIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
+);
+
+const StatsIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3v18m7-14v14M4 13v8" />
   </svg>
 );
 

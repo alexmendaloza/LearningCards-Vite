@@ -210,7 +210,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     try {
       const { data } = await api.post('/login', login);
       onAuth(data.usuario);
-      navigate('/dashboard');
+      navigate('/user/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Credenciales incorrectas.');
     } finally {
@@ -225,7 +225,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     try {
       const { data } = await api.post('/register', register);
       onAuth(data.usuario);
-      navigate('/dashboard');
+      navigate('/user/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'No fue posible registrar el usuario.');
     } finally {
@@ -414,7 +414,7 @@ export const DashboardPage = () => {
   const hasFilters = ['search', 'origin', 'cards_count', 'category'].some((key) => params.get(key));
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-8">
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold md:text-4xl">
           ¡{saludo} de vuelta, {usuario.NombreCompleto || 'Usuario'}! 👋
@@ -428,19 +428,20 @@ export const DashboardPage = () => {
         <PrecisionCard value={data.precision || 0} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section className="space-y-6 lg:col-span-2">
+      <div className="flex flex-col items-start gap-10 md:flex-row">
+        <section className="w-full space-y-6 md:w-[70%]">
           <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
             <h2 className="shrink-0 text-2xl font-black tracking-tight text-slate-800">Mis Mazos</h2>
 
             <div className="relative w-full max-w-2xl flex-1">
-              <form onSubmit={applyFilters} className="relative">
+              <form action="/user/dashboard" onSubmit={applyFilters} className="relative">
                 <div className="group relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 transition-colors group-focus-within:text-indigo-500">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </div>
                   <input
                     type="text"
+                    name="search"
                     value={form.search}
                     onChange={(event) => updateFilter('search', event.target.value)}
                     placeholder="Buscar mazos..."
@@ -501,7 +502,7 @@ export const DashboardPage = () => {
             </div>
 
             <div className="shrink-0">
-              <Link to="/mazos/create" className="group">
+              <Link to="/user/mazos/create" className="group">
                 <button className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-purple-100 transition-all duration-300 hover:scale-105 hover:shadow-purple-300 active:scale-95 lg:w-auto">
                   <span className="text-xl leading-none transition-transform duration-300 group-hover:rotate-90">+</span>
                   Nuevo Mazo
@@ -511,7 +512,7 @@ export const DashboardPage = () => {
           </div>
 
           {data.mazos?.length ? data.mazos.map((mazo) => (
-            <div key={mazo.IDMazo} className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div key={mazo.IDMazo} className="dashboard-deck-card group relative overflow-hidden rounded-2xl border border-slate-100 bg-white/80 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-90" />
               <div className="flex items-center justify-between gap-4 p-4">
                 <div className="flex min-w-0 flex-1 items-center gap-4">
@@ -524,25 +525,31 @@ export const DashboardPage = () => {
                     <div className="flex items-center gap-2">
                       <span className="rounded-full border border-indigo-100/50 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-500">{mazo.tarjetas_count || 0} Tarjetas</span>
                       {Number(mazo.original) === 0 && <span className="rounded-full border border-amber-100/50 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500">Copia</span>}
+                      {Number(mazo.publico) === 1 && (
+                        <span className="flex items-center gap-1 rounded-full border border-emerald-100/50 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                          <CheckIcon className="h-3 w-3" />
+                          Publicado
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col gap-1 sm:flex-row">
-                    <button onClick={() => navigate(`/mazos/${mazo.IDMazo}/edit`)} className="rounded-full p-2 text-slate-400 transition-all hover:bg-indigo-50 hover:text-indigo-600 active:scale-90" title="Editar">
+                    <button onClick={() => navigate(`/user/mazos/${mazo.IDMazo}/edit`)} className="dashboard-edit-btn rounded-full border border-indigo-100 bg-indigo-50 p-2 text-indigo-600 transition-all hover:bg-indigo-100 active:scale-90" title="Editar">
                       <EditIcon className="h-5 w-5" />
                     </button>
                     {Number(mazo.original) === 1 && (
                       <button
-                        onClick={() => navigate(`/mazos/${mazo.IDMazo}/publicar`)}
-                        className={`rounded-full p-2 transition-all active:scale-90 ${mazo.id_Publ ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-purple-50 hover:text-purple-600'}`}
-                        title={mazo.id_Publ ? 'Editar Publicación' : 'Publicar'}
+                        onClick={() => navigate(`/user/mazos/${mazo.IDMazo}/publicar`)}
+                        className={`dashboard-share-btn rounded-full p-2 transition-all active:scale-90 ${Number(mazo.publico) === 1 ? 'is-public bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'is-private bg-orange-50 text-orange-500 hover:bg-orange-100'}`}
+                        title={Number(mazo.publico) === 1 ? 'Editar publicación' : 'Publicar'}
                       >
-                        {mazo.id_Publ ? <GlobeIcon className="h-5 w-5" /> : <ShareIcon className="h-5 w-5" />}
+                        <ShareIcon className="h-5 w-5" />
                       </button>
                     )}
                   </div>
-                  <button onClick={() => navigate(`/estudiar/${mazo.IDMazo}`)} className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition-all hover:bg-indigo-600 hover:shadow-indigo-200 active:scale-95">
+                  <button onClick={() => navigate(`/user/estudiar/${mazo.IDMazo}`)} className="dashboard-study-btn flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition-all hover:bg-indigo-600 hover:shadow-indigo-200 active:scale-95">
                     <PlayIcon className="h-4 w-4" />
                     Estudiar
                   </button>
@@ -565,7 +572,7 @@ export const DashboardPage = () => {
                 <>
                   <h3 className="mb-2 text-xl font-bold text-slate-800">Tu colección está vacía</h3>
                   <p className="mx-auto mb-8 max-w-xs text-slate-500">Aún no tienes mazos creados. ¡Comienza tu aventura de aprendizaje ahora!</p>
-                  <Link to="/mazos/create" className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-purple-100 transition-all hover:scale-105 active:scale-95">
+                  <Link to="/user/mazos/create" className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-purple-100 transition-all hover:scale-105 active:scale-95">
                     <span className="text-lg">+</span>
                     Crear tu primer mazo
                   </Link>
@@ -575,9 +582,14 @@ export const DashboardPage = () => {
           )}
         </section>
 
-        <aside className="space-y-6">
-          <div className="rounded-2xl bg-white p-6 shadow-lg">
-            <h3 className="mb-4 font-bold">🏆 Logros</h3>
+        <aside className="w-full space-y-6 md:w-[30%]">
+          <div className="glass-stat group rounded-3xl p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-black tracking-tight text-gray-800">🏆 Logros</h3>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                <SparkIcon className="h-5 w-5" />
+              </div>
+            </div>
             {usuario.nombreNivel ? (
               <div className="mb-4 flex items-center gap-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-lg">🔥</div>
@@ -589,40 +601,42 @@ export const DashboardPage = () => {
             ) : (
               <p className="mb-4 text-sm text-gray-500">Completa tu primera sesión de estudio para desbloquear logros.</p>
             )}
-            <Link to="/reporte" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 text-sm font-bold text-indigo-700 transition-all hover:from-indigo-100 hover:to-purple-100 active:scale-95">
-              <svg className="h-5 w-5 text-indigo-500 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-              Ver Reporte de Progreso
+              <Link to="/user/reportes" className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-100 bg-white py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all duration-300 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-600">
+              Reporte Completo
+              <ArrowRightIcon className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="dashboard-marketplace-card glass-stat group rounded-3xl p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-bold text-gray-800">
+              <h3 className="flex items-center gap-2 text-base font-black tracking-tight text-gray-800">
                 <BagIcon className="h-5 w-5 text-indigo-500" />
-                Explorar Marketplace
+                Populares
               </h3>
-              <Link to="/marketplace" className="text-xs font-semibold text-indigo-600">Ver todo</Link>
+              <Link to="/user/marketplace" className="dashboard-marketplace-all text-[9px] font-black uppercase tracking-widest text-indigo-600 transition-colors hover:text-indigo-800">Ver todo</Link>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {data.mazosPopulares?.length ? data.mazosPopulares.map((mazo) => (
-                <div key={mazo.id_Publ} className="group relative flex items-center gap-3 rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-indigo-100 hover:bg-indigo-50/30">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-sm">
+                <div key={mazo.id_Publ} className="dashboard-marketplace-item group/item relative flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all duration-300 hover:border-indigo-100 hover:bg-indigo-50/50">
+                  <div className="dashboard-marketplace-thumb relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-transparent shadow-sm transition-transform group-hover/item:scale-110">
                     {(mazo.titulo || 'M').slice(0, 1)} 📚
                   </div>
+                  <span className="pointer-events-none absolute left-3 flex h-9 w-9 items-center justify-center text-xs font-bold text-white">
+                    {(mazo.titulo || 'M').slice(0, 1)}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <h4 className="truncate text-sm font-bold text-gray-800 transition-colors group-hover:text-indigo-700">{mazo.titulo}</h4>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">{mazo.tarjetas_count} tarjetas</span>
-                      <span className="text-[10px] text-gray-400">por {String(mazo.NombreCompleto || mazo.UserName || 'Usuario').split(' ')[0]}</span>
+                    <h4 className="truncate text-sm font-extrabold text-gray-900 transition-colors group-hover/item:text-indigo-700">{mazo.titulo}</h4>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-500">{mazo.tarjetas_count} tarjetas</span>
                     </div>
                   </div>
-                  <Link to={`/marketplace/${mazo.id_Publ}`} className="rounded-full bg-gray-50 p-1.5 text-gray-400 transition-all group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white">
+                  <Link to={`/user/marketplace/${mazo.id_Publ}`} className="dashboard-marketplace-plus rounded-full bg-slate-50 p-2 text-slate-400 shadow-sm transition-all hover:scale-110 hover:bg-indigo-600 hover:text-white">
                     <PlusIcon className="h-4 w-4" />
                   </Link>
                 </div>
               )) : <p className="py-6 text-center text-xs italic text-gray-400">No hay mazos publicos disponibles.</p>}
             </div>
-            <div className="mt-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3 text-center">
+            <div className="dashboard-marketplace-tip mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center">
               <p className="text-[10px] text-gray-500">¿Sabías que puedes publicar tus propios mazos para ayudar a otros?</p>
             </div>
           </div>
@@ -719,7 +733,12 @@ const PlayIcon = ({ className }) => <svg className={className} fill="currentColo
 const BagIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
 const PlusIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>;
 const CloseIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
-const GlobeIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12h20M12 2a15.3 15.3 0 010 20 15.3 15.3 0 010-20" /></svg>;
+const SearchIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+const UserMiniIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
+const CheckMarkIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>;
+const CheckIcon = ({ className }) => <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>;
+const SparkIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>;
+const ArrowRightIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>;
 
 export const MazoFormPage = () => {
   const { id } = useParams();
@@ -751,7 +770,7 @@ export const MazoFormPage = () => {
         await api.put(`/mazos/${id}`, deck);
       } else {
         const { data } = await api.post('/mazos', deck);
-        navigate(`/mazos/${data.IDMazo}/edit`);
+        navigate(`/user/mazos/${data.IDMazo}/edit`);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'No fue posible guardar el mazo.');
@@ -796,7 +815,7 @@ export const MazoFormPage = () => {
   const deleteDeck = async () => {
     if (!confirm('Seguro que deseas eliminar este mazo?')) return;
     await api.delete(`/mazos/${id}`);
-    navigate('/dashboard');
+    navigate('/user/dashboard');
   };
 
   return (
@@ -1049,7 +1068,7 @@ export const StudyPage = () => {
 
   if (loading) return <Loading text="Preparando estudio..." />;
   if (error) return <ErrorBox message={error} />;
-  if (!cards.length) return <div className="py-20 text-center"><h1 className="text-2xl font-bold">Este mazo no contiene tarjetas.</h1><Link className="mt-4 inline-block text-indigo-600" to="/dashboard">Volver al dashboard</Link></div>;
+  if (!cards.length) return <div className="py-20 text-center"><h1 className="text-2xl font-bold">Este mazo no contiene tarjetas.</h1><Link className="mt-4 inline-block text-indigo-600" to="/user/dashboard">Volver al dashboard</Link></div>;
 
   if (finished) {
     const total = finished.pass + finished.fail;
@@ -1065,7 +1084,7 @@ export const StudyPage = () => {
             <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5"><div className="text-3xl font-black text-slate-400">{finished.fail}</div><div className="text-[10px] font-bold uppercase text-slate-400">Fallos</div></div>
           </div>
           <div className="mb-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 p-[2px]"><div className="flex items-center justify-between rounded-[14px] bg-white p-4"><span className="text-sm font-bold text-gray-500">Precision</span><span className="text-xl font-black text-indigo-600">{accuracy}%</span></div></div>
-          <button onClick={() => navigate('/dashboard')} className="w-full rounded-2xl bg-gray-900 py-4 font-bold text-white">Volver al dashboard</button>
+          <button onClick={() => navigate('/user/dashboard')} className="w-full rounded-2xl bg-gray-900 py-4 font-bold text-white">Volver al dashboard</button>
         </div>
       </div>
     );
@@ -1216,7 +1235,7 @@ export const MarketplacePage = () => {
         {loading ? <Loading text="Sincronizando marketplace..." /> : error ? <ErrorBox message={error} /> : data.publicaciones?.length ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {data.publicaciones.map((pub) => (
-              <Link key={pub.id_Publ} to={`/marketplace/${pub.id_Publ}`} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-100">
+              <Link key={pub.id_Publ} to={`/user/marketplace/${pub.id_Publ}`} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-100">
                 <div className="relative h-40 overflow-hidden bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500">
                   {pub.imagen_url ? <img src={pub.imagen_url} alt={pub.titulo} className="h-full w-full object-cover transition group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-5xl opacity-60">LC</div>}
                   <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow ${Number(pub.pago) ? 'bg-indigo-600' : 'bg-green-500'}`}>{Number(pub.pago) ? money(pub.precio) : 'GRATIS'}</span>
@@ -1302,8 +1321,8 @@ export const MarketplaceDetailPage = () => {
       {success && (
         <AcquisitionSuccessModal
           {...success}
-          onDashboard={() => navigate('/dashboard')}
-          onMarketplace={() => navigate('/marketplace')}
+          onDashboard={() => navigate('/user/dashboard')}
+          onMarketplace={() => navigate('/user/marketplace')}
         />
       )}
       <div className="container mx-auto max-w-5xl px-4 py-8">
@@ -1380,7 +1399,7 @@ export const MarketplaceDetailPage = () => {
           <aside className="space-y-4">
             <div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="mb-5 text-center">{Number(publicacion.pago) ? <><div className="mb-1 text-4xl font-bold text-gray-900">{money(publicacion.precio)}</div><p className="text-sm text-gray-400">Pago unico</p></> : <><div className="mb-1 text-4xl font-bold text-green-600">GRATIS</div><p className="text-sm text-gray-400">Sin costo</p></>}</div>
-              {yaAdquirido ? <><div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3 text-center font-semibold text-green-700">Ya tienes este mazo</div><button onClick={() => navigate('/dashboard')} className="w-full rounded-xl border-2 border-indigo-200 py-3 font-semibold text-indigo-600">Ver en Mi Dashboard</button></> : esPropio ? <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700">Este es tu mazo publicado</div> : Number(publicacion.pago) ? <button onClick={() => navigate(`/marketplace/${id}/pagar`)} className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 text-lg font-bold text-white">Comprar ahora</button> : <button onClick={acquire} className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3.5 text-lg font-bold text-white">Agregar gratis</button>}
+              {yaAdquirido ? <><div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-3 text-center font-semibold text-green-700">Ya tienes este mazo</div><button onClick={() => navigate('/user/dashboard')} className="w-full rounded-xl border-2 border-indigo-200 py-3 font-semibold text-indigo-600">Ver en Mi Dashboard</button></> : esPropio ? <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm font-medium text-indigo-700">Este es tu mazo publicado</div> : Number(publicacion.pago) ? <button onClick={() => navigate(`/user/marketplace/${id}/pagar`)} className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 text-lg font-bold text-white">Comprar ahora</button> : <button onClick={acquire} className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3.5 text-lg font-bold text-white">Agregar gratis</button>}
               <div className="mt-5 space-y-2.5 text-sm text-gray-500">
                 <p>{tarjetas.length} tarjetas incluidas</p>
                 <p>El mazo se clona a tu coleccion</p>
@@ -1407,7 +1426,7 @@ export const PaymentPage = () => {
     if (!data || redirected.current) return;
     if (data.yaAdquirido) {
       redirected.current = true;
-      navigate('/dashboard');
+      navigate('/user/dashboard');
       return;
     }
     if (!Number(data.publicacion.pago)) {
@@ -1474,8 +1493,8 @@ export const PaymentPage = () => {
       {success && (
         <AcquisitionSuccessModal
           {...success}
-          onDashboard={() => navigate('/dashboard')}
-          onMarketplace={() => navigate('/marketplace')}
+          onDashboard={() => navigate('/user/dashboard')}
+          onMarketplace={() => navigate('/user/marketplace')}
         />
       )}
       <div className="w-full max-w-2xl">
@@ -1541,7 +1560,7 @@ export const PublishPage = () => {
     setSubmitError('');
     try {
       await api.post(`/mazos/${id}/publicar`, form);
-      navigate('/marketplace');
+      navigate('/user/marketplace');
     } catch (err) {
       setSubmitError(err.response?.data?.message || 'No fue posible publicar el mazo.');
     }
@@ -1595,7 +1614,7 @@ export const PublishPage = () => {
           </div>
           {form.pago === '1' && <Field label="Precio (USD)" type="number" value={form.precio} onChange={(value) => setForm({ ...form, precio: value })} required step="0.01" min="0.01" max="999.99" placeholder="9.99" />}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => navigate('/dashboard')} className="flex-1 rounded-xl border-2 border-gray-200 py-3 font-semibold text-gray-600">Cancelar</button>
+            <button type="button" onClick={() => navigate('/user/dashboard')} className="flex-1 rounded-xl border-2 border-gray-200 py-3 font-semibold text-gray-600">Cancelar</button>
             <button className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-200">{editing ? '💾 Actualizar publicación' : '🚀 Publicar en Marketplace'}</button>
           </div>
         </form>
@@ -1673,7 +1692,7 @@ export const ProfilePage = ({ onAuth }) => {
           </div>
         </div>
         <div className="flex justify-end gap-4 border-t border-gray-100 bg-gray-50 p-8">
-          <button type="button" onClick={() => navigate('/dashboard')} className="px-6 py-3 text-sm font-bold text-gray-500">Cancelar</button>
+          <button type="button" onClick={() => navigate('/user/dashboard')} className="px-6 py-3 text-sm font-bold text-gray-500">Cancelar</button>
           <button className="rounded-xl bg-indigo-600 px-8 py-3 font-bold text-white shadow-lg shadow-indigo-100">Guardar Cambios</button>
         </div>
       </form>
@@ -1727,28 +1746,90 @@ export const AdminLoginPage = ({ onAuth }) => {
 };
 
 export const AdminDashboardPage = () => {
+  useEffect(() => {
+    document.body.classList.add('admin-dashboard-mode');
+    return () => document.body.classList.remove('admin-dashboard-mode');
+  }, []);
+
   const { loading, error, data } = useResource(async () => (await api.get('/admin/dashboard')).data, []);
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
+  const recentSales = data.comprasRecientes || [];
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <AdminMetric label="Ganancias" value={money(data.totalGanancias)} text="Ingresos totales brutos" />
-        <AdminMetric label="Comunidad" value={data.stats.usuarios} text="Usuarios en la plataforma" />
-        <AdminMetric label="Contenido" value={data.stats.mazos} text="Mazos creados totales" />
-        <AdminMetric label="Ventas" value={data.stats.ventas} text="Transacciones exitosas" />
+    <div className="admin-dashboard-page mx-auto max-w-[1536px] px-6 py-8">
+      <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <AdminMetric tone="emerald" label="Ganancias" value={money(data.totalGanancias)} text="Ingresos totales brutos" icon={<AdminMoneyIcon className="h-6 w-6" />} />
+        <AdminMetric tone="cyan" label="Comunidad" value={data.stats.usuarios} text="Usuarios en la plataforma" icon={<AdminUsersIcon className="h-6 w-6" />} />
+        <AdminMetric tone="purple" label="Contenido" value={data.stats.mazos} text="Mazos creados totales" icon={<DeckIcon className="h-6 w-6" />} />
+        <AdminMetric tone="orange" label="Ventas" value={data.stats.ventas} text="Transacciones exitosas" icon={<AdminTrendIcon className="h-6 w-6" />} />
       </div>
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-gray-50 p-8"><h3 className="text-xl font-bold text-gray-800">Ventas Recientes</h3><Link to="/admin/ventas" className="text-sm font-bold text-purple-600">Ver todas</Link></div>
-          <Table headers={['Comprador', 'Mazo', 'Monto', 'Fecha']} rows={data.comprasRecientes.map((sale) => [sale.UserName || 'Anonimo', sale.titulo || 'Mazo borrado', money(sale.precioPagado), shortDate(sale.fechaCompra)])} />
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="admin-sales-panel overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-xl lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-50 p-10">
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-2 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600" />
+              <h3 className="text-2xl font-black text-slate-900">Ventas Recientes</h3>
+            </div>
+            <Link to="/admin/ventas" className="admin-view-all rounded-xl px-6 py-2.5 text-xs font-black uppercase tracking-widest text-purple-600 transition-all">Ver todas</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="admin-sales-table w-full border-collapse text-left">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Comprador</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Mazo</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Monto</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Fecha</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {recentSales.map((sale) => (
+                  <tr key={sale.id_Compra} className="group transition-colors hover:bg-slate-50/50">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-600">
+                          {(sale.UserName || 'A').slice(0, 1)}
+                        </div>
+                        <span className="font-bold text-slate-700 transition-colors group-hover:text-indigo-600">{sale.UserName || 'Anonimo'}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="text-sm text-slate-500 transition-colors group-hover:text-slate-700">{sale.titulo || 'Mazo borrado'}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="admin-amount font-black text-lg">{money(sale.precioPagado)}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="text-xs font-bold tracking-tighter text-slate-400">{adminShortDate(sale.fechaCompra)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="rounded-[2.5rem] bg-gradient-to-r from-purple-900 to-indigo-900 p-8 text-white shadow-xl">
-          <h3 className="mb-6 text-xl font-bold">Acciones de Control</h3>
-          <div className="grid gap-4">
-            <AdminLink to="/admin/users">Gestionar Usuarios</AdminLink>
-            <AdminLink to="/admin/mazos">Gestionar Mazos</AdminLink>
-            <AdminLink to="/admin/ventas">Gestionar Ventas</AdminLink>
+
+        <div className="space-y-6">
+          <div className="admin-actions-panel relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 p-10 text-white shadow-2xl">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl transition-transform duration-700" />
+            <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-black/20 blur-3xl" />
+            <h3 className="relative z-10 mb-8 text-2xl font-black">Acciones de Control</h3>
+            <div className="relative z-10 grid gap-5">
+              <AdminLink to="/admin/users" icon="👤">Gestionar Usuarios</AdminLink>
+              <AdminLink to="/admin/mazos" icon="🃏">Gestionar Mazos</AdminLink>
+              <AdminLink to="/admin/ventas" icon="📊">Reporte Completo</AdminLink>
+            </div>
+          </div>
+
+          <div className="admin-info-panel flex items-center gap-4 rounded-[2.5rem] border border-dashed border-slate-200 bg-slate-50 p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
+              <AdminInfoIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold tracking-tight text-slate-600">Panel de Control Admin</h4>
+              <p className="text-xs font-medium text-slate-400">Sistema v2.5.0 • Operativo</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1756,37 +1837,294 @@ export const AdminDashboardPage = () => {
   );
 };
 
-const AdminMetric = ({ label, value, text }) => (
-  <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm"><div className="mb-4 flex items-center justify-between"><div className="rounded-2xl bg-purple-100 p-3 text-purple-600">LC</div><span className="text-xs font-bold uppercase text-gray-400">{label}</span></div><h2 className="text-2xl font-black text-gray-800">{value}</h2><p className="text-sm text-gray-500">{text}</p></div>
+const adminShortDate = (value) => {
+  if (!value) return '';
+  return new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
+
+const adminLongDate = (value) => {
+  if (!value) return '';
+  return new Date(value).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const AdminReportStat = ({ label, value, icon, tone }) => (
+  <div className="admin-report-stat group relative overflow-hidden rounded-[2.5rem] p-10 shadow-xl transition-all">
+    <div className={`admin-report-glow admin-report-glow-${tone} absolute -right-4 -top-4 h-32 w-32 rounded-full blur-3xl transition-all`} />
+    <div className="mb-6 flex items-center gap-5">
+      <div className={`admin-report-icon admin-report-icon-${tone} flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg`}>
+        {icon}
+      </div>
+      <p className={`text-xs font-black uppercase tracking-[0.2em] ${tone === 'indigo' ? 'text-indigo-400' : 'text-slate-400'}`}>{label}</p>
+    </div>
+    <h2 className={`admin-report-value admin-report-value-${tone} text-5xl font-black tracking-tighter`}>{value}</h2>
+  </div>
 );
 
-const AdminLink = ({ to, children }) => <Link to={to} className="w-full rounded-2xl bg-white/10 px-6 py-4 font-bold transition hover:bg-white/20">{children}</Link>;
+const AdminMetric = ({ label, value, text, icon, tone = 'purple' }) => (
+  <div className="admin-metric-card group rounded-[2.5rem] border border-slate-100 bg-white p-8 shadow-xl transition-all duration-500 hover:scale-105">
+    <div className="mb-6 flex items-center justify-between">
+      <div className={`admin-metric-icon admin-metric-${tone} rounded-2xl p-4 transition-transform group-hover:scale-110`}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</span>
+    </div>
+    <h2 className="mb-1 text-3xl font-black text-slate-900">{value}</h2>
+    <p className="text-xs font-medium tracking-wide text-slate-500">{text}</p>
+  </div>
+);
+
+const AdminLink = ({ to, icon, children }) => (
+  <Link to={to} className="admin-action-btn flex w-full items-center rounded-2xl border border-white/10 bg-white/10 px-8 py-5 shadow-lg transition-all duration-300 hover:border-white/30 hover:bg-white/20">
+    <span className="admin-action-icon mr-4 text-2xl transition-transform duration-300">{icon}</span>
+    <span className="text-sm font-black uppercase tracking-widest">{children}</span>
+  </Link>
+);
+
+const AdminMoneyIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const AdminUsersIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+const AdminTrendIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
+const AdminInfoIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const LockIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
+const ReportFileIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
+const CalendarMiniIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M8 7V3m8 4V3M5 11h14M7 21h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 
 export const AdminUsersPage = () => {
   const [refresh, setRefresh] = useState(0);
   const { loading, error, data } = useResource(async () => (await api.get('/admin/users')).data, [refresh]);
   const promote = async (id, name) => { if (confirm(`Ascender a ${name} a administrador?`)) { await api.patch(`/admin/users/${id}/toggle`); setRefresh((value) => value + 1); } };
   const remove = async (id, name) => { if (confirm(`Borrar todos los datos de ${name}?`)) { await api.delete(`/admin/users/${id}`); setRefresh((value) => value + 1); } };
+
+  useEffect(() => {
+    document.body.classList.add('admin-dashboard-mode');
+    return () => document.body.classList.remove('admin-dashboard-mode');
+  }, []);
+
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
   return (
-    <AdminPage title="Gestion de Usuarios">
-      <table className="w-full text-left"><thead className="bg-gray-50"><tr><Th>Usuario</Th><Th>Email</Th><Th>Rol Actual</Th><Th align="right">Acciones</Th></tr></thead><tbody className="divide-y divide-gray-50">{data.usuarios.map((user) => <tr key={user.IDUsuario} className="hover:bg-gray-50/50"><Td><div className="flex items-center"><div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 font-bold text-purple-600">{user.UserName?.[0]}</div><span className="font-bold text-gray-700">{user.UserName}</span></div></Td><Td>{user.email}</Td><Td><span className={`rounded-full px-3 py-1 text-xs font-bold ${user.rol === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>{String(user.rol).toUpperCase()}</span></Td><Td align="right">{user.rol !== 'admin' ? <div className="space-x-2"><button onClick={() => promote(user.IDUsuario, user.UserName)} className="text-sm font-bold text-blue-600">Hacer Admin</button><button onClick={() => remove(user.IDUsuario, user.UserName)} className="text-sm font-bold text-red-500">Eliminar</button></div> : <span className="text-xs italic text-gray-400">Cuenta protegida</span>}</Td></tr>)}</tbody></table>
-    </AdminPage>
+    <div className="admin-users-page mx-auto max-w-[1536px] px-6 py-8">
+      <div className="mb-10 flex items-center gap-4">
+        <div className="h-10 w-2 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600" />
+        <h1 className="text-3xl font-black text-slate-900">Gestión de Usuarios</h1>
+      </div>
+
+      <div className="admin-users-table-wrap overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-xl">
+        <table className="admin-users-table w-full border-collapse text-left">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="px-8 py-6 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Usuario</th>
+              <th className="px-8 py-6 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Email</th>
+              <th className="px-8 py-6 text-center text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Rol Actual</th>
+              <th className="px-8 py-6 text-right text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {data.usuarios.map((user) => (
+              <tr key={user.IDUsuario} className="group transition-colors hover:bg-slate-50/50">
+                <td className="px-8 py-7">
+                  <div className="flex items-center">
+                    <div className="mr-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-xl font-black text-indigo-600 transition-transform group-hover:scale-110">
+                      {user.UserName?.slice(0, 1)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-black text-slate-700 transition-colors group-hover:text-indigo-600">{user.UserName}</span>
+                      <span className="text-[13px] font-bold uppercase tracking-tight text-slate-400">ID: #{user.IDUsuario}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-8 py-7 text-base font-medium text-slate-500">{user.email}</td>
+                <td className="px-8 py-7 text-center">
+                  <span className={`admin-role-badge ${user.rol === 'admin' ? 'admin-role-admin' : 'admin-role-user'}`}>
+                    {user.rol}
+                  </span>
+                </td>
+                <td className="px-8 py-7 text-right">
+                  <div className="flex items-center justify-end gap-3">
+                    {user.rol !== 'admin' ? (
+                      <>
+                        <button onClick={() => promote(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-promote uppercase tracking-widest">Promover</button>
+                        <button onClick={() => remove(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-delete uppercase tracking-widest">Eliminar</button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <LockIcon className="h-5 w-5" />
+                        <span className="text-[12px] font-black uppercase italic tracking-widest opacity-60">Protegido</span>
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 
 export const AdminMazosPage = () => {
   const [refresh, setRefresh] = useState(0);
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get('/admin/mazos')).data, [refresh]);
+  const [params, setParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    search: params.get('search') || '',
+    autor: params.get('autor') || '',
+    estado: params.get('estado') || '',
+    coleccion: params.get('coleccion') || '',
+  });
+  const query = params.toString();
+  const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos${query ? `?${query}` : ''}`)).data, [refresh, query]);
   const remove = async (id) => { if (confirm('Borrar mazo?')) { await api.delete(`/admin/mazos/${id}`); setRefresh((value) => value + 1); } };
+
+  useEffect(() => {
+    document.body.classList.add('admin-dashboard-mode');
+    return () => document.body.classList.remove('admin-dashboard-mode');
+  }, []);
+
+  useEffect(() => {
+    setFilters({
+      search: params.get('search') || '',
+      autor: params.get('autor') || '',
+      estado: params.get('estado') || '',
+      coleccion: params.get('coleccion') || '',
+    });
+  }, [params]);
+
+  const applyFilters = (event) => {
+    event.preventDefault();
+    const next = {};
+    Object.entries(filters).forEach(([key, value]) => { if (value) next[key] = value; });
+    setParams(next);
+  };
+
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
+  const hasFilters = ['search', 'autor', 'estado', 'coleccion'].some((key) => params.get(key));
   return (
-    <AdminPage title="Moderacion de Mazos">
-      <table className="w-full text-left"><thead className="bg-gray-50"><tr><Th>Titulo</Th><Th>Autor</Th><Th>Coleccion</Th><Th>Tarjetas</Th><Th>Estado</Th><Th align="right">Acciones</Th></tr></thead><tbody className="divide-y divide-gray-50">{data.mazos.map((mazo) => <tr key={mazo.IDMazo} className="hover:bg-gray-50/50"><Td strong>{mazo.titulo}</Td><Td>{mazo.UserName || 'S/N'}</Td><Td>{Number(mazo.enColeccion) ? <span className="text-xs font-bold text-green-600">Activo</span> : <span className="text-xs font-bold italic text-red-400">Borrado</span>}</Td><Td>{mazo.tarjetas_count}</Td><Td>{Number(mazo.publico) === 1 ? <span className="rounded-lg bg-green-100 px-2 py-1 text-[10px] font-black uppercase text-green-700">Publicado</span> : <span className="rounded-lg bg-gray-100 px-2 py-1 text-[10px] font-black uppercase text-gray-400">Privado</span>}</Td><Td align="right"><button onClick={() => navigate(`/admin/mazos/${mazo.IDMazo}/tarjetas`)} className="mr-2 font-bold text-blue-600">Ver</button><button onClick={() => remove(mazo.IDMazo)} className="font-bold text-red-500">Eliminar</button></Td></tr>)}</tbody></table>
-    </AdminPage>
+    <div className="admin-mazos-page mx-auto max-w-[1536px] px-6 py-8">
+      <div className="mb-12 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-2 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600" />
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Moderación de Mazos</h1>
+        </div>
+
+        <form onSubmit={applyFilters} className="flex flex-1 flex-col items-center justify-between gap-6 lg:flex-row">
+          <div className="admin-mazos-filters mx-auto flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white/50 p-2 shadow-sm backdrop-blur-sm">
+            <label className="group relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-500">
+                <SearchIcon className="h-4 w-4" />
+              </span>
+              <input
+                name="search"
+                value={filters.search}
+                onChange={(event) => setFilters({ ...filters, search: event.target.value })}
+                placeholder="Título..."
+                className="w-40 rounded-xl border-none bg-slate-50 py-2 pl-10 pr-4 text-sm font-medium transition-all focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </label>
+
+            <label className="group relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-500">
+                <UserMiniIcon className="h-4 w-4" />
+              </span>
+              <input
+                name="autor"
+                value={filters.autor}
+                onChange={(event) => setFilters({ ...filters, autor: event.target.value })}
+                placeholder="Autor..."
+                className="w-32 rounded-xl border-none bg-slate-50 py-2 pl-10 pr-4 text-sm font-medium transition-all focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </label>
+
+            <select name="estado" value={filters.estado} onChange={(event) => setFilters({ ...filters, estado: event.target.value })} className="cursor-pointer rounded-xl border-none bg-slate-50 px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20">
+              <option value="">Estado</option>
+              <option value="publicado">Publicado</option>
+              <option value="privado">Privado</option>
+            </select>
+
+            <select name="coleccion" value={filters.coleccion} onChange={(event) => setFilters({ ...filters, coleccion: event.target.value })} className="cursor-pointer rounded-xl border-none bg-slate-50 px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20">
+              <option value="">Colección</option>
+              <option value="activo">Activos</option>
+              <option value="borrado">Borrados</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button type="submit" className="admin-mazos-apply flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-400 to-rose-500 px-8 py-3 font-black uppercase tracking-widest text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 active:scale-95">
+              <CheckMarkIcon className="h-5 w-5" />
+              <span>Aplicar</span>
+            </button>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => setParams({})}
+                className="admin-mazos-clear flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-all hover:bg-red-50 hover:text-red-500"
+                title="Limpiar filtros"
+              >
+                <CloseIcon className="h-6 w-6" />
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="admin-mazos-table-wrap overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-xl">
+        <table className="admin-mazos-table w-full border-collapse text-left">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="px-8 py-5 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Título</th>
+              <th className="px-8 py-5 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Autor</th>
+              <th className="px-8 py-5 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Colección</th>
+              <th className="px-8 py-5 text-center text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Tarjetas</th>
+              <th className="px-8 py-5 text-center text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Estado</th>
+              <th className="px-8 py-5 text-right text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {data.mazos.map((mazo) => (
+              <tr key={mazo.IDMazo} className="group transition-colors hover:bg-slate-50/50">
+                <td className="px-8 py-7">
+                  <span className="inline-block text-lg font-black text-slate-700 transition-all group-hover:translate-x-1 group-hover:text-indigo-500">{mazo.titulo}</span>
+                </td>
+                <td className="px-8 py-7">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-xs font-black text-indigo-500">
+                      {(mazo.UserName || 'S').slice(0, 1)}
+                    </div>
+                    <span className="text-base font-medium text-slate-500 transition-colors group-hover:text-slate-700">{mazo.UserName || 'Desconocido'}</span>
+                  </div>
+                </td>
+                <td className="px-8 py-7">
+                  {Number(mazo.enColeccion) === 1 ? (
+                    <span className="admin-badge admin-badge-active">
+                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                      Activo
+                    </span>
+                  ) : (
+                    <span className="admin-badge admin-badge-deleted">
+                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                      Borrado
+                    </span>
+                  )}
+                </td>
+                <td className="px-8 py-7 text-center">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-sm font-black text-indigo-600 transition-transform group-hover:scale-110">{mazo.tarjetas_count}</span>
+                </td>
+                <td className="px-8 py-7 text-center">
+                  {Number(mazo.publico) === 1 ? <span className="admin-badge admin-badge-public">Publicado</span> : <span className="admin-badge admin-badge-private">Privado</span>}
+                </td>
+                <td className="px-8 py-7 text-right">
+                  <div className="flex items-center justify-end gap-3">
+                    <button onClick={() => navigate(`/admin/mazos/${mazo.IDMazo}/tarjetas`)} className="admin-table-action admin-table-view uppercase tracking-widest">Ver</button>
+                    <button onClick={() => remove(mazo.IDMazo)} className="admin-table-action admin-table-delete uppercase tracking-widest">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 
@@ -1809,13 +2147,162 @@ export const AdminMazoDetailPage = () => {
 };
 
 export const AdminVentasPage = () => {
-  const { loading, error, data } = useResource(async () => (await api.get('/admin/ventas')).data, []);
+  const [params, setParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    usuario: params.get('usuario') || '',
+    orden: params.get('orden') || 'desc',
+    fecha_inicio: params.get('fecha_inicio') || '',
+    fecha_fin: params.get('fecha_fin') || '',
+  });
+  const query = params.toString();
+  const { loading, error, data } = useResource(async () => (await api.get(`/admin/ventas${query ? `?${query}` : ''}`)).data, [query]);
+
+  useEffect(() => {
+    document.body.classList.add('admin-dashboard-mode');
+    return () => document.body.classList.remove('admin-dashboard-mode');
+  }, []);
+
+  useEffect(() => {
+    setFilters({
+      usuario: params.get('usuario') || '',
+      orden: params.get('orden') || 'desc',
+      fecha_inicio: params.get('fecha_inicio') || '',
+      fecha_fin: params.get('fecha_fin') || '',
+    });
+  }, [params]);
+
+  const applyFilters = (event) => {
+    event.preventDefault();
+    const next = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && !(key === 'orden' && value === 'desc')) next[key] = value;
+    });
+    setParams(next);
+  };
+
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
+  const stats = data.stats || {};
+  const users = stats.lista_usuarios || [];
+  const hasFilters = ['usuario', 'orden', 'fecha_inicio', 'fecha_fin'].some((key) => params.get(key));
+
   return (
-    <AdminPage title="Historial Global de Ventas">
-      <Table headers={['ID', 'Comprador', 'Mazo Adquirido', 'Precio', 'Fecha']} rows={data.ventas.map((sale) => [`#${sale.id_Compra}`, sale.UserName, sale.titulo || 'N/A', money(sale.precioPagado), new Date(sale.fechaCompra).toLocaleString('es-MX')])} />
-    </AdminPage>
+    <div className="admin-report-page min-h-screen px-6 pb-20 pt-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-5">
+            <div className="h-14 w-2 rounded-full bg-gradient-to-b from-indigo-500 to-purple-600" />
+            <div>
+              <h1 className="flex items-center gap-3 text-4xl font-black tracking-tight text-slate-900">
+                Reporte Administrativo Global
+                <span className="text-3xl">📊</span>
+              </h1>
+              <p className="mt-1 font-medium text-slate-500">Visualiza el rendimiento financiero y crecimiento de LearningCards</p>
+            </div>
+          </div>
+
+          <a href="/admin/reporte-pdf" className="admin-report-pdf flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-rose-500 px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/30 transition-all hover:scale-105 active:scale-95">
+            <ReportFileIcon className="h-6 w-6" />
+            Descargar Reporte PDF
+          </a>
+        </div>
+
+        <section className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+          <AdminReportStat tone="emerald" label="Ventas Brutas" value={money(stats.total_ganancias)} icon={<AdminMoneyIcon className="h-8 w-8" />} />
+          <AdminReportStat tone="indigo" label="Utilidad NovaLearn (15%)" value={money(stats.utilidad_novalearn)} icon={<AdminTrendIcon className="h-8 w-8" />} />
+          <AdminReportStat tone="purple" label="Usuarios Activos" value={`${stats.total_usuarios || 0} Users`} icon={<AdminUsersIcon className="h-8 w-8" />} />
+        </section>
+
+        <div className="mb-12 flex flex-col items-center justify-between gap-6 lg:flex-row">
+          <div className="flex min-w-max items-center gap-4">
+            <div className="h-10 w-2 rounded-full bg-gradient-to-b from-orange-400 to-rose-600 shadow-[0_0_10px_rgba(251,146,60,0.3)]" />
+            <h3 className="text-2xl font-black tracking-tight text-slate-800">Historial de Transacciones</h3>
+          </div>
+
+          <form onSubmit={applyFilters} className="flex flex-1 flex-col items-center justify-between gap-6 lg:flex-row">
+            <div className="admin-report-filters mx-auto flex flex-1 flex-wrap items-center justify-center gap-4 rounded-[2.2rem] border border-slate-100 bg-white/50 p-3 shadow-sm backdrop-blur-sm">
+              <select value={filters.usuario} onChange={(event) => setFilters({ ...filters, usuario: event.target.value })} className="min-w-[200px] cursor-pointer appearance-none rounded-xl border border-indigo-500/10 bg-indigo-500/5 px-6 py-3.5 text-sm font-black text-slate-700 transition-all hover:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                <option value="">Todos los Usuarios</option>
+                {users.map((user) => <option key={user.IDUsuario} value={user.IDUsuario}>{user.UserName}</option>)}
+              </select>
+
+              <select value={filters.orden} onChange={(event) => setFilters({ ...filters, orden: event.target.value })} className="min-w-[180px] cursor-pointer appearance-none rounded-xl border border-indigo-500/10 bg-indigo-500/5 px-6 py-3.5 text-sm font-black text-slate-700 transition-all hover:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                <option value="desc">Más recientes</option>
+                <option value="asc">Más antiguos</option>
+              </select>
+
+              <label className="admin-report-date-field flex items-center gap-3 rounded-xl border border-rose-500/10 bg-rose-500/5 px-5 py-3 transition-all hover:border-rose-500/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-rose-500/10">
+                <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Desde</span>
+                <span className="relative flex items-center gap-2">
+                  <input type="date" value={filters.fecha_inicio} onChange={(event) => setFilters({ ...filters, fecha_inicio: event.target.value })} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
+                  <CalendarMiniIcon className="admin-report-calendar-icon h-4 w-4" />
+                </span>
+              </label>
+
+              <label className="admin-report-date-field flex items-center gap-3 rounded-xl border border-rose-500/10 bg-rose-500/5 px-5 py-3 transition-all hover:border-rose-500/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-rose-500/10">
+                <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Hasta</span>
+                <span className="relative flex items-center gap-2">
+                  <input type="date" value={filters.fecha_fin} onChange={(event) => setFilters({ ...filters, fecha_fin: event.target.value })} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
+                  <CalendarMiniIcon className="admin-report-calendar-icon h-4 w-4" />
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button type="submit" className="admin-report-apply flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-rose-500 px-10 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/30 transition-all hover:scale-105 active:scale-95">
+                <CheckMarkIcon className="h-5 w-5" />
+                Aplicar
+              </button>
+              {hasFilters && (
+                <button type="button" onClick={() => setParams({})} className="admin-report-clear flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-all hover:bg-red-50 hover:text-red-500">
+                  <CloseIcon className="h-7 w-7" />
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        <div className="admin-report-table-wrap overflow-hidden rounded-[3rem] border border-slate-100 shadow-2xl">
+          <div className="overflow-x-auto">
+            <table className="admin-report-table w-full border-collapse text-left">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Usuario</th>
+                  <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Mazo Adquirido</th>
+                  <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Fecha de Operación</th>
+                  <th className="px-10 py-7 text-right text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Monto Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {data.ventas?.length ? data.ventas.map((sale) => (
+                  <tr key={sale.id_Compra} className="group transition-colors hover:bg-slate-50/50">
+                    <td className="px-10 py-7">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-sm font-black text-indigo-500">
+                          {(sale.UserName || 'A').slice(0, 1)}
+                        </div>
+                        <span className="text-lg font-black text-slate-700 transition-colors group-hover:text-indigo-600">{sale.UserName || 'Anonimo'}</span>
+                      </div>
+                    </td>
+                    <td className="px-10 py-7">
+                      <span className="inline-block rounded-xl border border-transparent bg-slate-100 px-4 py-2 font-bold italic text-slate-500 transition-all group-hover:border-indigo-100 group-hover:bg-indigo-50 group-hover:text-indigo-600">
+                        {sale.titulo || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-10 py-7 text-base font-medium text-slate-400">{adminLongDate(sale.fechaCompra)}</td>
+                    <td className="px-10 py-7 text-right">
+                      <span className="text-2xl font-black tracking-tighter text-emerald-500"><span className="mr-1 text-sm font-bold opacity-50">$</span>{Number(sale.precioPagado || 0).toFixed(2)}</span>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="4" className="py-20 text-center text-sm font-bold italic text-slate-400">No hay transacciones registradas aún</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

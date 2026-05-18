@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
 import Home from './pages/Home';
 import {
@@ -20,6 +20,7 @@ import {
   StudyPage,
 } from './pages/Platform';
 import ReportPage from './pages/Report';
+import UserStatsPage from './pages/reports/UserStats';
 import api from './api/axios';
 
 const LoadingScreen = () => (
@@ -36,8 +37,14 @@ const RequireUser = ({ user, children }) => {
 
 const RequireAdmin = ({ user, children }) => {
   if (!user) return <Navigate to="/admin/login" replace />;
-  if (user.rol !== 'admin') return <Navigate to="/dashboard" replace />;
+  if (user.rol !== 'admin') return <Navigate to="/user/dashboard" replace />;
   return children;
+};
+
+const LegacyUserRedirect = ({ pattern }) => {
+  const params = useParams();
+  const to = pattern.replace(/:([A-Za-z0-9_]+)/g, (_, key) => params[key] ?? '');
+  return <Navigate to={to} replace />;
 };
 
 function App() {
@@ -58,20 +65,32 @@ function App() {
       <AppLayout user={user} onAuth={setUser}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage initialTab="login" onAuth={setUser} />} />
-          <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage initialTab="register" onAuth={setUser} />} />
+          <Route path="/login" element={user ? <Navigate to={user.rol === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace /> : <LoginPage initialTab="login" onAuth={setUser} />} />
+          <Route path="/register" element={user ? <Navigate to={user.rol === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace /> : <LoginPage initialTab="register" onAuth={setUser} />} />
           <Route path="/admin/login" element={<AdminLoginPage onAuth={setUser} />} />
 
-          <Route path="/dashboard" element={<RequireUser user={user}><DashboardPage /></RequireUser>} />
-          <Route path="/reporte" element={<RequireUser user={user}><ReportPage /></RequireUser>} />
-          <Route path="/configuracion" element={<RequireUser user={user}><ProfilePage onAuth={setUser} /></RequireUser>} />
-          <Route path="/mazos/create" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />
-          <Route path="/mazos/:id/edit" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />
-          <Route path="/mazos/:id/publicar" element={<RequireUser user={user}><PublishPage /></RequireUser>} />
-          <Route path="/estudiar/:id" element={<RequireUser user={user}><StudyPage /></RequireUser>} />
-          <Route path="/marketplace" element={<RequireUser user={user}><MarketplacePage /></RequireUser>} />
-          <Route path="/marketplace/:id" element={<RequireUser user={user}><MarketplaceDetailPage /></RequireUser>} />
-          <Route path="/marketplace/:id/pagar" element={<RequireUser user={user}><PaymentPage /></RequireUser>} />
+          <Route path="/user/dashboard" element={<RequireUser user={user}><DashboardPage /></RequireUser>} />
+          <Route path="/user/creator/stats" element={<RequireUser user={user}><UserStatsPage /></RequireUser>} />
+          <Route path="/user/reportes" element={<RequireUser user={user}><ReportPage /></RequireUser>} />
+          <Route path="/user/configuracion" element={<RequireUser user={user}><ProfilePage onAuth={setUser} /></RequireUser>} />
+          <Route path="/user/mazos/create" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />
+          <Route path="/user/mazos/:id/edit" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />
+          <Route path="/user/mazos/:id/publicar" element={<RequireUser user={user}><PublishPage /></RequireUser>} />
+          <Route path="/user/estudiar/:id" element={<RequireUser user={user}><StudyPage /></RequireUser>} />
+          <Route path="/user/marketplace" element={<RequireUser user={user}><MarketplacePage /></RequireUser>} />
+          <Route path="/user/marketplace/:id" element={<RequireUser user={user}><MarketplaceDetailPage /></RequireUser>} />
+          <Route path="/user/marketplace/:id/pagar" element={<RequireUser user={user}><PaymentPage /></RequireUser>} />
+
+          <Route path="/dashboard" element={<Navigate to="/user/dashboard" replace />} />
+          <Route path="/reporte" element={<Navigate to="/user/reportes" replace />} />
+          <Route path="/configuracion" element={<Navigate to="/user/configuracion" replace />} />
+          <Route path="/mazos/create" element={<LegacyUserRedirect pattern="/user/mazos/create" />} />
+          <Route path="/mazos/:id/edit" element={<LegacyUserRedirect pattern="/user/mazos/:id/edit" />} />
+          <Route path="/mazos/:id/publicar" element={<LegacyUserRedirect pattern="/user/mazos/:id/publicar" />} />
+          <Route path="/estudiar/:id" element={<LegacyUserRedirect pattern="/user/estudiar/:id" />} />
+          <Route path="/marketplace" element={<Navigate to="/user/marketplace" replace />} />
+          <Route path="/marketplace/:id" element={<LegacyUserRedirect pattern="/user/marketplace/:id" />} />
+          <Route path="/marketplace/:id/pagar" element={<LegacyUserRedirect pattern="/user/marketplace/:id/pagar" />} />
 
           <Route path="/admin/dashboard" element={<RequireAdmin user={user}><AdminDashboardPage /></RequireAdmin>} />
           <Route path="/admin/users" element={<RequireAdmin user={user}><AdminUsersPage /></RequireAdmin>} />

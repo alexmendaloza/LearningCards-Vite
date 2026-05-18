@@ -677,7 +677,8 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
     const [mazos] = await pool.query(
       `SELECT m.*,
               (SELECT COUNT(*) FROM Tarjeta t WHERE t.IDMazo = m.IDMazo) AS tarjetas_count,
-              p.id_Publ
+              p.id_Publ,
+              p.publico
          FROM Mazo m
          LEFT JOIN Publicacion p ON p.fk_id_mazo = m.IDMazo
         WHERE ${where.join(' AND ')}
@@ -716,6 +717,157 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
       totalEstudiadas,
       precision,
       categorias: ['Idiomas', 'Ciencia', 'Tecnologia', 'Historia', 'Medicina', 'Otros'],
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.get('/api/user/creator/stats', requireUser, async (req, res, next) => {
+  try {
+    const commissionRate = 0.15;
+    const { search, tipo, categoria, ingresos_min: ingresosMin, fecha_desde: fechaDesde, fecha_hasta: fechaHasta } = req.query;
+    const userId = req.usuario.IDUsuario;
+
+    const publicationWhere = ['p.fk_id_usuario = ?', 'p.publico = 1'];
+    const publicationParams = [userId];
+    const addPublicationFilters = (where, params) => {
+      if (search) {
+        where.push('(m.titulo LIKE ? OR m.descripcion LIKE ? OR p.descripcion_publica LIKE ? OR p.categoria LIKE ?)');
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      }
+      if (tipo === 'gratis') where.push('p.pago = 0');
+      if (tipo === 'pago') where.push('p.pago = 1');
+      if (categoria) {
+        where.push('p.categoria = ?');
+        params.push(categoria);
+      }
+    };
+
+    const filteredWhere = [...publicationWhere];
+    const filteredParams = [...publicationParams];
+    addPublicationFilters(filteredWhere, filteredParams);
+
+    const saleJoin = ['c.fk_id_publicacion = p.id_Publ', "c.estado = 'completada'"];
+    const saleParams = [];
+    if (fechaDesde) {
+      saleJoin.push('DATE(c.fechaCompra) >= ?');
+      saleParams.push(fechaDesde);
+    }
+    if (fechaHasta) {
+      saleJoin.push('DATE(c.fechaCompra) <= ?');
+      saleParams.push(fechaHasta);
+    }
+
+    const [allPublications] = await pool.query(
+      `SELECT p.*
+         FROM Publicacion p
+         JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
+        WHERE ${publicationWhere.join(' AND ')}`,
+      publicationParams,
+    );
+
+    const [[salesTotals], [ratingTotals], [topRows], [categoriesRows], [recentSales]] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(c.id_Compra) AS copias_vendidas,
+                COALESCE(SUM(c.precioPagado), 0) AS ingresos_brutos
+           FROM Compra c
+           JOIN Publicacion p ON p.id_Publ = c.fk_id_publicacion
+          WHERE p.fk_id_usuario = ? AND p.publico = 1 AND c.estado = 'completada'`,
+        [userId],
+      ),
+      pool.query(
+        `SELECT COUNT(v.id_Val) AS valoraciones,
+                COALESCE(AVG(v.puntuacion), 0) AS promedio_estrellas
+           FROM Valoracion v
+           JOIN Publicacion p ON p.id_Publ = v.fk_id_publicacion
+          WHERE p.fk_id_usuario = ? AND p.publico = 1`,
+        [userId],
+      ),
+      pool.query(
+        `SELECT p.id_Publ,
+                p.pago,
+                p.precio,
+                p.categoria,
+                p.promedio_valoracion,
+                p.num_valoraciones,
+                m.IDMazo,
+                m.titulo,
+                m.descripcion,
+                COUNT(c.id_Compra) AS copias_vendidas,
+                COALESCE(SUM(c.precioPagado), 0) AS ingresos_brutos,
+                (SELECT COUNT(*) FROM Tarjeta t WHERE t.IDMazo = m.IDMazo) AS tarjetas_count
+           FROM Publicacion p
+           JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
+           LEFT JOIN Compra c ON ${saleJoin.join(' AND ')}
+          WHERE ${filteredWhere.join(' AND ')}
+          GROUP BY p.id_Publ, p.pago, p.precio, p.categoria, p.promedio_valoracion, p.num_valoraciones, m.IDMazo, m.titulo, m.descripcion
+         HAVING ingresos_brutos >= ?
+          ORDER BY ingresos_brutos DESC, copias_vendidas DESC, p.id_Publ DESC
+          LIMIT 5`,
+        [...saleParams, ...filteredParams, Number(ingresosMin || 0)],
+      ),
+      pool.query(
+        `SELECT DISTINCT categoria
+           FROM Publicacion
+          WHERE fk_id_usuario = ? AND publico = 1 AND categoria IS NOT NULL AND categoria != ''
+          ORDER BY categoria`,
+        [userId],
+      ),
+      pool.query(
+        `SELECT c.id_Compra,
+                c.fechaCompra,
+                c.precioPagado,
+                c.estado,
+                c.nombre_titular,
+                c.ultimos_digitos,
+                m.titulo,
+                u.UserName,
+                u.NombreCompleto
+           FROM Compra c
+           JOIN Publicacion p ON p.id_Publ = c.fk_id_publicacion
+           JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
+           JOIN Usuario u ON u.IDUsuario = c.fk_id_usuario
+          WHERE p.fk_id_usuario = ? AND p.publico = 1 AND c.estado = 'completada'
+          ORDER BY c.fechaCompra DESC
+          LIMIT 8`,
+        [userId],
+      ),
+    ]);
+
+    const mazosPublicados = allPublications.length;
+    const copiasVendidas = Number(salesTotals[0]?.copias_vendidas || 0);
+    const ingresosBrutos = Number(salesTotals[0]?.ingresos_brutos || 0);
+    const comisionPlataforma = ingresosBrutos * commissionRate;
+    const dineroNeto = ingresosBrutos - comisionPlataforma;
+    const topMazos = topRows.map((row) => ({
+      ...row,
+      copias_vendidas: Number(row.copias_vendidas || 0),
+      ingresos_brutos: Number(row.ingresos_brutos || 0),
+      comision: Number(row.ingresos_brutos || 0) * commissionRate,
+      ingresos_netos: Number(row.ingresos_brutos || 0) * (1 - commissionRate),
+      promedio_valoracion: Number(row.promedio_valoracion || 0),
+    }));
+
+    return res.json({
+      usuario: cleanUser(req.usuario),
+      stats: {
+        mazos_publicados: mazosPublicados,
+        mazos_gratis: allPublications.filter((pub) => Number(pub.pago) === 0).length,
+        mazos_pago: allPublications.filter((pub) => Number(pub.pago) === 1).length,
+        copias_vendidas: copiasVendidas,
+        valoraciones: Number(ratingTotals[0]?.valoraciones || 0),
+        promedio_estrellas: Number(ratingTotals[0]?.promedio_estrellas || 0),
+        ingresos_brutos: ingresosBrutos,
+        comision_plataforma: comisionPlataforma,
+        dinero_neto: dineroNeto,
+        ticket_promedio: copiasVendidas > 0 ? ingresosBrutos / copiasVendidas : 0,
+        porcentaje_comision: commissionRate * 100,
+      },
+      topMazos,
+      categorias: categoriesRows.map((row) => row.categoria),
+      ventasRecientes: recentSales,
+      filters: { search: search || '', tipo: tipo || '', categoria: categoria || '', ingresos_min: ingresosMin || '', fecha_desde: fechaDesde || '', fecha_hasta: fechaHasta || '' },
     });
   } catch (error) {
     return next(error);
@@ -1314,8 +1466,25 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res, next) => {
   }
 });
 
-app.get('/api/admin/mazos', requireAdmin, async (_req, res, next) => {
+app.get('/api/admin/mazos', requireAdmin, async (req, res, next) => {
   try {
+    const { search, autor, estado, coleccion } = req.query;
+    const where = [];
+    const params = [];
+
+    if (search) {
+      where.push('m.titulo LIKE ?');
+      params.push(`%${search}%`);
+    }
+    if (autor) {
+      where.push('u.UserName LIKE ?');
+      params.push(`%${autor}%`);
+    }
+    if (estado === 'publicado') where.push('p.publico = 1');
+    if (estado === 'privado') where.push('(p.publico IS NULL OR p.publico = 0)');
+    if (coleccion === 'activo') where.push('m.enColeccion = 1');
+    if (coleccion === 'borrado') where.push('m.enColeccion = 0');
+
     const [mazos] = await pool.query(
       `SELECT m.*,
               u.UserName,
@@ -1325,7 +1494,9 @@ app.get('/api/admin/mazos', requireAdmin, async (_req, res, next) => {
          FROM Mazo m
          LEFT JOIN Usuario u ON u.IDUsuario = m.IDUsuario
          LEFT JOIN Publicacion p ON p.fk_id_mazo = m.IDMazo
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
         ORDER BY m.IDMazo DESC`,
+      params,
     );
     return res.json({ mazos });
   } catch (error) {
@@ -1368,17 +1539,57 @@ app.get('/api/admin/mazos/:id/tarjetas', requireAdmin, async (req, res, next) =>
   }
 });
 
-app.get('/api/admin/ventas', requireAdmin, async (_req, res, next) => {
+app.get('/api/admin/ventas', requireAdmin, async (req, res, next) => {
   try {
+    const { usuario, orden = 'desc', fecha_inicio: fechaInicio, fecha_fin: fechaFin } = req.query;
+    const where = [];
+    const params = [];
+
+    if (usuario) {
+      where.push('c.fk_id_usuario = ?');
+      params.push(usuario);
+    }
+    if (fechaInicio) {
+      where.push('DATE(c.fechaCompra) >= ?');
+      params.push(fechaInicio);
+    }
+    if (fechaFin) {
+      where.push('DATE(c.fechaCompra) <= ?');
+      params.push(fechaFin);
+    }
+
+    const orderDirection = orden === 'asc' ? 'ASC' : 'DESC';
     const [ventas] = await pool.query(
       `SELECT c.*, u.UserName, m.titulo
          FROM Compra c
          LEFT JOIN Usuario u ON u.IDUsuario = c.fk_id_usuario
          LEFT JOIN Publicacion p ON p.id_Publ = c.fk_id_publicacion
          LEFT JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
-        ORDER BY c.fechaCompra DESC`,
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+        ORDER BY c.fechaCompra ${orderDirection}`,
+      params,
     );
-    return res.json({ ventas });
+
+    const [[totals], [users]] = await Promise.all([
+      pool.query(
+        `SELECT COALESCE(SUM(c.precioPagado), 0) AS total_ganancias
+           FROM Compra c
+          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}`,
+        params,
+      ),
+      pool.query('SELECT IDUsuario, UserName FROM Usuario ORDER BY UserName ASC'),
+    ]);
+
+    return res.json({
+      ventas,
+      stats: {
+        total_ganancias: Number(totals[0]?.total_ganancias || 0),
+        total_usuarios: users.length,
+        lista_usuarios: users,
+        utilidad_novalearn: Number(totals[0]?.total_ganancias || 0) * 0.15,
+      },
+      filters: { usuario: usuario || '', orden: orderDirection.toLowerCase(), fecha_inicio: fechaInicio || '', fecha_fin: fechaFin || '' },
+    });
   } catch (error) {
     return next(error);
   }

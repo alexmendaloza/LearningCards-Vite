@@ -1132,3 +1132,1149 @@ body.dark-theme .auth-submit:hover {
   62% { border-radius: 76% 999px 999px 76% / 999px; scale: .99 1.02; }
   100% { border-radius: 999px; scale: 1; }
 }
+
+/* Dark premium polish copied from the Laravel layout. */
+body.dark-theme {
+  --premium-filter-bg: rgba(15, 23, 42, 0.34);
+  --premium-filter-border: rgba(148, 163, 184, 0.24);
+  --btn-primary-a: #ff7a59;
+  --btn-primary-b: #ff4f6d;
+  --btn-primary-c: #fb923c;
+  --btn-view-a: #22d3ee;
+  --btn-view-b: #2563eb;
+  --btn-success-a: #34d399;
+  --btn-success-b: #059669;
+}
+
+body.dark-theme button,
+body.dark-theme a[class*="rounded"] {
+  transition: transform .3s cubic-bezier(.18, 1.08, .22, 1), box-shadow .3s ease, filter .3s ease, background .3s ease, border-color .3s ease, color .3s ease !important;
+}
+
+body.dark-theme button[class*="bg-indigo-"],
+body.dark-theme button[class*="bg-purple-"],
+body.dark-theme button[class*="bg-violet-"],
+body.dark-theme button[class*="from-indigo"],
+body.dark-theme button[class*="from-purple"],
+body.dark-theme button[class*="from-violet"],
+body.dark-theme button[class*="bg-slate-900"],
+body.dark-theme a[class*="from-indigo"],
+body.dark-theme a[class*="from-purple"],
+body.dark-theme a[class*="from-violet"],
+body.dark-theme a[class*="bg-white"][class*="text-violet-700"],
+body.dark-theme button[type="submit"]:not([class*="bg-green"]):not([class*="from-green"]):not([class*="bg-emerald"]):not([class*="from-emerald"]) {
+  background: linear-gradient(135deg, var(--btn-primary-a) 0%, var(--btn-primary-b) 52%, var(--btn-primary-c) 100%) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(15, 23, 42, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 999px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 16px 34px rgba(255, 107, 107, 0.32), 0 0 24px rgba(251, 146, 60, 0.18) !important;
+}
+
+body.dark-theme button[class*="border-indigo"][class*="text-indigo"],
+body.dark-theme a[class*="text-indigo-600"][class*="hover:text-indigo"] {
+  background: linear-gradient(135deg, var(--btn-view-a) 0%, var(--btn-view-b) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(125, 211, 252, 0.48) !important;
+  border-radius: 999px !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+  box-shadow: 0 16px 34px rgba(34, 211, 238, 0.25), 0 0 22px rgba(37, 99, 235, 0.16) !important;
+}
+
+body.dark-theme button[class*="bg-green"],
+body.dark-theme button[class*="from-green"],
+body.dark-theme button[class*="bg-emerald"],
+body.dark-theme button[class*="from-emerald"],
+body.dark-theme a[class*="bg-green"],
+body.dark-theme a[class*="from-green"],
+body.dark-theme a[class*="bg-emerald"],
+body.dark-theme a[class*="from-emerald"] {
+  background: linear-gradient(135deg, var(--btn-success-a) 0%, var(--btn-success-b) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(110, 231, 183, 0.38) !important;
+  border-radius: 999px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 16px 34px rgba(16, 185, 129, 0.28), 0 0 22px rgba(52, 211, 153, 0.16) !important;
+}
+
+body.dark-theme input[name="search"] {
+  background: var(--premium-filter-bg) !important;
+  border-color: var(--premium-filter-border) !important;
+  color: #f8fafc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+body.dark-theme input[name="search"]::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .creator-stats-page {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(59, 130, 246, 0.16), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(34, 211, 238, 0.12), transparent 26%),
+    radial-gradient(circle at 50% 88%, rgba(168, 85, 247, 0.16), transparent 34%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.dark-theme .creator-stats-page h1,
+body.dark-theme .creator-stats-page h2,
+body.dark-theme .creator-stats-page h3,
+body.dark-theme .creator-stats-page .text-slate-900,
+body.dark-theme .creator-stats-page .text-slate-800,
+body.dark-theme .creator-stats-page .text-slate-700 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .creator-stats-page p,
+body.dark-theme .creator-stats-page .text-slate-500 {
+  color: #dbeafe !important;
+}
+
+body.dark-theme .creator-panel {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border: 1px solid rgba(125, 211, 252, 0.22) !important;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+body.dark-theme .creator-filter-panel {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+
+.creator-input {
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 1rem;
+  background: #ffffff;
+  padding: .75rem 1rem;
+  font-size: .875rem;
+  font-weight: 700;
+  color: #334155;
+  outline: none;
+}
+
+.creator-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+}
+
+body.dark-theme .creator-input {
+  background: rgba(8, 13, 28, 0.86) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+  color: #f8fafc !important;
+}
+
+body.dark-theme .creator-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .creator-table thead tr {
+  background: rgba(8, 13, 28, 0.72) !important;
+  border-color: rgba(125, 211, 252, 0.3) !important;
+}
+
+body.dark-theme .creator-table th {
+  color: #ffffff !important;
+}
+
+body.dark-theme .creator-table tbody tr {
+  border-color: rgba(125, 211, 252, 0.12) !important;
+}
+
+body.dark-theme .deck-type-badge {
+  background: #ecfeff !important;
+  color: #0f172a !important;
+}
+
+body.dark-theme .withdrawable-card {
+  background: linear-gradient(135deg, #059669 0%, #0f766e 48%, #06b6d4 100%) !important;
+  box-shadow: 0 18px 44px rgba(20, 184, 166, 0.28), 0 0 34px rgba(6, 182, 212, 0.12) !important;
+}
+
+body.dark-theme .withdrawable-card p {
+  color: #ffffff !important;
+}
+
+body.dark-theme .dashboard-deck-card {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.06), 0 16px 40px rgba(0, 0, 0, 0.22) !important;
+}
+
+body.dark-theme .dashboard-edit-btn {
+  background: linear-gradient(135deg, #22d3ee 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(125, 211, 252, 0.44) !important;
+  box-shadow: 0 12px 26px rgba(34, 211, 238, 0.24) !important;
+}
+
+body.dark-theme .dashboard-share-btn.is-private {
+  background: linear-gradient(135deg, #ff7a59 0%, #fb923c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 12px 26px rgba(251, 146, 60, 0.24) !important;
+}
+
+body.dark-theme .dashboard-share-btn.is-public {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(110, 231, 183, 0.34) !important;
+  box-shadow: 0 12px 26px rgba(16, 185, 129, 0.24) !important;
+}
+
+body.dark-theme .dashboard-study-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff4f6d 52%, #fb923c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 16px 32px rgba(255, 107, 107, 0.28), 0 0 24px rgba(251, 146, 60, 0.14) !important;
+}
+
+body.dark-theme .dashboard-marketplace-card {
+  background: rgba(30, 41, 59, 0.86) !important;
+  border: 1px solid rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.dark-theme .dashboard-marketplace-card h3,
+body.dark-theme .dashboard-marketplace-card h4 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .dashboard-marketplace-all {
+  background: linear-gradient(135deg, #22d3ee 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border-radius: 999px !important;
+  padding: .22rem .48rem !important;
+  line-height: 1 !important;
+  box-shadow: 0 10px 20px rgba(34, 211, 238, 0.22) !important;
+}
+
+body.dark-theme .dashboard-marketplace-item {
+  background: rgba(30, 41, 59, 0.68) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+}
+
+body.dark-theme .dashboard-marketplace-item:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+  border-color: rgba(96, 165, 250, 0.44) !important;
+}
+
+body.dark-theme .dashboard-marketplace-thumb {
+  background: #0f172a !important;
+  color: transparent !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-theme .dashboard-marketplace-plus {
+  background: linear-gradient(135deg, #ff7a59 0%, #fb923c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 12px 26px rgba(251, 146, 60, 0.24) !important;
+}
+
+body.dark-theme .dashboard-marketplace-tip {
+  background: rgba(15, 23, 42, 0.34) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+}
+
+body.dark-theme .dashboard-marketplace-tip p {
+  color: #dbeafe !important;
+}
+
+body.dark-theme .admin-dashboard-page {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(236, 72, 153, 0.16), transparent 24%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.dark-theme .admin-metric-card {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.dark-theme .admin-metric-card h2,
+body.dark-theme .admin-metric-card span {
+  color: #ffffff !important;
+}
+
+body.dark-theme .admin-metric-card p {
+  color: #dbeafe !important;
+}
+
+.admin-metric-icon {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.admin-metric-emerald {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.admin-metric-cyan {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.admin-metric-purple {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.12);
+}
+
+.admin-metric-slate {
+  color: #f8fafc;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.admin-metric-orange {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+}
+
+body.dark-theme .admin-sales-panel {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.dark-theme .admin-sales-panel h3 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .admin-view-all {
+  border: 1px solid rgba(167, 139, 250, 0.3) !important;
+  background: rgba(15, 23, 42, 0.28) !important;
+  color: #c4b5fd !important;
+}
+
+body.dark-theme .admin-view-all:hover {
+  background: rgba(167, 139, 250, 0.1) !important;
+  border-color: rgba(167, 139, 250, 0.6) !important;
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.2) !important;
+}
+
+body.dark-theme .admin-sales-table thead tr {
+  background: rgba(8, 13, 28, 0.72) !important;
+}
+
+body.dark-theme .admin-sales-table th {
+  color: #ffffff !important;
+}
+
+body.dark-theme .admin-sales-table tbody {
+  border-color: rgba(56, 106, 132, 0.86) !important;
+}
+
+body.dark-theme .admin-sales-table tr {
+  border-color: rgba(56, 106, 132, 0.74) !important;
+}
+
+body.dark-theme .admin-sales-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+}
+
+body.dark-theme .admin-sales-table td span {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .admin-sales-table .admin-amount {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+body.dark-theme .admin-actions-panel {
+  background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 52%, #ec4899 100%) !important;
+  box-shadow: 0 24px 60px rgba(168, 85, 247, 0.24), 0 0 34px rgba(236, 72, 153, 0.16) !important;
+}
+
+body.dark-theme .admin-action-btn {
+  background: rgba(30, 41, 59, 0.84) !important;
+  border-color: rgba(125, 211, 252, 0.2) !important;
+  color: #ffffff !important;
+}
+
+body.dark-theme .admin-action-btn:hover {
+  background: rgba(51, 65, 85, 0.92) !important;
+  border-color: rgba(125, 211, 252, 0.38) !important;
+}
+
+.admin-action-btn:hover .admin-action-icon {
+  transform: translateX(3px);
+}
+
+body.dark-theme .admin-info-panel {
+  background: rgba(30, 41, 59, 0.84) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+}
+
+body.dark-theme .admin-info-panel h4 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .admin-info-panel p {
+  color: #dbeafe !important;
+}
+
+body.admin-dashboard-mode,
+body.admin-dashboard-mode main {
+  background: #08111f !important;
+}
+
+body.admin-dashboard-mode header,
+body.admin-dashboard-mode footer {
+  background: rgba(30, 41, 59, 0.94) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .nav-brand-title,
+body.admin-dashboard-mode header a,
+body.admin-dashboard-mode footer {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-dashboard-page {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(236, 72, 153, 0.16), transparent 24%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.admin-dashboard-mode .admin-metric-card,
+body.admin-dashboard-mode .admin-sales-panel {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-metric-card h2,
+body.admin-dashboard-mode .admin-metric-card span,
+body.admin-dashboard-mode .admin-sales-panel h3,
+body.admin-dashboard-mode .admin-sales-table th {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-metric-card p {
+  color: #dbeafe !important;
+}
+
+body.admin-dashboard-mode .admin-view-all {
+  border: 1px solid rgba(167, 139, 250, 0.3) !important;
+  background: rgba(15, 23, 42, 0.28) !important;
+  color: #c4b5fd !important;
+}
+
+body.admin-dashboard-mode .admin-sales-table thead tr {
+  background: rgba(8, 13, 28, 0.72) !important;
+}
+
+body.admin-dashboard-mode .admin-sales-table tr {
+  border-color: rgba(56, 106, 132, 0.74) !important;
+}
+
+body.admin-dashboard-mode .admin-sales-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+}
+
+body.admin-dashboard-mode .admin-sales-table td span {
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-sales-table .admin-amount {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+body.admin-dashboard-mode .admin-actions-panel {
+  background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 52%, #ec4899 100%) !important;
+  box-shadow: 0 24px 60px rgba(168, 85, 247, 0.24), 0 0 34px rgba(236, 72, 153, 0.16) !important;
+}
+
+body.admin-dashboard-mode .admin-action-btn {
+  background: rgba(30, 41, 59, 0.84) !important;
+  border-color: rgba(125, 211, 252, 0.2) !important;
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-action-btn:hover {
+  background: rgba(51, 65, 85, 0.92) !important;
+  border-color: rgba(125, 211, 252, 0.38) !important;
+}
+
+body.admin-dashboard-mode .admin-info-panel {
+  background: rgba(30, 41, 59, 0.84) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+}
+
+body.admin-dashboard-mode .admin-info-panel h4 {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-info-panel p {
+  color: #dbeafe !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-page {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(236, 72, 153, 0.12), transparent 24%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-page h1 {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-filters {
+  background: rgba(30, 41, 59, 0.58) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-filters input,
+body.admin-dashboard-mode .admin-mazos-filters select {
+  background: rgba(15, 23, 42, 0.66) !important;
+  border: 1px solid rgba(56, 106, 132, 0.86) !important;
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-filters input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-apply {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff4f6d 52%, #fb923c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 18px 38px rgba(255, 107, 107, 0.34), 0 0 24px rgba(251, 146, 60, 0.18) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-clear {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(56, 106, 132, 0.86) !important;
+  color: #94a3b8 !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-clear:hover {
+  background: rgba(244, 63, 94, 0.16) !important;
+  color: #fb7185 !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table-wrap {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table thead tr {
+  background: rgba(8, 13, 28, 0.76) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table th {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table tbody,
+body.admin-dashboard-mode .admin-mazos-table tr {
+  border-color: rgba(56, 106, 132, 0.74) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table td,
+body.admin-dashboard-mode .admin-mazos-table td span {
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-mazos-table td:first-child span {
+  color: #a78bfa !important;
+}
+
+.admin-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: .75rem;
+  padding: .4rem .8rem;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+body.admin-dashboard-mode .admin-badge-active {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+  color: #34d399 !important;
+}
+
+body.admin-dashboard-mode .admin-badge-deleted {
+  background: rgba(244, 63, 94, 0.25) !important;
+  border: 1px solid rgba(251, 113, 133, 0.4) !important;
+  color: #fb7185 !important;
+}
+
+body.admin-dashboard-mode .admin-badge-public {
+  background: rgba(6, 182, 212, 0.3) !important;
+  border: 1px solid rgba(34, 211, 238, 0.5) !important;
+  color: #22d3ee !important;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3) !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.6) !important;
+}
+
+body.admin-dashboard-mode .admin-badge-private {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(148, 163, 184, 0.2) !important;
+}
+
+.admin-table-action {
+  display: inline-flex;
+  min-width: 100px;
+  align-items: center;
+  justify-content: center;
+  border-radius: .85rem;
+  padding: .6rem 1.2rem;
+  font-size: .85rem;
+  font-weight: 900;
+  transition: all .4s cubic-bezier(.4, 0, .2, 1);
+}
+
+body.admin-dashboard-mode .admin-table-view {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border: 1px solid rgba(110, 231, 183, 0.3) !important;
+  color: #6ee7b7 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2) !important;
+}
+
+body.admin-dashboard-mode .admin-table-delete {
+  background: rgba(244, 63, 94, 0.2) !important;
+  border: 1px solid rgba(253, 164, 175, 0.3) !important;
+  color: #fda4af !important;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.2) !important;
+}
+
+body.admin-dashboard-mode .admin-table-view:hover {
+  background: rgba(16, 185, 129, 0.28) !important;
+  color: #34d399 !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+body.admin-dashboard-mode .admin-table-delete:hover {
+  background: rgba(244, 63, 94, 0.28) !important;
+  color: #fb7185 !important;
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+body.admin-dashboard-mode .admin-users-page {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(236, 72, 153, 0.12), transparent 24%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.admin-dashboard-mode .admin-users-page h1 {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-users-table-wrap {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-users-table thead tr {
+  background: rgba(8, 13, 28, 0.76) !important;
+}
+
+body.admin-dashboard-mode .admin-users-table th {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-users-table tbody,
+body.admin-dashboard-mode .admin-users-table tr {
+  border-color: rgba(56, 106, 132, 0.74) !important;
+}
+
+body.admin-dashboard-mode .admin-users-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+}
+
+body.admin-dashboard-mode .admin-users-table td,
+body.admin-dashboard-mode .admin-users-table td span {
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-users-table td:first-child span:first-child {
+  color: #a78bfa !important;
+}
+
+.admin-role-badge {
+  border-radius: .75rem;
+  padding: .5rem 1.25rem;
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+body.admin-dashboard-mode .admin-role-admin {
+  background: rgba(168, 85, 247, 0.16) !important;
+  border: 1px solid rgba(168, 85, 247, 0.34) !important;
+  color: #a78bfa !important;
+}
+
+body.admin-dashboard-mode .admin-role-user {
+  background: rgba(99, 102, 241, 0.14) !important;
+  border: 1px solid rgba(99, 102, 241, 0.34) !important;
+  color: #ffffff !important;
+}
+
+.admin-user-action {
+  border-radius: .75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: .6rem 1.2rem;
+  font-size: .85rem;
+  font-weight: 800;
+  transition: all .3s ease;
+}
+
+body.admin-dashboard-mode .admin-user-promote {
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #818cf8 !important;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.16) !important;
+}
+
+body.admin-dashboard-mode .admin-user-promote:hover {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+  box-shadow: 0 0 18px rgba(99, 102, 241, 0.28) !important;
+}
+
+body.admin-dashboard-mode .admin-user-delete {
+  background: rgba(244, 63, 94, 0.12) !important;
+  color: #fb7185 !important;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.16) !important;
+}
+
+body.admin-dashboard-mode .admin-user-delete:hover {
+  background: rgba(244, 63, 94, 0.2) !important;
+  color: #fda4af !important;
+  box-shadow: 0 0 18px rgba(244, 63, 94, 0.28) !important;
+}
+
+body.admin-dashboard-mode .admin-report-page {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(236, 72, 153, 0.12), transparent 24%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 56%, #15122b 100%) !important;
+}
+
+body.admin-dashboard-mode .admin-report-page h1,
+body.admin-dashboard-mode .admin-report-page h3 {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-report-page p {
+  color: #dbeafe !important;
+}
+
+body.admin-dashboard-mode .admin-report-pdf,
+body.admin-dashboard-mode .admin-report-apply {
+  background: linear-gradient(135deg, #ff7a59 0%, #ff4f6d 52%, #fb923c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 44px rgba(255, 107, 107, 0.34), 0 0 28px rgba(251, 146, 60, 0.18) !important;
+}
+
+body.admin-dashboard-mode .admin-report-stat {
+  background: rgba(30, 41, 59, 0.82) !important;
+  border: 1px solid rgba(56, 106, 132, 0.56) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-report-stat:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+.admin-report-glow-emerald { background: rgba(16, 185, 129, 0.1); }
+.admin-report-glow-indigo { background: rgba(99, 102, 241, 0.1); }
+.admin-report-glow-purple { background: rgba(168, 85, 247, 0.1); }
+
+body.admin-dashboard-mode .admin-report-stat:hover .admin-report-glow-emerald { background: rgba(16, 185, 129, 0.2); }
+body.admin-dashboard-mode .admin-report-stat:hover .admin-report-glow-indigo { background: rgba(99, 102, 241, 0.2); }
+body.admin-dashboard-mode .admin-report-stat:hover .admin-report-glow-purple { background: rgba(168, 85, 247, 0.2); }
+
+.admin-report-icon-emerald {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.18);
+}
+
+.admin-report-icon-indigo {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.18);
+}
+
+.admin-report-icon-purple {
+  background: rgba(168, 85, 247, 0.2);
+  color: #a78bfa;
+  box-shadow: 0 12px 28px rgba(168, 85, 247, 0.18);
+}
+
+body.admin-dashboard-mode .admin-report-value {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-report-value-emerald {
+  color: #34d399 !important;
+}
+
+body.admin-dashboard-mode .admin-report-value-indigo {
+  color: #a78bfa !important;
+}
+
+body.admin-dashboard-mode .admin-report-filters {
+  background: rgba(30, 41, 59, 0.58) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-report-filters select,
+body.admin-dashboard-mode .admin-report-filters input {
+  background: rgba(15, 23, 42, 0.66) !important;
+  border-color: rgba(56, 106, 132, 0.86) !important;
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-report-filters label {
+  background: rgba(244, 63, 94, 0.08) !important;
+  border-color: rgba(244, 63, 94, 0.22) !important;
+}
+
+body.admin-dashboard-mode .admin-report-date-field {
+  min-height: 3.25rem;
+  background: rgba(244, 63, 94, 0.12) !important;
+  border-color: rgba(244, 63, 94, 0.32) !important;
+}
+
+body.admin-dashboard-mode .admin-report-date-field:focus-within {
+  background: rgba(244, 63, 94, 0.16) !important;
+  border-color: rgba(251, 113, 133, 0.5) !important;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.08), 0 0 18px rgba(244, 63, 94, 0.14) !important;
+}
+
+body.admin-dashboard-mode .admin-report-date-input {
+  width: 8.75rem;
+  min-width: 8.75rem;
+  color-scheme: dark;
+  letter-spacing: .01em;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body.admin-dashboard-mode .admin-report-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 1.25rem;
+  cursor: pointer;
+}
+
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit,
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-fields-wrapper,
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-text,
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-day-field,
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-month-field,
+body.admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-year-field {
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-report-calendar-icon {
+  margin-left: -.2rem;
+  color: #fb7185 !important;
+  filter: drop-shadow(0 0 8px rgba(251, 113, 133, 0.26));
+  pointer-events: none;
+}
+
+body.admin-dashboard-mode .admin-report-clear {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(56, 106, 132, 0.86) !important;
+  color: #94a3b8 !important;
+}
+
+body.admin-dashboard-mode .admin-report-clear:hover {
+  background: rgba(244, 63, 94, 0.16) !important;
+  color: #fb7185 !important;
+}
+
+body.admin-dashboard-mode .admin-report-table-wrap {
+  background: rgba(30, 41, 59, 0.82) !important;
+  border-color: rgba(56, 106, 132, 0.56) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(148, 163, 184, 0.05) !important;
+}
+
+body.admin-dashboard-mode .admin-report-table thead tr {
+  background: rgba(8, 13, 28, 0.76) !important;
+}
+
+body.admin-dashboard-mode .admin-report-table th {
+  color: #ffffff !important;
+}
+
+body.admin-dashboard-mode .admin-report-table tbody,
+body.admin-dashboard-mode .admin-report-table tr {
+  border-color: rgba(56, 106, 132, 0.74) !important;
+}
+
+body.admin-dashboard-mode .admin-report-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.72) !important;
+}
+
+body.admin-dashboard-mode .admin-report-table td,
+body.admin-dashboard-mode .admin-report-table td span {
+  color: #e2e8f0 !important;
+}
+
+body.admin-dashboard-mode .admin-report-table td:last-child span {
+  color: #34d399 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode,
+body:not(.dark-theme).admin-dashboard-mode main {
+  background: #f8fafc !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode header,
+body:not(.dark-theme).admin-dashboard-mode footer {
+  background: rgba(255, 255, 255, 0.86) !important;
+  border-color: rgba(226, 232, 240, 0.9) !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.05) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .nav-brand-title,
+body:not(.dark-theme).admin-dashboard-mode header a,
+body:not(.dark-theme).admin-dashboard-mode footer {
+  color: #0f172a !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-dashboard-page,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-page,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-page,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-page {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(99, 102, 241, 0.08), transparent 26%),
+    radial-gradient(circle at 84% 16%, rgba(236, 72, 153, 0.07), transparent 24%),
+    linear-gradient(135deg, #f8fafc 0%, #f8fafc 58%, #fdf2f8 100%) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-dashboard-page h1,
+body:not(.dark-theme).admin-dashboard-mode .admin-dashboard-page h2,
+body:not(.dark-theme).admin-dashboard-mode .admin-dashboard-page h3,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-page h1,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-page h1,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-page h1,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-page h3 {
+  color: #0f172a !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-dashboard-page p,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-page p {
+  color: #64748b !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-metric-card,
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-panel,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table-wrap,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table-wrap,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table-wrap,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-stat {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(226, 232, 240, 0.95) !important;
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-metric-card h2,
+body:not(.dark-theme).admin-dashboard-mode .admin-metric-card span,
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-panel h3,
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table th,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table th,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table th,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table th {
+  color: #0f172a !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-metric-card p {
+  color: #64748b !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table thead tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table thead tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table thead tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table thead tr {
+  background: rgba(248, 250, 252, 0.8) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table tbody,
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table tbody,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table tbody,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table tr,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table tbody,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table tr {
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table tbody tr:hover,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table tbody tr:hover,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table tbody tr:hover,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table tbody tr:hover {
+  background: rgba(248, 250, 252, 0.9) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table td,
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table td span,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table td,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-table td span,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table td,
+body:not(.dark-theme).admin-dashboard-mode .admin-users-table td span,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table td,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table td span {
+  color: #334155 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-sales-table .admin-amount,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-table td:last-child span {
+  color: #10b981 !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-value {
+  color: #0f172a !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-value-emerald {
+  color: #10b981 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-value-indigo {
+  color: #4f46e5 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-filters,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-filters {
+  background: rgba(255, 255, 255, 0.65) !important;
+  border-color: rgba(226, 232, 240, 0.95) !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-filters select,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-filters input,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-filters input,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-filters select {
+  background: rgba(99, 102, 241, 0.05) !important;
+  border-color: rgba(99, 102, 241, 0.12) !important;
+  color: #1e293b !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-field {
+  background: rgba(244, 63, 94, 0.06) !important;
+  border-color: rgba(244, 63, 94, 0.14) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-field:focus-within {
+  background: #ffffff !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.08) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input {
+  color-scheme: light;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-fields-wrapper,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-text,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-day-field,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-month-field,
+body:not(.dark-theme).admin-dashboard-mode .admin-report-date-input::-webkit-datetime-edit-year-field {
+  color: #334155 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-calendar-icon {
+  color: #fb7185 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-report-clear,
+body:not(.dark-theme).admin-dashboard-mode .admin-mazos-clear {
+  background: #f1f5f9 !important;
+  border-color: rgba(226, 232, 240, 0.95) !important;
+  color: #94a3b8 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-info-panel {
+  background: rgba(255, 255, 255, 0.74) !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-info-panel h4 {
+  color: #334155 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-info-panel p {
+  color: #94a3b8 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-view-all {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(167, 139, 250, 0.34) !important;
+  color: #7c3aed !important;
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-view-all:hover {
+  background: #ffffff !important;
+  border-color: rgba(124, 58, 237, 0.5) !important;
+  color: #6d28d9 !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-actions-panel h3 {
+  color: #ffffff !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-action-btn {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 12px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-action-btn span {
+  color: #ffffff !important;
+}
+
+body:not(.dark-theme).admin-dashboard-mode .admin-actions-panel {
+  background: linear-gradient(135deg, #4f46e5 0%, #9333ea 52%, #db2777 100%) !important;
+  box-shadow: 0 24px 54px rgba(168, 85, 247, 0.24), 0 0 28px rgba(236, 72, 153, 0.12) !important;
+}

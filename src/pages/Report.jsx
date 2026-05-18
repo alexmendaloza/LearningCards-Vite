@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Award, BookOpen, Target, Flame, Calendar, Trophy, Download, Activity, CheckCircle2, XCircle, Eye } from 'lucide-react';
 import api from '../api/axios';
 
+const REPORT_FALLBACK_DATE = '2026-01-01T00:00:00.000Z';
+
 const ErrorBox = ({ message }) => message ? (
   <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
     {message}
@@ -79,7 +81,7 @@ const PrintLayout = ({ data }) => {
         {usuario.logros?.length > 0 ? usuario.logros.map((logro, idx) => (
           <div key={idx} className="mb-3 p-3 bg-[#fffdf7] border border-[#f3d27a] border-l-4 border-l-[#f5b82e] rounded-xl font-medium break-inside-avoid">
             <strong>{logro.nombre}</strong> - {logro.descripcion}<br/>
-            <span className="text-[#64748b] text-[10px]">OBTENIDO EL: {new Date(logro.pivot?.fecha_obtenido || Date.now()).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+            <span className="text-[#64748b] text-[10px]">OBTENIDO EL: {new Date(logro.pivot?.fecha_obtenido || REPORT_FALLBACK_DATE).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
           </div>
         )) : (
           <p>AÚN NO SE HAN OBTENIDO LOGROS.</p>
@@ -126,7 +128,7 @@ const PrintLayout = ({ data }) => {
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, colorClass, gradientClass, delay = '0s' }) => (
+const StatCard = ({ title, value, icon, colorClass, gradientClass, delay = '0s' }) => (
   <div 
     className={`relative overflow-hidden rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${colorClass}`}
     style={{ animation: `fadeInUp 0.6s ease-out ${delay} both` }}
@@ -134,7 +136,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, gradientClass, delay =
     <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full opacity-20 blur-xl ${gradientClass}`} />
     <div className="relative z-10 flex items-center gap-4">
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/60 shadow-sm backdrop-blur-sm`}>
-        <Icon className="h-5 w-5" />
+        {React.createElement(icon, { className: 'h-5 w-5' })}
       </div>
       <div>
         <p className="text-[10px] font-bold uppercase tracking-wider opacity-80 leading-tight">{title}</p>
@@ -185,7 +187,7 @@ export const ReportPage = () => {
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <ErrorBox message={error} />
       <div className="mt-8 text-center">
-        <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-600">
+        <Link to="/user/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-600">
           Volver al Dashboard
         </Link>
       </div>
@@ -201,7 +203,7 @@ export const ReportPage = () => {
     promedioPrecision = 0,
     totalMazos = 0,
     sesionesRecientes = [],
-    filtroEtiqueta = 'Sin Filtros'
+    filtroEtiqueta: _filtroEtiqueta = 'Sin Filtros'
   } = data;
 
   return (
@@ -335,7 +337,7 @@ export const ReportPage = () => {
                   <h3 className="font-bold text-slate-800 text-sm mb-1 uppercase">{logro.nombre}</h3>
                   <p className="text-xs text-slate-500 mb-3">{logro.descripcion}</p>
                   <div className="inline-block rounded-full bg-slate-50 border border-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Obtenido: {new Date(logro.pivot?.fecha_obtenido || Date.now()).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    Obtenido: {new Date(logro.pivot?.fecha_obtenido || REPORT_FALLBACK_DATE).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </div>
                 </div>
               )) : (
