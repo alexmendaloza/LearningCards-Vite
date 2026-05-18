@@ -19,6 +19,7 @@ import {
   PublishPage,
   StudyPage,
 } from './pages/Platform';
+import ReportPage from './pages/Report';
 import api from './api/axios';
 
 const LoadingScreen = () => (
@@ -62,6 +63,7 @@ function App() {
           <Route path="/admin/login" element={<AdminLoginPage onAuth={setUser} />} />
 
           <Route path="/dashboard" element={<RequireUser user={user}><DashboardPage /></RequireUser>} />
+          <Route path="/reporte" element={<RequireUser user={user}><ReportPage /></RequireUser>} />
           <Route path="/configuracion" element={<RequireUser user={user}><ProfilePage onAuth={setUser} /></RequireUser>} />
           <Route path="/mazos/create" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />
           <Route path="/mazos/:id/edit" element={<RequireUser user={user}><MazoFormPage /></RequireUser>} />

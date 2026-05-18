@@ -579,7 +579,7 @@ export const DashboardPage = () => {
           <div className="rounded-2xl bg-white p-6 shadow-lg">
             <h3 className="mb-4 font-bold">🏆 Logros</h3>
             {usuario.nombreNivel ? (
-              <div className="flex items-center gap-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
+              <div className="mb-4 flex items-center gap-3 rounded-xl border border-orange-100 bg-orange-50 p-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-lg">🔥</div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{usuario.nombreNivel}</p>
@@ -587,8 +587,12 @@ export const DashboardPage = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">Completa tu primera sesión de estudio para desbloquear logros.</p>
+              <p className="mb-4 text-sm text-gray-500">Completa tu primera sesión de estudio para desbloquear logros.</p>
             )}
+            <Link to="/reporte" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 text-sm font-bold text-indigo-700 transition-all hover:from-indigo-100 hover:to-purple-100 active:scale-95">
+              <svg className="h-5 w-5 text-indigo-500 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              Ver Reporte de Progreso
+            </Link>
           </div>
 
           <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">

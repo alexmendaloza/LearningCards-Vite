@@ -709,6 +709,69 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
   }
 });
 
+app.get('/api/user/report', requireUser, async (req, res, next) => {
+  try {
+    const userId = req.usuario.IDUsuario;
+
+    const [sesionesRecientes] = await pool.query(
+      `SELECT s.*, m.titulo AS mazo_titulo 
+         FROM SesionEstudio s 
+         LEFT JOIN Mazo m ON m.IDMazo = s.IDMazo 
+        WHERE s.IDUsuario = ? 
+        ORDER BY s.fechaIni DESC 
+        LIMIT 10`,
+      [userId]
+    );
+
+    const sesionesFormateadas = sesionesRecientes.map(s => ({
+      ...s,
+      mazo: { titulo: s.mazo_titulo || 'MAZO ELIMINADO' }
+    }));
+
+    const [stats] = await pool.query(
+      `SELECT COUNT(IDSesion) AS totalSesiones, 
+              COALESCE(SUM(totalTarjetas), 0) AS totalTarjetasEstudiadas, 
+              COALESCE(SUM(aciertos), 0) AS aciertosTotales 
+         FROM SesionEstudio 
+        WHERE IDUsuario = ?`,
+      [userId]
+    );
+
+    const totalSesiones = Number(stats[0].totalSesiones || 0);
+    const totalTarjetasEstudiadas = Number(stats[0].totalTarjetasEstudiadas || 0);
+    const aciertosTotales = Number(stats[0].aciertosTotales || 0);
+    const promedioPrecision = totalTarjetasEstudiadas > 0 ? Math.round((aciertosTotales / totalTarjetasEstudiadas) * 100) : 0;
+
+    const [mazosCount] = await pool.query(
+      `SELECT COUNT(*) AS totalMazos FROM Mazo WHERE IDUsuario = ? AND enColeccion = 1`,
+      [userId]
+    );
+    const totalMazos = Number(mazosCount[0].totalMazos || 0);
+
+    const [niveles] = await pool.query(
+      `SELECT nombreNivel FROM NivelRacha WHERE IDNivel = ? LIMIT 1`,
+      [req.usuario.IDNivel]
+    );
+    const nombreNivel = niveles[0]?.nombreNivel || 'Novato';
+
+    return res.json({
+      usuario: {
+        ...cleanUser(req.usuario),
+        nivel: { nombreNivel },
+        logros: [],
+      },
+      totalSesiones,
+      totalTarjetasEstudiadas,
+      promedioPrecision,
+      totalMazos,
+      sesionesRecientes: sesionesFormateadas,
+      filtroEtiqueta: 'Sin Filtros'
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.get('/api/user/configuracion', requireUser, (req, res) => {
   res.json({ usuario: cleanUser(req.usuario) });
 });
