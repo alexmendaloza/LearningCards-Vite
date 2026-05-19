@@ -7,7 +7,15 @@ const empty = 'Sin descripcion';
 
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
 const shortDate = (value) => (value ? new Date(value).toLocaleDateString('es-MX') : '');
-const dateValue = (value) => (value ? String(value).slice(0, 10) : '');
+const dateValue = (value) => {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const initials = (name = 'U') => name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
 const storageUrl = (path) => path ? (String(path).startsWith('http') ? path : `/storage/${path}`) : '';
@@ -2288,6 +2296,7 @@ export const AdminVentasPage = () => {
     fecha_inicio: params.get('fecha_inicio') || '',
     fecha_fin: params.get('fecha_fin') || '',
   });
+  const today = dateValue(new Date());
   const query = params.toString();
   const { loading, error, data } = useResource(async () => (await api.get(`/admin/ventas${query ? `?${query}` : ''}`)).data, [query]);
 
@@ -2304,6 +2313,14 @@ export const AdminVentasPage = () => {
       fecha_fin: params.get('fecha_fin') || '',
     });
   }, [params]);
+
+  const handleDateFilterChange = (key) => (event) => {
+    const value = event.target.value;
+    setFilters((current) => ({
+      ...current,
+      [key]: value && value > today ? today : value,
+    }));
+  };
 
   const applyFilters = (event) => {
     event.preventDefault();
@@ -2370,7 +2387,7 @@ export const AdminVentasPage = () => {
               <label className="admin-report-date-field flex items-center gap-3 rounded-xl border border-rose-500/10 bg-rose-500/5 px-5 py-3 transition-all hover:border-rose-500/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-rose-500/10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Desde</span>
                 <span className="relative flex items-center gap-2">
-                  <input type="date" value={filters.fecha_inicio} onChange={(event) => setFilters({ ...filters, fecha_inicio: event.target.value })} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
+                  <input type="date" max={today} value={filters.fecha_inicio} onChange={handleDateFilterChange('fecha_inicio')} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
                   <CalendarMiniIcon className="admin-report-calendar-icon h-4 w-4" />
                 </span>
               </label>
@@ -2378,7 +2395,7 @@ export const AdminVentasPage = () => {
               <label className="admin-report-date-field flex items-center gap-3 rounded-xl border border-rose-500/10 bg-rose-500/5 px-5 py-3 transition-all hover:border-rose-500/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-rose-500/10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Hasta</span>
                 <span className="relative flex items-center gap-2">
-                  <input type="date" value={filters.fecha_fin} onChange={(event) => setFilters({ ...filters, fecha_fin: event.target.value })} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
+                  <input type="date" max={today} value={filters.fecha_fin} onChange={handleDateFilterChange('fecha_fin')} className="admin-report-date-input bg-transparent p-0 text-sm font-black text-slate-700 focus:ring-0" />
                   <CalendarMiniIcon className="admin-report-calendar-icon h-4 w-4" />
                 </span>
               </label>
