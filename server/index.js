@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servidor principal de la API de LearningCards (Express).
+ * Maneja las rutas de autenticación, gestión de usuarios, mazos, tarjetas,
+ * publicaciones del marketplace y reportes.
+ */
+
 import bcrypt from 'bcryptjs';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -45,6 +51,12 @@ const nowSql = () => new Date().toISOString().slice(0, 19).replace('T', ' ');
 const todaySql = () => new Date().toISOString().slice(0, 10);
 const tokenCookie = 'lc_session';
 
+/**
+ * Limpia el objeto usuario para no devolver datos sensibles (como la contraseña) al frontend.
+ * Además, verifica si la racha actual se ha perdido (si han pasado más de 1 día desde el último estudio).
+ * @param {Object} user - Objeto del usuario obtenido de la BD.
+ * @returns {Object|null} Objeto limpio.
+ */
 const cleanUser = (user) => {
   if (!user) return null;
   const copy = { ...user };
@@ -81,6 +93,11 @@ const saveDataUrlImage = async (dataUrl, originalName = 'perfil.png') => {
   return relative;
 };
 
+/**
+ * Genera el JWT y lo establece como una cookie HttpOnly en la respuesta.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @param {Object} usuario - Datos del usuario.
+ */
 const signIn = (res, usuario) => {
   const token = jwt.sign(
     { id: usuario.IDUsuario, role: usuario.rol || 'user', name: usuario.NombreCompleto },
@@ -109,6 +126,10 @@ const getAuthPayload = (req) => {
   }
 };
 
+/**
+ * Middleware para proteger rutas requeridas de usuario.
+ * Verifica si el token es válido y si el usuario existe en la base de datos.
+ */
 const requireUser = async (req, res, next) => {
   try {
     const payload = getAuthPayload(req);
@@ -131,6 +152,10 @@ const requireUser = async (req, res, next) => {
   }
 };
 
+/**
+ * Middleware para proteger rutas exclusivas de administrador.
+ * Primero ejecuta `requireUser` y luego verifica el rol.
+ */
 const requireAdmin = async (req, res, next) => {
   await requireUser(req, res, () => {
     if (req.usuario?.rol !== 'admin') {
@@ -518,10 +543,19 @@ app.get('/api/tables/:table/:id', async (req, res, next) => {
   }
 });
 
+/**
+ * Ruta: GET /api/me
+ * Obtiene los datos del usuario actualmente autenticado (basado en la cookie).
+ */
 app.get('/api/me', requireUser, (req, res) => {
   res.json({ usuario: cleanUser(req.usuario) });
 });
 
+/**
+ * Ruta: POST /api/login
+ * Inicia sesión para usuarios normales. Comprueba credenciales (email o username)
+ * y devuelve el usuario y un token de sesión si son correctas.
+ */
 app.post('/api/login', async (req, res, next) => {
   try {
     const { email: identifier, password } = req.body;
@@ -564,6 +598,10 @@ app.post('/api/login', async (req, res, next) => {
   }
 });
 
+/**
+ * Ruta: POST /api/admin/login
+ * Inicia sesión exclusiva para administradores en el panel de control.
+ */
 app.post('/api/admin/login', async (req, res, next) => {
   try {
     const { email: identifier, password } = req.body;
@@ -605,6 +643,10 @@ app.post('/api/admin/login', async (req, res, next) => {
   }
 });
 
+/**
+ * Ruta: POST /api/register
+ * Crea una nueva cuenta de usuario y automáticamente inicia sesión si los datos son válidos.
+ */
 app.post('/api/register', async (req, res, next) => {
   try {
     const errors = validate({
@@ -656,6 +698,13 @@ app.post('/api/admin/logout', (_req, res) => {
   res.json({ success: true });
 });
 
+/**
+ * Ruta: GET /api/user/dashboard
+ * Retorna la información necesaria para el Dashboard del usuario, incluyendo:
+ * - Mazos del usuario (propios y comprados).
+ * - Mazos populares en el marketplace (para recomendación).
+ * - Estadísticas de la sesión del día (total estudiadas, precisión).
+ */
 app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
   try {
     const { search, origin, cards_count: cardsCount } = req.query;
@@ -723,6 +772,11 @@ app.get('/api/user/dashboard', requireUser, async (req, res, next) => {
   }
 });
 
+/**
+ * Ruta: GET /api/user/creator/stats
+ * Obtiene las estadísticas de ventas y valoraciones para los mazos
+ * que el usuario ha publicado en el Marketplace.
+ */
 app.get('/api/user/creator/stats', requireUser, async (req, res, next) => {
   try {
     const commissionRate = 0.15;

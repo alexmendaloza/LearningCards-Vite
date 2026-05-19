@@ -1,7 +1,17 @@
+/**
+ * @fileoverview Componente de la página de inicio (Landing Page).
+ * Muestra información promocional sobre la plataforma LearningCards,
+ * incluyendo características, un hero interactivo y llamadas a la acción (CTAs).
+ */
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+/**
+ * Componente principal de la página de inicio.
+ * Presenta el hero banner animado y los bloques de características principales.
+ */
 const Home = () => {
   return (
     <div className="overflow-x-hidden">

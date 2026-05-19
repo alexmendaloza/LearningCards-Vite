@@ -1,8 +1,18 @@
+/**
+ * @fileoverview Componente de inicio de sesión exclusivo para administradores.
+ * Proporciona una interfaz segura e independiente del login de usuarios normales
+ * para acceder al panel de control de la plataforma.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 
+/**
+ * Componente de la página de Login de Administrador.
+ * Gestiona el formulario, la autenticación y los efectos visuales de seguridad.
+ */
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

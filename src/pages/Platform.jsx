@@ -142,6 +142,10 @@ const useResource = (loader, deps = []) => {
   return state;
 };
 
+/**
+ * Componente de página para inicio de sesión y registro de usuarios.
+ * Maneja ambos formularios mediante un sistema de pestañas y llamadas a la API.
+ */
 export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const navigate = useNavigate();
   const authToggleRef = useRef(null);
@@ -301,7 +305,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
                 <Field label="Correo electronico" type="email" value={register.email} onChange={(value) => setRegister({ ...register, email: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Contrasena" type="password" value={register.password} onChange={(value) => setRegister({ ...register, password: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
-                  <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} max={new Date().toISOString().split('T')[0]} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
                 <label className="block">
                   <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">Foto de perfil</span>
@@ -371,6 +375,10 @@ const Select = ({ label, value, onChange, options, required = false, ...props })
   </label>
 );
 
+/**
+ * Componente de Dashboard principal del usuario.
+ * Muestra estadísticas, rachas, y la lista de mazos creados o adquiridos.
+ */
 export const DashboardPage = () => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -740,6 +748,10 @@ const CheckIcon = ({ className }) => <svg className={className} fill="currentCol
 const SparkIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>;
 const ArrowRightIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>;
 
+/**
+ * Componente para crear y editar mazos de tarjetas.
+ * Permite gestionar el título, descripción y la lista interactiva de tarjetas (anverso, reverso, tipo).
+ */
 export const MazoFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -983,6 +995,11 @@ export const MazoFormPage = () => {
   );
 };
 
+/**
+ * Componente de la sesión de estudio.
+ * Presenta las tarjetas al usuario secuencialmente y evalúa sus respuestas
+ * mediante un sistema de autoevaluación o coincidencia difusa (fuzzy match).
+ */
 export const StudyPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1195,6 +1212,10 @@ const Counter = ({ label, value, color }) => (
   </div>
 );
 
+/**
+ * Componente de la tienda o Marketplace.
+ * Muestra todas las publicaciones públicas disponibles para adquisición o compra.
+ */
 export const MarketplacePage = () => {
   const [params, setParams] = useSearchParams();
   const [form, setForm] = useState({
@@ -1266,6 +1287,10 @@ export const MarketplacePage = () => {
   );
 };
 
+/**
+ * Vista de detalle para una publicación específica en el Marketplace.
+ * Muestra reseñas, vista previa de tarjetas y permite añadir el mazo a la colección.
+ */
 export const MarketplaceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1413,6 +1438,10 @@ export const MarketplaceDetailPage = () => {
   );
 };
 
+/**
+ * Componente que simula la pasarela de pago para mazos de costo superior a $0.
+ * Registra la transacción y añade el mazo al dashboard tras un éxito simulado.
+ */
 export const PaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1536,6 +1565,10 @@ export const PaymentPage = () => {
   );
 };
 
+/**
+ * Componente para publicar un mazo en el Marketplace.
+ * Configura la visibilidad, categoría, precio e imagen promocional del mazo.
+ */
 export const PublishPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1623,6 +1656,10 @@ export const PublishPage = () => {
   );
 };
 
+/**
+ * Página de configuración del perfil del usuario.
+ * Permite cambiar nombre, contraseña y foto de perfil.
+ */
 export const ProfilePage = ({ onAuth }) => {
   const navigate = useNavigate();
   const { loading, error, data } = useResource(async () => (await api.get('/user/configuracion')).data, []);
@@ -1700,6 +1737,9 @@ export const ProfilePage = ({ onAuth }) => {
   );
 };
 
+/**
+ * Página de inicio de sesión exclusiva para el panel de administradores.
+ */
 export const AdminLoginPage = ({ onAuth }) => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -1745,6 +1785,11 @@ export const AdminLoginPage = ({ onAuth }) => {
   );
 };
 
+/**
+ * Dashboard del Administrador.
+ * Muestra KPIs de la plataforma: total de usuarios, ventas brutas,
+ * mazos totales y los mazos más vendidos.
+ */
 export const AdminDashboardPage = () => {
   useEffect(() => {
     document.body.classList.add('admin-dashboard-mode');
@@ -1888,6 +1933,10 @@ const LockIcon = ({ className }) => <svg className={className} fill="none" strok
 const ReportFileIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
 const CalendarMiniIcon = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M8 7V3m8 4V3M5 11h14M7 21h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 
+/**
+ * Panel de administración para la gestión de usuarios.
+ * Permite al admin listar y cambiar contraseñas o roles de otros usuarios.
+ */
 export const AdminUsersPage = () => {
   const [refresh, setRefresh] = useState(0);
   const { loading, error, data } = useResource(async () => (await api.get('/admin/users')).data, [refresh]);
@@ -1962,6 +2011,10 @@ export const AdminUsersPage = () => {
   );
 };
 
+/**
+ * Panel de administración de mazos.
+ * Lista todos los mazos en la plataforma para moderación y mantenimiento.
+ */
 export const AdminMazosPage = () => {
   const [refresh, setRefresh] = useState(0);
   const navigate = useNavigate();
@@ -2128,6 +2181,9 @@ export const AdminMazosPage = () => {
   );
 };
 
+/**
+ * Vista de detalle en administración para ver y gestionar las tarjetas de un mazo.
+ */
 export const AdminMazoDetailPage = () => {
   const { id } = useParams();
   const [refresh, setRefresh] = useState(0);
@@ -2146,6 +2202,84 @@ export const AdminMazoDetailPage = () => {
   );
 };
 
+const AdminPrintLayout = ({ data, filters }) => {
+  const stats = data?.stats || {};
+  const ventas = data?.ventas || [];
+  return (
+    <div className="hidden print:block bg-white text-black text-[11px] leading-[1.55] uppercase font-sans p-8">
+      <div className="text-center bg-[#1e293b] text-white border-b-4 border-[#3b82f6] rounded-2xl p-6 mb-8 break-inside-avoid font-extrabold">
+        <h1 className="m-0 text-white text-3xl font-extrabold tracking-wide">LEARNINGCARDS - REPORTE ADMINISTRATIVO</h1>
+        <p className="mt-2 text-[11px]">SISTEMA NOVALEARN</p>
+        <p className="mt-1 text-[11px]">FECHA DE GENERACIÓN: {new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</p>
+        {(filters?.fecha_inicio || filters?.fecha_fin) && (
+          <p className="mt-1 text-[11px] text-blue-200">
+            PERÍODO: {filters.fecha_inicio || 'INICIO'} AL {filters.fecha_fin || 'ACTUALIDAD'}
+          </p>
+        )}
+      </div>
+
+      <table className="w-full border-separate border-spacing-3 -mx-3 mb-8 break-inside-avoid">
+        <tbody>
+          <tr>
+            <td className="w-1/3 p-0">
+              <div className="bg-[#f0fdf4] border border-[#86efac] border-t-4 border-t-[#22c55e] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">VENTAS BRUTAS TOTALES</div>
+                <div className="text-lg">{money(stats.total_ganancias)}</div>
+              </div>
+            </td>
+            <td className="w-1/3 p-0">
+              <div className="bg-[#eff6ff] border border-[#93c5fd] border-t-4 border-t-[#3b82f6] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">UTILIDAD NOVALEARN (15%)</div>
+                <div className="text-lg">{money(stats.utilidad_novalearn)}</div>
+              </div>
+            </td>
+            <td className="w-1/3 p-0">
+              <div className="bg-[#faf5ff] border border-[#d8b4fe] border-t-4 border-t-[#a855f7] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">USUARIOS ACTIVOS</div>
+                <div className="text-lg">{stats.total_usuarios || 0}</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 className="text-[#0f172a] text-xl font-extrabold text-left mt-8 mb-4 pb-2 border-b-2 border-[#94a3b8] relative break-after-avoid after:content-[''] after:block after:w-32 after:h-0.5 after:mt-2 after:bg-[#3b82f6]">
+        📋 HISTORIAL DE TRANSACCIONES
+      </h2>
+      <table className="w-full border-collapse mb-8 break-inside-auto">
+        <thead className="table-header-group">
+          <tr>
+            <th className="bg-[#1e293b] text-left p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#3b82f6]">USUARIO</th>
+            <th className="bg-[#1e293b] text-left p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#3b82f6]">MAZO ADQUIRIDO</th>
+            <th className="bg-[#1e293b] text-left p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#3b82f6]">FECHA</th>
+            <th className="bg-[#1e293b] text-right p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#3b82f6]">MONTO</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ventas?.length > 0 ? ventas.map((sale, idx) => (
+            <tr key={idx} className="break-inside-avoid even:bg-[#f8fafc]">
+              <td className="p-3 border-b border-[#e2e8f0] font-bold">{sale.UserName || 'Anónimo'}</td>
+              <td className="p-3 border-b border-[#e2e8f0]">{sale.titulo || 'N/A'}</td>
+              <td className="p-3 border-b border-[#e2e8f0]">{adminLongDate(sale.fechaCompra)}</td>
+              <td className="p-3 border-b border-[#e2e8f0] text-right font-bold text-emerald-700">{money(sale.precioPagado)}</td>
+            </tr>
+          )) : (
+            <tr><td colSpan="4" className="p-3 border-b border-[#e2e8f0] text-center">NO HAY TRANSACCIONES REGISTRADAS</td></tr>
+          )}
+        </tbody>
+      </table>
+
+      <div className="mt-10 pt-4 border-t-2 border-[#cbd5e1] text-center text-[10px] font-bold text-slate-500">
+        REPORTE CONFIDENCIAL - USO EXCLUSIVO ADMINISTRATIVO.
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Panel de administración para el registro y auditoría de todas las ventas (compras)
+ * realizadas en la plataforma.
+ */
 export const AdminVentasPage = () => {
   const [params, setParams] = useSearchParams();
   const [filters, setFilters] = useState({
@@ -2187,7 +2321,9 @@ export const AdminVentasPage = () => {
   const hasFilters = ['usuario', 'orden', 'fecha_inicio', 'fecha_fin'].some((key) => params.get(key));
 
   return (
-    <div className="admin-report-page min-h-screen px-6 pb-20 pt-10">
+    <>
+      {data && <AdminPrintLayout data={data} filters={filters} />}
+      <div className="print:hidden admin-report-page min-h-screen px-6 pb-20 pt-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div className="flex items-center gap-5">
@@ -2201,10 +2337,10 @@ export const AdminVentasPage = () => {
             </div>
           </div>
 
-          <a href="/admin/reporte-pdf" className="admin-report-pdf flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-rose-500 px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/30 transition-all hover:scale-105 active:scale-95">
+          <button onClick={() => { document.title = 'Reporte_Administrativo'; window.print(); }} className="admin-report-pdf flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-orange-400 to-rose-500 px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-orange-500/30 transition-all hover:scale-105 active:scale-95">
             <ReportFileIcon className="h-6 w-6" />
             Descargar Reporte PDF
-          </a>
+          </button>
         </div>
 
         <section className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -2302,7 +2438,8 @@ export const AdminVentasPage = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

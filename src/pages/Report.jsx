@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Componente para la generación, visualización y descarga de reportes
+ * de progreso del usuario. Incluye métricas globales e historial de sesiones de estudio.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Award, BookOpen, Target, Flame, Calendar, Trophy, Download, Activity, CheckCircle2, XCircle, Eye } from 'lucide-react';
@@ -18,6 +23,10 @@ const Loading = ({ text = 'Cargando...' }) => (
   </div>
 );
 
+/**
+ * Componente oculto en pantalla pero visible al imprimir.
+ * Genera el diseño del PDF cuando el usuario hace clic en "Descargar PDF" o "Previsualizar".
+ */
 const PrintLayout = ({ data }) => {
   const { usuario, totalSesiones, totalTarjetasEstudiadas, promedioPrecision, totalMazos, sesionesRecientes, filtroEtiqueta } = data;
   return (
@@ -128,6 +137,10 @@ const PrintLayout = ({ data }) => {
   );
 };
 
+/**
+ * Tarjeta de estadística visual para el dashboard del reporte.
+ * Muestra un valor, un título y un ícono con gradientes personalizados.
+ */
 const StatCard = ({ title, value, icon, colorClass, gradientClass, delay = '0s' }) => (
   <div 
     className={`relative overflow-hidden rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${colorClass}`}
@@ -146,6 +159,11 @@ const StatCard = ({ title, value, icon, colorClass, gradientClass, delay = '0s' 
   </div>
 );
 
+/**
+ * Página principal del reporte de progreso.
+ * Descarga los datos del backend basándose en filtros de fecha y renderiza
+ * la vista web y la vista de impresión (`PrintLayout`).
+ */
 export const ReportPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

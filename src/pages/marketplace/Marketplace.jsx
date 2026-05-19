@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, CreditCard, Download, Layers, MessageSquare, Plus, UserRound } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, Download, Layers, MessageSquare, Plus, UserRound, Eye } from 'lucide-react';
 import api from '../../api/axios';
 import DeckCard from './DeckCard';
 import FilterBar from './FilterBar';
@@ -109,10 +109,22 @@ export const MarketplacePage = () => {
               <p className="ml-15 text-gray-500">Descubre y adquiere mazos de flashcards creados por la comunidad</p>
             </div>
 
-            <button className="marketplace-liquid-btn inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black text-white">
-              <Download className="h-5 w-5" />
-              Descargar Reporte de Ventas
-            </button>
+            <div className="flex gap-3">
+              <Link
+                to="/user/creator/stats"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/50 border border-purple-200 px-5 py-3 text-sm font-black text-purple-700 backdrop-blur transition-all hover:bg-white hover:-translate-y-0.5"
+              >
+                <Eye className="h-5 w-5" />
+                Previsualizar Reporte
+              </Link>
+              <Link 
+                to="/user/creator/stats"
+                className="marketplace-liquid-btn inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black text-white transition-all hover:-translate-y-0.5"
+              >
+                <Download className="h-5 w-5" />
+                Descargar Reporte de Ventas
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Componente raíz de la aplicación React.
+ * Configura React Router, maneja el estado de autenticación global y define
+ * todas las rutas de la plataforma (públicas, de usuario y de administrador).
+ */
+
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
@@ -23,6 +29,9 @@ import ReportPage from './pages/Report';
 import UserStatsPage from './pages/reports/UserStats';
 import api from './api/axios';
 
+/**
+ * Pantalla de carga que se muestra mientras se verifica la sesión del usuario.
+ */
 const LoadingScreen = () => (
   <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50">
     <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
@@ -30,27 +39,44 @@ const LoadingScreen = () => (
   </div>
 );
 
+/**
+ * Componente envoltorio (HOC) para proteger rutas que requieren autenticación.
+ * Redirige a la página de login si el usuario no ha iniciado sesión.
+ */
 const RequireUser = ({ user, children }) => {
   if (!user) return <Navigate to="/login" replace />;
   return children;
 };
 
+/**
+ * Componente envoltorio (HOC) para proteger rutas exclusivas de administrador.
+ * Redirige al login o al dashboard normal si no tiene permisos.
+ */
 const RequireAdmin = ({ user, children }) => {
   if (!user) return <Navigate to="/admin/login" replace />;
   if (user.rol !== 'admin') return <Navigate to="/user/dashboard" replace />;
   return children;
 };
 
+/**
+ * Componente para redirigir URLs antiguas a las nuevas rutas.
+ * Reemplaza los parámetros de la URL según el patrón definido.
+ */
 const LegacyUserRedirect = ({ pattern }) => {
   const params = useParams();
   const to = pattern.replace(/:([A-Za-z0-9_]+)/g, (_, key) => params[key] ?? '');
   return <Navigate to={to} replace />;
 };
 
+/**
+ * Componente principal de la aplicación.
+ * Maneja el estado global del usuario y define el árbol de rutas.
+ */
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Verifica la sesión del usuario al cargar la aplicación por primera vez
   useEffect(() => {
     api.get('/me')
       .then(({ data }) => setUser(data.usuario))
@@ -64,11 +90,13 @@ function App() {
     <Router>
       <AppLayout user={user} onAuth={setUser}>
         <Routes>
+          {/* Rutas Públicas */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={user ? <Navigate to={user.rol === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace /> : <LoginPage initialTab="login" onAuth={setUser} />} />
           <Route path="/register" element={user ? <Navigate to={user.rol === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace /> : <LoginPage initialTab="register" onAuth={setUser} />} />
           <Route path="/admin/login" element={<AdminLoginPage onAuth={setUser} />} />
 
+          {/* Rutas de Usuario (Protegidas) */}
           <Route path="/user/dashboard" element={<RequireUser user={user}><DashboardPage /></RequireUser>} />
           <Route path="/user/creator/stats" element={<RequireUser user={user}><UserStatsPage /></RequireUser>} />
           <Route path="/user/reportes" element={<RequireUser user={user}><ReportPage /></RequireUser>} />
@@ -81,6 +109,7 @@ function App() {
           <Route path="/user/marketplace/:id" element={<RequireUser user={user}><MarketplaceDetailPage /></RequireUser>} />
           <Route path="/user/marketplace/:id/pagar" element={<RequireUser user={user}><PaymentPage /></RequireUser>} />
 
+          {/* Redirecciones de URLs legacy */}
           <Route path="/dashboard" element={<Navigate to="/user/dashboard" replace />} />
           <Route path="/reporte" element={<Navigate to="/user/reportes" replace />} />
           <Route path="/configuracion" element={<Navigate to="/user/configuracion" replace />} />
@@ -92,6 +121,7 @@ function App() {
           <Route path="/marketplace/:id" element={<LegacyUserRedirect pattern="/user/marketplace/:id" />} />
           <Route path="/marketplace/:id/pagar" element={<LegacyUserRedirect pattern="/user/marketplace/:id/pagar" />} />
 
+          {/* Rutas de Administrador (Protegidas) */}
           <Route path="/admin/dashboard" element={<RequireAdmin user={user}><AdminDashboardPage /></RequireAdmin>} />
           <Route path="/admin/users" element={<RequireAdmin user={user}><AdminUsersPage /></RequireAdmin>} />
           <Route path="/admin/mazos" element={<RequireAdmin user={user}><AdminMazosPage /></RequireAdmin>} />

@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Star,
   X,
+  Eye,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -87,6 +88,123 @@ const useCreatorStats = (params) => {
   return state;
 };
 
+const PrintLayout = ({ data }) => {
+  const { usuario, stats, topMazos, ventasRecientes } = data;
+  return (
+    <div className="hidden print:block bg-white text-black text-[11px] leading-[1.55] uppercase font-sans p-8">
+      <div className="text-center bg-[#4c1d95] text-white border-b-4 border-[#f5b82e] rounded-2xl p-6 mb-8 break-inside-avoid font-extrabold">
+        <h1 className="m-0 text-white text-3xl font-extrabold tracking-wide">LEARNINGCARDS - REPORTE DE VENTAS</h1>
+        <p className="mt-2 text-[11px]">CREADOR: {usuario?.NombreCompleto?.toUpperCase() || usuario?.UserName?.toUpperCase() || 'USUARIO'}</p>
+        <p className="mt-1 text-[11px]">FECHA DE GENERACIÓN: {new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</p>
+      </div>
+
+      <table className="w-full border-separate border-spacing-3 -mx-3 mb-8 break-inside-avoid">
+        <tbody>
+          <tr>
+            <td className="w-1/4 p-0">
+              <div className="bg-[#fbf7ff] border border-[#d8b4fe] border-t-4 border-t-[#7c3aed] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">MAZOS PUBLICADOS</div>
+                <div className="text-lg">{stats?.mazos_publicados || 0}</div>
+              </div>
+            </td>
+            <td className="w-1/4 p-0">
+              <div className="bg-[#fbf7ff] border border-[#d8b4fe] border-t-4 border-t-[#7c3aed] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">COPIAS VENDIDAS</div>
+                <div className="text-lg">{stats?.copias_vendidas || 0}</div>
+              </div>
+            </td>
+            <td className="w-1/4 p-0">
+              <div className="bg-[#fbf7ff] border border-[#d8b4fe] border-t-4 border-t-[#7c3aed] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">TICKET PROMEDIO</div>
+                <div className="text-lg">{money(stats?.ticket_promedio)}</div>
+              </div>
+            </td>
+            <td className="w-1/4 p-0">
+              <div className="bg-[#fbf7ff] border border-[#d8b4fe] border-t-4 border-t-[#7c3aed] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">VALORACIÓN PROMEDIO</div>
+                <div className="text-lg">{rating(stats?.promedio_estrellas)}</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td className="w-1/3 p-0 pt-2">
+              <div className="bg-[#fffdf7] border border-[#f3d27a] border-t-4 border-t-[#f5b82e] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">INGRESOS BRUTOS</div>
+                <div className="text-lg">{money(stats?.ingresos_brutos)}</div>
+              </div>
+            </td>
+            <td className="w-1/3 p-0 pt-2">
+              <div className="bg-[#fffdf7] border border-[#f3d27a] border-t-4 border-t-[#ef4444] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">COMISIÓN PLATAFORMA</div>
+                <div className="text-lg">{money(stats?.comision_plataforma)}</div>
+              </div>
+            </td>
+            <td className="w-1/3 p-0 pt-2">
+              <div className="bg-[#f0fdf4] border border-[#86efac] border-t-4 border-t-[#22c55e] rounded-xl p-4 text-center font-bold text-black">
+                <div className="text-[9px] mb-2 tracking-wide">GANANCIAS NETAS</div>
+                <div className="text-lg">{money(stats?.dinero_neto)}</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 className="text-[#2e1065] text-xl font-extrabold text-left mt-8 mb-4 pb-2 border-b-2 border-[#c084fc] relative break-after-avoid after:content-[''] after:block after:w-32 after:h-0.5 after:mt-2 after:bg-[#f5b82e]">
+        📦 RENDIMIENTO DE MAZOS
+      </h2>
+      <table className="w-full border-collapse mb-8 break-inside-auto">
+        <thead className="table-header-group">
+          <tr>
+            <th className="bg-[#4c1d95] text-left p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">MAZO</th>
+            <th className="bg-[#4c1d95] text-left p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">TIPO</th>
+            <th className="bg-[#4c1d95] text-center p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">VENTAS</th>
+            <th className="bg-[#4c1d95] text-right p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">BRUTO</th>
+            <th className="bg-[#4c1d95] text-right p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">NETO</th>
+            <th className="bg-[#4c1d95] text-right p-3 text-[9px] text-white font-extrabold tracking-wide border-b-2 border-[#f5b82e]">RATING</th>
+          </tr>
+        </thead>
+        <tbody>
+          {topMazos?.length > 0 ? topMazos.map((mazo, idx) => (
+            <tr key={idx} className="break-inside-avoid even:bg-[#faf5ff]">
+              <td className="p-3 border-b border-[#eadcff]">
+                <div className="font-bold">{mazo.titulo}</div>
+                <div className="text-[9px] text-slate-500">{mazo.categoria || mazo.descripcion || 'Sin categoría'}</div>
+              </td>
+              <td className="p-3 border-b border-[#eadcff]">{Number(mazo.pago) === 1 ? money(mazo.precio) : 'GRATIS'}</td>
+              <td className="p-3 border-b border-[#eadcff] text-center">{mazo.copias_vendidas}</td>
+              <td className="p-3 border-b border-[#eadcff] text-right">{money(mazo.ingresos_brutos)}</td>
+              <td className="p-3 border-b border-[#eadcff] text-right font-bold text-emerald-700">{money(mazo.ingresos_netos)}</td>
+              <td className="p-3 border-b border-[#eadcff] text-right">{rating(mazo.promedio_valoracion)}</td>
+            </tr>
+          )) : (
+            <tr><td colSpan="6" className="p-3 border-b border-[#eadcff] text-center">NO HAY MAZOS PUBLICADOS</td></tr>
+          )}
+        </tbody>
+      </table>
+
+      <h2 className="text-[#2e1065] text-xl font-extrabold text-left mt-8 mb-4 pb-2 border-b-2 border-[#c084fc] relative break-after-avoid after:content-[''] after:block after:w-32 after:h-0.5 after:mt-2 after:bg-[#f5b82e]">
+        💳 VENTAS RECIENTES
+      </h2>
+      <div className="mb-8">
+        {ventasRecientes?.length > 0 ? ventasRecientes.map((sale, idx) => (
+          <div key={idx} className="mb-2 p-3 bg-[#f0fdf4] border border-[#86efac] border-l-4 border-l-[#22c55e] rounded-xl font-medium break-inside-avoid flex justify-between">
+            <div>
+              <strong>{sale.titulo}</strong> <span className="text-[#64748b] text-[10px]">por {sale.UserName || sale.NombreCompleto}</span>
+            </div>
+            <div className="font-bold text-emerald-700">{money(sale.precioPagado)}</div>
+          </div>
+        )) : (
+          <p>NO HAY VENTAS RECIENTES REGISTRADAS.</p>
+        )}
+      </div>
+
+      <div className="mt-10 pt-4 border-t-2 border-[#e9d5ff] text-center text-[10px] font-bold">
+        ESTE REPORTE FUE GENERADO AUTOMÁTICAMENTE POR LA PLATAFORMA LEARNINGCARDS.
+      </div>
+    </div>
+  );
+};
+
 export const UserStatsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, error, data } = useCreatorStats(searchParams);
@@ -127,7 +245,9 @@ export const UserStatsPage = () => {
   const categorias = data.categorias || [];
 
   return (
-    <div className="creator-stats-page min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-cyan-50 py-8">
+    <>
+      <PrintLayout data={data} />
+      <div className="print:hidden creator-stats-page min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-cyan-50 py-8">
       <div className="mx-auto max-w-[1536px] px-4">
         <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
@@ -135,13 +255,25 @@ export const UserStatsPage = () => {
             <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">Mis Estadísticas</h1>
             <p className="mt-2 font-medium text-slate-500">Monitorea tus ventas, calificaciones e ingresos netos disponibles para retiro.</p>
           </div>
-          <a
-            href="/user/marketplace/reporte-ventas/pdf"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-400 px-6 py-4 text-sm font-black text-white shadow-xl shadow-rose-500/25 transition-all hover:-translate-y-1"
-          >
-            <Download className="h-4 w-4" />
-            Descargar reporte PDF
-          </a>
+          <div className="flex gap-3">
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-50 border border-indigo-100 px-6 py-4 text-sm font-black text-indigo-700 shadow-sm transition-all hover:-translate-y-1 hover:bg-indigo-100"
+            >
+              <Eye className="h-4 w-4" />
+              Previsualizar reporte
+            </button>
+            <button
+              onClick={() => {
+                document.title = `Reporte_Ventas_${data?.usuario?.NombreCompleto || 'Usuario'}`;
+                window.print();
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-400 px-6 py-4 text-sm font-black text-white shadow-xl shadow-rose-500/25 transition-all hover:-translate-y-1"
+            >
+              <Download className="h-4 w-4" />
+              Descargar reporte PDF
+            </button>
+          </div>
         </div>
 
         <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -306,7 +438,8 @@ export const UserStatsPage = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,8 +1,19 @@
+/**
+ * @fileoverview Vista del Marketplace de LearningCards.
+ * Permite a los usuarios buscar, filtrar y visualizar mazos publicados
+ * por la comunidad.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axios';
 
+/**
+ * Componente principal de la página del Marketplace.
+ * Contiene el buscador, filtros (categoría, precio, ordenamiento) y la cuadrícula
+ * de resultados de publicaciones obtenidas desde la API.
+ */
 const Marketplace = () => {
   const [publicaciones, setPublicaciones] = useState([]);
   const [categorias, setCategorias] = useState(['Idiomas', 'Ciencia', 'Tecnología', 'Historia', 'Medicina', 'Otros']);
@@ -176,6 +187,10 @@ const Marketplace = () => {
   );
 };
 
+/**
+ * Componente para mostrar una tarjeta individual de publicación en el Marketplace.
+ * Muestra la portada del mazo, precio (o gratis), categoría, título, descripción y valoración.
+ */
 const PublicacionCard = ({ pub }) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
