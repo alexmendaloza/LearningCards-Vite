@@ -7,11 +7,11 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
-    'src/pages/AdminLogin.jsx',
-    'src/pages/Dashboard.jsx',
-    'src/pages/Home.jsx',
-    'src/pages/Login.jsx',
-    'src/pages/Marketplace.jsx',
+    'frontend/src/pages/AdminLogin.jsx',
+    'frontend/src/pages/Dashboard.jsx',
+    'frontend/src/pages/Home.jsx',
+    'frontend/src/pages/Login.jsx',
+    'frontend/src/pages/Marketplace.jsx',
   ]),
   {
     files: ['**/*.{js,jsx}'],
@@ -36,7 +36,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.js'],
+    files: ['backend/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },

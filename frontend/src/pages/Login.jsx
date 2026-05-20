@@ -2,23 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
+// Gestiona el acceso y registro de usuarios desde la interfaz pública.
 const Login = ({ initialTab = 'login' }) => {
+  // Controla qué formulario se muestra: inicio de sesión o registro.
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  // Sincroniza la pestaña visible cuando cambia el modo inicial desde la ruta.
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  // Estados de soporte para solicitudes, errores y navegación posterior.
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Datos del formulario de inicio de sesión.
   const [loginData, setLoginData] = useState({
     email: '',
     password: '',
     remember: false
   });
 
+  // Datos del formulario de registro de usuario.
   const [registerData, setRegisterData] = useState({
     UserName: '',
     NombreCompleto: '',
@@ -29,6 +35,7 @@ const Login = ({ initialTab = 'login' }) => {
     fotoruta: null
   });
 
+  // Envía las credenciales del usuario al backend y gestiona la respuesta.
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -63,6 +70,7 @@ const Login = ({ initialTab = 'login' }) => {
     }
   };
 
+  // Construye y envía el formulario multipart para registrar una cuenta nueva.
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

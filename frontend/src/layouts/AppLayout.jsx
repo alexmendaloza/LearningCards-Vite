@@ -2,20 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
+// Layout general que envuelve las páginas y adapta navegación, tema y sesión.
 const AppLayout = ({ children, user, onAuth }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  // Controla la visibilidad del menú del avatar.
   const [open, setOpen] = useState(false);
 
+  // Variables derivadas de la ruta actual para condicionar encabezado y acciones.
   const isAdminLogin = location.pathname === '/admin/login';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isAdmin = user?.rol === 'admin';
   const isDashboard = location.pathname === '/user/dashboard';
   const isLanding = location.pathname === '/';
+  // Datos listos para pintar nombre y avatar del usuario.
   const nombre = user?.NombreCompleto || 'Usuario';
   const iniciales = nombre.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
   const foto = user?.fotoruta ? (String(user.fotoruta).startsWith('http') ? user.fotoruta : `/storage/${user.fotoruta}`) : '';
 
+  // Recupera la preferencia de tema guardada en el navegador.
   useEffect(() => {
     try {
       document.body.classList.toggle('dark-theme', localStorage.getItem('novalearn-theme') === 'dark');
@@ -24,6 +29,7 @@ const AppLayout = ({ children, user, onAuth }) => {
     }
   }, []);
 
+  // Cambia entre tema claro y oscuro y guarda la elección para futuras visitas.
   const toggleTheme = () => {
     const nextIsDark = !document.body.classList.contains('dark-theme');
     const toggle = document.getElementById('themeToggle');
@@ -43,6 +49,7 @@ const AppLayout = ({ children, user, onAuth }) => {
     }
   };
 
+  // Cierra la sesión del usuario actual y lo redirige a la entrada correcta.
   const logout = async () => {
     await api.post(isAdmin ? '/admin/logout' : '/logout');
     onAuth(null);
@@ -152,18 +159,21 @@ const AppLayout = ({ children, user, onAuth }) => {
   );
 };
 
+// Icono para accesos de retorno al panel principal.
 const HomeIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
   </svg>
 );
 
+// Icono para el enlace de estadísticas del creador.
 const StatsIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3v18m7-14v14M4 13v8" />
   </svg>
 );
 
+// Icono para el acceso al marketplace.
 const BagIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />

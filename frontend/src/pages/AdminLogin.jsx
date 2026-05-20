@@ -14,6 +14,7 @@ import api from '../api/axios';
  * Gestiona el formulario, la autenticación y los efectos visuales de seguridad.
  */
 const AdminLogin = () => {
+  // Estados del formulario y de la interfaz de autenticación administrativa.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -27,6 +28,7 @@ const AdminLogin = () => {
     return () => document.documentElement.classList.remove('admin-mode');
   }, []);
 
+  // Envía las credenciales del administrador y resuelve errores de acceso seguro.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

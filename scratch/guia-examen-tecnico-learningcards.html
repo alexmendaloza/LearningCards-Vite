@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guia de Estudio Tecnica - LearningCards</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #526070;
+      --paper: #f5f7fb;
+      --card: #ffffff;
+      --accent: #5b3af7;
+      --line: #d9e0ec;
+      --code: #101828;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+
+    header {
+      margin-bottom: 28px;
+      border-bottom: 4px solid var(--accent);
+      padding-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 14px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      color: var(--accent);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 6px 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .card {
+      margin: 14px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      padding: 18px;
+      page-break-inside: avoid;
+    }
+
+    .label {
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    code {
+      border-radius: 5px;
+      background: #eef2ff;
+      color: var(--code);
+      padding: 2px 5px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+    }
+
+    ul {
+      margin: 8px 0 0 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .answer {
+      border-left: 4px solid var(--accent);
+      background: #f7f5ff;
+      padding: 10px 12px;
+    }
+
+    .print-note {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      main {
+        max-width: none;
+        padding: 18mm;
+      }
+
+      .card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Guia de Estudio Tecnica - LearningCards</h1>
+      <p class="subtitle">Material externo para exposicion academica. No forma parte de la aplicacion ni modifica su logica.</p>
+      <p class="print-note">Para convertir a PDF: abrir este archivo en el navegador, presionar Ctrl + P y elegir "Guardar como PDF".</p>
+    </header>
+
+    <h2>Seccion 1: Mapa de Ubicacion del Codigo</h2>
+
+    <div class="card">
+      <h3>1. Conexion a Base de Datos MySQL / XAMPP</h3>
+      <p><span class="label">Archivo:</span> <code>backend/src/config/db.js</code></p>
+      <p>Ahi se configura <code>mysql2/promise</code>, el pool de conexiones y las variables <code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code> y <code>DB_NAME</code>.</p>
+      <p><span class="label">Respuesta:</span> Las credenciales se leen desde <code>.env</code>; si no existen, usa valores compatibles con XAMPP local: <code>localhost</code>, puerto <code>3306</code>, usuario <code>root</code> y password vacio.</p>
+    </div>
+
+    <div class="card">
+      <h3>2. Rutas del Servidor / Endpoints API</h3>
+      <p><span class="label">Archivo principal:</span> <code>backend/src/app.js</code></p>
+      <p>Ahi se montan los routers bajo el prefijo <code>/api</code>.</p>
+      <ul>
+        <li><code>backend/src/routes/auth.routes.js</code></li>
+        <li><code>backend/src/routes/user.routes.js</code></li>
+        <li><code>backend/src/routes/deck.routes.js</code></li>
+        <li><code>backend/src/routes/marketplace.routes.js</code></li>
+        <li><code>backend/src/routes/admin.routes.js</code></li>
+        <li><code>backend/src/routes/system.routes.js</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>3. Controladores / Logica SQL</h3>
+      <ul>
+        <li>Login, registro y sesion: <code>backend/src/controllers/authController.js</code></li>
+        <li>Usuarios, dashboard, perfil y reportes: <code>backend/src/controllers/userController.js</code></li>
+        <li>Mazos, tarjetas y sesiones de estudio: <code>backend/src/controllers/deckController.js</code></li>
+        <li>Marketplace, compras y valoraciones: <code>backend/src/controllers/marketplaceController.js</code></li>
+        <li>Administracion, usuarios, mazos y ventas: <code>backend/src/controllers/adminController.js</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>4. Encriptacion de Contrasena</h3>
+      <p><span class="label">Archivo:</span> <code>backend/src/controllers/authController.js</code></p>
+      <p><span class="label">Funcion:</span> <code>register</code></p>
+      <p>La contrasena se cifra antes del <code>INSERT INTO Usuario</code> con <code>bcrypt.hashSync(String(req.body.password), 10)</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>5. CORS</h3>
+      <p><span class="label">Archivo:</span> <code>backend/src/middleware/security.js</code></p>
+      <p><span class="label">Funcion:</span> <code>applySecurityMiddleware</code></p>
+      <p>Permite que React en <code>localhost</code> se comunique con el backend y habilita cookies mediante <code>credentials: true</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Login y Generacion de Token</h3>
+      <p><span class="label">Validacion:</span> <code>backend/src/controllers/authController.js</code>, funciones <code>login</code> y <code>adminLogin</code>.</p>
+      <p><span class="label">Token:</span> <code>backend/src/middleware/auth.js</code>, funcion <code>signIn</code>.</p>
+      <p>El JWT se guarda en una cookie <code>HttpOnly</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>7. Seguridad y Rutas Protegidas</h3>
+      <p><span class="label">Archivo:</span> <code>backend/src/middleware/auth.js</code></p>
+      <ul>
+        <li><code>requireUser</code>: valida JWT y carga <code>req.usuario</code>.</li>
+        <li><code>requireAdmin</code>: valida usuario y exige <code>req.usuario.rol === 'admin'</code>.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>8. Pagos / Compra de Mazos</h3>
+      <p><span class="label">Frontend:</span> <code>frontend/src/pages/Platform.jsx</code>, componente <code>PaymentPage</code>.</p>
+      <p><span class="label">Backend:</span> <code>backend/src/controllers/marketplaceController.js</code>, funcion <code>confirmPayment</code>.</p>
+      <p>Nota tecnica: en esta version academica el pago es simulado con tarjeta; no hay integracion real con PayPal.</p>
+    </div>
+
+    <div class="card">
+      <h3>9. Reportes PDF</h3>
+      <p><span class="label">Usuario:</span> <code>frontend/src/pages/Report.jsx</code> y backend <code>userController.report</code>.</p>
+      <p><span class="label">Creador:</span> <code>frontend/src/pages/reports/UserStats.jsx</code> y backend <code>userController.creatorStats</code>.</p>
+      <p><span class="label">Admin:</span> <code>frontend/src/pages/Platform.jsx</code>, <code>AdminPrintLayout</code>, y backend <code>adminController.salesReport</code>.</p>
+      <p>El PDF se obtiene con <code>window.print()</code>; el backend compila los datos y el frontend renderiza una vista imprimible.</p>
+    </div>
+
+    <div class="card">
+      <h3>10. Axios / Comunicacion Frontend-Backend</h3>
+      <p><span class="label">Archivo:</span> <code>frontend/src/api/axiosConfig.js</code></p>
+      <p>Configura <code>baseURL: 'http://localhost:3001/api'</code> y <code>withCredentials: true</code> para enviar cookies al backend.</p>
+    </div>
+
+    <h2>Seccion 2: Simulacion de Preguntas Capciosas</h2>
+
+    <div class="card">
+      <h3>1. ¿Por que separaron Frontend y Backend?</h3>
+      <p class="answer">Porque separa responsabilidades. React/Vite maneja interfaz y navegacion, mientras Express concentra reglas de negocio, autenticacion, seguridad y consultas SQL. Esto mejora mantenibilidad, permite escalar por capas y evita exponer logica sensible en el navegador.</p>
+    </div>
+
+    <div class="card">
+      <h3>2. ¿Que pasa si MySQL/XAMPP se apaga mientras un usuario estudia?</h3>
+      <p class="answer">La interfaz puede seguir renderizando, pero las operaciones que dependen de backend fallaran: guardar sesion, consultar mazos o registrar progreso. Los controladores usan <code>try/catch</code> y delegan al <code>errorHandler</code>, por lo que se devuelve un error controlado en lugar de romper el servidor.</p>
+    </div>
+
+    <div class="card">
+      <h3>3. ¿Como evitan que un usuario comun entre al admin alterando React?</h3>
+      <p class="answer">No se confia en el frontend. Aunque el usuario modifique rutas o componentes, los endpoints administrativos pasan por <code>requireAdmin</code>. Ese middleware valida el JWT, consulta el usuario real en MySQL y exige <code>rol === 'admin'</code>. Si no cumple, responde <code>403</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>4. ¿Donde se demuestra que hay logica propia y no solo pantallas?</h3>
+      <p class="answer">En los controladores del backend: <code>deckController.js</code> maneja mazos, tarjetas y sesiones; <code>marketplaceController.js</code> valida compras y transacciones; <code>userController.js</code> calcula reportes; <code>adminController.js</code> produce metricas administrativas.</p>
+    </div>
+
+    <div class="card">
+      <h3>5. ¿La contrasena esta segura?</h3>
+      <p class="answer">Si. En <code>authController.register</code> se cifra con bcrypt antes de insertarla. En login se compara con <code>bcrypt.compareSync</code>. La contrasena real nunca se guarda ni se compara en texto plano.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Si cambio <code>rol: 'admin'</code> en el navegador, ¿ya soy admin?</h3>
+      <p class="answer">No. El rol del frontend no concede permisos. El backend obtiene el usuario desde la cookie JWT y luego valida contra la base de datos. La autorizacion real ocurre en <code>requireAdmin</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>7. ¿El pago es PayPal real?</h3>
+      <p class="answer">No. En esta version academica el flujo es un pago simulado con tarjeta. Lo tecnicamente importante es que el backend valida datos, evita compras duplicadas y registra la compra junto con la clonacion del mazo.</p>
+    </div>
+
+    <div class="card">
+      <h3>8. ¿Por que usan cookie HttpOnly para el JWT?</h3>
+      <p class="answer">Porque reduce el riesgo de robo del token mediante JavaScript. Axios usa <code>withCredentials: true</code>, asi que el navegador envia la cookie automaticamente al backend.</p>
+    </div>
+
+    <div class="card">
+      <h3>9. ¿Como impiden que un usuario edite mazos ajenos?</h3>
+      <p class="answer">En <code>deckController.js</code>, funciones como <code>updateDeck</code> usan condiciones SQL con <code>IDMazo</code> e <code>IDUsuario</code>. Si el mazo no pertenece al usuario, no se actualiza.</p>
+    </div>
+
+    <div class="card">
+      <h3>10. ¿El PDF se genera en backend?</h3>
+      <p class="answer">No como archivo binario. El backend compila los datos y el frontend renderiza una vista imprimible. La descarga se realiza con <code>window.print()</code>, permitiendo guardar como PDF desde el navegador.</p>
+    </div>
+  </main>
+</body>
+</html>
