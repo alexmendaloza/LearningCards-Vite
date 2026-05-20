@@ -5,8 +5,11 @@ import api from '../api/axios';
 
 const empty = 'Sin descripcion';
 
+// Convierte cualquier valor numérico a una cadena monetaria con dos decimales.
 const money = (value) => `$${Number(value || 0).toFixed(2)}`;
+// Formatea una fecha corta con configuración regional mexicana.
 const shortDate = (value) => (value ? new Date(value).toLocaleDateString('es-MX') : '');
+// Normaliza fechas para usarlas en controles tipo date y envíos al backend.
 const dateValue = (value) => {
   if (!value) return '';
   const date = value instanceof Date ? value : new Date(value);
@@ -17,9 +20,12 @@ const dateValue = (value) => {
   return `${year}-${month}-${day}`;
 };
 
+// Genera iniciales a partir del nombre completo del usuario.
 const initials = (name = 'U') => name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
+// Resuelve rutas de imágenes locales o absolutas para recursos subidos.
 const storageUrl = (path) => path ? (String(path).startsWith('http') ? path : `/storage/${path}`) : '';
 
+// Lee una imagen seleccionada por el usuario y la convierte en base64 con metadatos básicos.
 const readImageFile = (file) => new Promise((resolve, reject) => {
   if (!file) {
     resolve({});
@@ -31,12 +37,14 @@ const readImageFile = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+// Muestra mensajes de error compactos cuando el backend o la UI reportan un problema.
 const ErrorBox = ({ message }) => message ? (
   <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
     {message}
   </div>
 ) : null;
 
+// Presenta alertas informativas o de éxito con estilo reutilizable.
 const Alert = ({ children, tone = 'green' }) => (
   <div className={`rounded-2xl border px-5 py-4 text-sm font-semibold ${
     tone === 'green' ? 'border-green-200 bg-green-50 text-green-800' : 'border-blue-200 bg-blue-50 text-blue-800'
@@ -45,10 +53,12 @@ const Alert = ({ children, tone = 'green' }) => (
   </div>
 );
 
+// Renderiza una vista genérica de carga para operaciones asíncronas.
 const Loading = ({ text = 'Cargando...' }) => (
   <div className="py-16 text-center text-sm font-semibold text-slate-500 animate-pulse">{text}</div>
 );
 
+// Modal de confirmación visual para mazos adquiridos o descargados correctamente.
 const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, cardCount, onDashboard, onMarketplace }) => {
   const paid = mode === 'pago';
   const particles = [
@@ -117,6 +127,7 @@ const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, card
   );
 };
 
+// Encabezado reutilizable para páginas internas con título, subtítulo y acción opcional.
 const PageTitle = ({ title, subtitle, action }) => (
   <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
     <div>
@@ -127,6 +138,7 @@ const PageTitle = ({ title, subtitle, action }) => (
   </div>
 );
 
+// Dibuja una fila de estrellas para representar valoraciones.
 const StarRow = ({ value = 0, size = 'w-4 h-4' }) => (
   <div className="flex items-center gap-0.5">
     {[1, 2, 3, 4, 5].map((star) => (
@@ -137,6 +149,7 @@ const StarRow = ({ value = 0, size = 'w-4 h-4' }) => (
   </div>
 );
 
+// Hook auxiliar para cargar recursos remotos y exponer loading, error y data.
 const useResource = (loader, deps = []) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
@@ -157,11 +170,13 @@ const useResource = (loader, deps = []) => {
 export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const navigate = useNavigate();
   const authToggleRef = useRef(null);
+  // Estado principal de la pantalla de autenticación para alternar entre vistas.
   const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
+  // Datos del formulario de registro.
   const [register, setRegister] = useState({
     UserName: '',
     NombreCompleto: '',
@@ -179,8 +194,10 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const [recoverCode, setRecoverCode] = useState('');
   const [recoverPassword, setRecoverPassword] = useState('');
 
+  // Sincroniza la pestaña mostrada con la pestaña solicitada por la ruta.
   useEffect(() => setTab(initialTab), [initialTab]);
 
+  // Aplica la ambientación visual propia de las pantallas de acceso.
   useEffect(() => {
     document.body.classList.add('auth-screen');
     try {
@@ -191,6 +208,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     return () => document.body.classList.remove('auth-screen');
   }, []);
 
+  // Cambia de pestaña y reinicia los errores visibles para el usuario.
   const selectTab = (nextTab) => {
     setTab(nextTab);
     setError('');
@@ -213,6 +231,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     }
   };
 
+  // Permite cambiar el tema del formulario sin afectar la lógica de autenticación.
   const toggleAuthTheme = () => {
     const nextIsDark = !document.body.classList.contains('dark-theme');
     const toggle = authToggleRef.current;
@@ -232,6 +251,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     }
   };
 
+  // Envía credenciales al backend y actualiza la sesión global al iniciar.
   const submitLogin = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -248,6 +268,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     }
   };
 
+  // Registra una nueva cuenta y autentica automáticamente al usuario creado.
   const submitRegister = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -497,6 +518,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   );
 };
 
+// Campo reutilizable para entradas de texto simples dentro de formularios.
 const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
@@ -512,6 +534,7 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
   </label>
 );
 
+// Área de texto reutilizable para contenido más largo o descriptivo.
 const TextArea = ({ label, value, onChange, placeholder = '', required = false, ...props }) => (
   <label className="block">
     <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
@@ -526,6 +549,7 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false, 
   </label>
 );
 
+// Selector reutilizable para catálogos o listas de opciones.
 const Select = ({ label, value, onChange, options, required = false, ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>

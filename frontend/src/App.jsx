@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
 import Home from './pages/Home';
 import {
@@ -28,6 +28,7 @@ import {
 import ReportPage from './pages/Report';
 import UserStatsPage from './pages/reports/UserStats';
 import api from './api/axios';
+
 
 /**
  * Pantalla de carga que se muestra mientras se verifica la sesión del usuario.
@@ -73,10 +74,12 @@ const LegacyUserRedirect = ({ pattern }) => {
  * Maneja el estado global del usuario y define el árbol de rutas.
  */
 function App() {
+  // Almacena el usuario autenticado para compartirlo en toda la aplicación.
   const [user, setUser] = useState(null);
+  // Controla el estado de carga inicial mientras se consulta la sesión.
   const [loading, setLoading] = useState(true);
 
-  // Verifica la sesión del usuario al cargar la aplicación por primera vez
+  // Verifica la sesión del usuario al cargar la aplicación por primera vez.
   useEffect(() => {
     api.get('/me')
       .then(({ data }) => setUser(data.usuario))
@@ -84,6 +87,7 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Muestra un estado de espera antes de renderizar las rutas protegidas o públicas.
   if (loading) return <LoadingScreen />;
 
   return (
