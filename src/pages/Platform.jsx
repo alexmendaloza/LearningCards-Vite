@@ -160,6 +160,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
   const [register, setRegister] = useState({
     UserName: '',
@@ -171,6 +172,12 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     fotorutaData: '',
     fotorutaName: '',
   });
+
+  // Estados específicos para recuperación de contraseña
+  const [recoverPhase, setRecoverPhase] = useState('request'); // 'request' o 'reset'
+  const [recoverEmail, setRecoverEmail] = useState('');
+  const [recoverCode, setRecoverCode] = useState('');
+  const [recoverPassword, setRecoverPassword] = useState('');
 
   useEffect(() => setTab(initialTab), [initialTab]);
 
@@ -187,6 +194,16 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const selectTab = (nextTab) => {
     setTab(nextTab);
     setError('');
+    setSuccessMsg('');
+    
+    // Si salimos de recover, reiniciamos la fase de recuperación
+    if (nextTab !== 'recover') {
+      setRecoverPhase('request');
+      setRecoverEmail('');
+      setRecoverCode('');
+      setRecoverPassword('');
+    }
+
     const tabs = document.getElementById('auth-tabs');
     if (tabs) {
       tabs.classList.remove('slider-moving');
@@ -219,6 +236,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     event.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMsg('');
     try {
       const { data } = await api.post('/login', login);
       onAuth(data.usuario);
@@ -234,12 +252,57 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     event.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMsg('');
     try {
       const { data } = await api.post('/register', register);
       onAuth(data.usuario);
       navigate('/user/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'No fue posible registrar el usuario.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitRecoverRequest = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const { data } = await api.post('/recover-password/request', { email: recoverEmail });
+      setSuccessMsg(data.message);
+      setRecoverPhase('reset');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al solicitar código.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitRecoverReset = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const { data } = await api.post('/recover-password/reset', {
+        email: recoverEmail,
+        code: recoverCode,
+        newPassword: recoverPassword,
+      });
+      setSuccessMsg(data.message);
+      // Redirigir al login después de 3 segundos
+      setTimeout(() => {
+        selectTab('login');
+        setRecoverPhase('request');
+        setRecoverEmail('');
+        setRecoverCode('');
+        setRecoverPassword('');
+        setSuccessMsg('');
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al restablecer contraseña.');
     } finally {
       setLoading(false);
     }
@@ -273,22 +336,45 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
 
         <div className="auth-card flex max-h-[80vh] flex-col overflow-hidden rounded-3xl shadow-2xl">
           <div className="p-8 pb-4">
-            <h1 className="auth-title mb-1 text-3xl font-black tracking-tight">Comenzar</h1>
-            <p className="auth-subtitle mb-6 mt-1 text-sm">Inicia sesion o crea una cuenta nueva</p>
-            <div id="auth-tabs" className={`auth-tabs mb-4 ${tab === 'register' ? 'register-active' : ''}`} role="tablist" aria-label="Acceso a cuenta">
-              <span className="auth-tab-slider" aria-hidden="true" />
-              <button type="button" className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => selectTab('login')} role="tab" aria-selected={tab === 'login'}>
-                Iniciar sesion
-              </button>
-              <button type="button" className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => selectTab('register')} role="tab" aria-selected={tab === 'register'}>
-                Registrarse
-              </button>
-            </div>
+            <h1 className="auth-title mb-1 text-3xl font-black tracking-tight">
+              {tab === 'recover' ? 'Recuperar Cuenta' : 'Comenzar'}
+            </h1>
+            <p className="auth-subtitle mb-6 mt-1 text-sm">
+              {tab === 'recover' 
+                ? 'Restablece tu contraseña usando tu correo electrónico.' 
+                : 'Inicia sesion o crea una cuenta nueva'}
+            </p>
+            {tab !== 'recover' ? (
+              <div id="auth-tabs" className={`auth-tabs mb-4 ${tab === 'register' ? 'register-active' : ''}`} role="tablist" aria-label="Acceso a cuenta">
+                <span className="auth-tab-slider" aria-hidden="true" />
+                <button type="button" className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => selectTab('login')} role="tab" aria-selected={tab === 'login'}>
+                  Iniciar sesion
+                </button>
+                <button type="button" className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => selectTab('register')} role="tab" aria-selected={tab === 'register'}>
+                  Registrarse
+                </button>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => selectTab('login')}
+                  className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-indigo-600 transition-colors bg-transparent border-none cursor-pointer"
+                >
+                  &larr; Volver al inicio de sesión
+                </button>
+              </div>
+            )}
+            {successMsg && (
+              <div className="mb-4">
+                <Alert tone="green">{successMsg}</Alert>
+              </div>
+            )}
             <ErrorBox message={error} />
           </div>
 
           <div className="custom-scrollbar overflow-y-auto px-8 pb-8">
-            {tab === 'login' ? (
+            {tab === 'login' && (
               <form className="space-y-4 py-2" onSubmit={submitLogin}>
                 <Field label="Correo electronico" type="email" value={login.email} onChange={(value) => setLogin({ ...login, email: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
                 <Field label="Contrasena" type="password" value={login.password} onChange={(value) => setLogin({ ...login, password: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
@@ -297,13 +383,15 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
                     <input type="checkbox" className="auth-checkbox rounded text-indigo-600 focus:ring-indigo-500" />
                     <span className="auth-muted transition-colors group-hover:text-indigo-600">Recordarme</span>
                   </label>
-                  <a href="#" className="auth-help-link font-semibold transition-colors">Olvidaste tu contrasena?</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); selectTab('recover'); }} className="auth-help-link font-semibold transition-colors">¿Olvidaste tu contraseña?</a>
                 </div>
                 <button disabled={loading} className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60">
                   {loading ? 'Cargando...' : 'Iniciar sesion'}
                 </button>
               </form>
-            ) : (
+            )}
+            
+            {tab === 'register' && (
               <form className="space-y-4 py-2" onSubmit={submitRegister}>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Usuario" value={register.UserName} onChange={(value) => setRegister({ ...register, UserName: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
@@ -332,6 +420,72 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
                   {loading ? 'Procesando...' : 'Crear cuenta gratis'}
                 </button>
               </form>
+            )}
+
+            {tab === 'recover' && (
+              recoverPhase === 'request' ? (
+                <form className="space-y-4 py-2" onSubmit={submitRecoverRequest}>
+                  <Field
+                    label="Correo electrónico"
+                    type="email"
+                    value={recoverEmail}
+                    onChange={setRecoverEmail}
+                    required
+                    placeholder="estudiante@ejemplo.com"
+                    className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  />
+                  <button
+                    disabled={loading}
+                    className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                  >
+                    {loading ? 'Enviando...' : 'Enviar código de recuperación'}
+                  </button>
+                </form>
+              ) : (
+                <form className="space-y-4 py-2" onSubmit={submitRecoverReset}>
+                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 text-xs font-bold text-indigo-700 leading-relaxed mb-2">
+                    Enviamos un código temporal de 6 dígitos a <strong>{recoverEmail}</strong>. Revisa tu bandeja de entrada.
+                  </div>
+                  <Field
+                    label="Código de verificación"
+                    type="text"
+                    value={recoverCode}
+                    onChange={setRecoverCode}
+                    required
+                    placeholder="123456"
+                    maxLength={10}
+                    className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  />
+                  <Field
+                    label="Nueva Contraseña"
+                    type="password"
+                    value={recoverPassword}
+                    onChange={setRecoverPassword}
+                    required
+                    placeholder="•••••••• (mínimo 6 caracteres)"
+                    className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                  />
+                  <button
+                    disabled={loading}
+                    className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                  >
+                    {loading ? 'Restableciendo...' : 'Restablecer contraseña'}
+                  </button>
+                  <div className="text-center mt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRecoverPhase('request');
+                        setSuccessMsg('');
+                        setError('');
+                      }}
+                      className="text-xs font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-800 transition-colors bg-transparent border-none cursor-pointer"
+                    >
+                      ¿No recibiste el código? Solicitar otro
+                    </button>
+                  </div>
+                </form>
+              )
             )}
           </div>
         </div>

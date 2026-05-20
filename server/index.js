@@ -20,6 +20,7 @@ import {
   pool,
   quoteIdentifier,
 } from './db.js';
+import { sendRecoveryEmail } from './mailer.js';
 
 const app = express();
 const port = Number(process.env.API_PORT || 3001);
@@ -385,6 +386,21 @@ const initSchema = async () => {
   } catch (error) {
     console.warn('Error al migrar la tabla Tarjeta:', error.message);
   }
+
+  try {
+    const [columns] = await pool.query('SHOW COLUMNS FROM Usuario');
+    const names = columns.map((c) => c.Field);
+    if (!names.includes('codigo_recuperacion')) {
+      await pool.query("ALTER TABLE Usuario ADD COLUMN codigo_recuperacion VARCHAR(10) NULL");
+      console.log('[DB] Columna "codigo_recuperacion" agregada a la tabla Usuario.');
+    }
+    if (!names.includes('codigo_recuperacion_expira')) {
+      await pool.query("ALTER TABLE Usuario ADD COLUMN codigo_recuperacion_expira DATETIME NULL");
+      console.log('[DB] Columna "codigo_recuperacion_expira" agregada a la tabla Usuario.');
+    }
+  } catch (error) {
+    console.warn('Error al migrar la tabla Usuario:', error.message);
+  }
 };
 
 const recalculateRating = async (publicationId) => {
@@ -684,6 +700,118 @@ app.post('/api/register', async (req, res, next) => {
     signIn(res, users[0]);
     return res.status(201).json({ usuario: cleanUser(users[0]), redirect: '/dashboard' });
   } catch (error) {
+    return next(error);
+  }
+});
+
+/**
+ * Ruta: POST /api/recover-password/request
+ * Solicita un código de recuperación de contraseña para un correo electrónico dado.
+ * Genera un código de 6 dígitos, guarda la fecha de expiración y envía un correo al usuario.
+ */
+app.post('/api/recover-password/request', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const errors = validate({ email: ['required', 'email'] }, req.body);
+    if (hasErrors(res, errors)) return;
+
+    // Buscar si existe el usuario con ese correo
+    const [users] = await pool.query(
+      'SELECT IDUsuario, NombreCompleto, email FROM Usuario WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    const usuario = users[0];
+    if (!usuario) {
+      // Para evitar la enumeración de cuentas, devolvemos una respuesta exitosa genérica
+      return res.json({
+        success: true,
+        message: 'Si el correo electrónico está registrado, recibirás un código de recuperación en unos momentos.',
+      });
+    }
+
+    // Generar un código aleatorio de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // El código expira en 15 minutos
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+    const expiresSql = expires.toISOString().slice(0, 19).replace('T', ' ');
+
+    // Actualizar el usuario con el código y su expiración
+    await pool.query(
+      'UPDATE Usuario SET codigo_recuperacion = ?, codigo_recuperacion_expira = ? WHERE IDUsuario = ?',
+      [code, expiresSql, usuario.IDUsuario]
+    );
+
+    // Enviar el correo
+    await sendRecoveryEmail(usuario.email, code, usuario.NombreCompleto);
+
+    return res.json({
+      success: true,
+      message: 'Código de recuperación enviado. Revisa tu bandeja de entrada.',
+    });
+  } catch (error) {
+    console.error('[RECOVER-REQUEST] Error:', error);
+    return next(error);
+  }
+});
+
+/**
+ * Ruta: POST /api/recover-password/reset
+ * Verifica el código de recuperación y restablece la contraseña del usuario.
+ */
+app.post('/api/recover-password/reset', async (req, res, next) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    const errors = validate(
+      {
+        email: ['required', 'email'],
+        code: ['required'],
+        newPassword: ['required', 'min:6'],
+      },
+      { email, code, newPassword }
+    );
+    if (hasErrors(res, errors)) return;
+
+    // Buscar al usuario
+    const [users] = await pool.query(
+      'SELECT IDUsuario, codigo_recuperacion, codigo_recuperacion_expira FROM Usuario WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    const usuario = users[0];
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    // Validar el código de recuperación
+    if (!usuario.codigo_recuperacion || usuario.codigo_recuperacion !== String(code).trim()) {
+      return res.status(400).json({ message: 'El código de recuperación es incorrecto.' });
+    }
+
+    // Validar la expiración
+    const expireTime = new Date(usuario.codigo_recuperacion_expira);
+    if (expireTime < new Date()) {
+      return res.status(400).json({ message: 'El código de recuperación ha expirado. Solicita uno nuevo.' });
+    }
+
+    // Encriptar la nueva contraseña
+    const hashedPassword = bcrypt.hashSync(String(newPassword), 10);
+
+    // Actualizar contraseña y limpiar código
+    await pool.query(
+      'UPDATE Usuario SET contrasena = ?, codigo_recuperacion = NULL, codigo_recuperacion_expira = NULL WHERE IDUsuario = ?',
+      [hashedPassword, usuario.IDUsuario]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Tu contraseña ha sido restablecida con éxito. Ya puedes iniciar sesión.',
+    });
+  } catch (error) {
+    console.error('[RECOVER-RESET] Error:', error);
     return next(error);
   }
 });
