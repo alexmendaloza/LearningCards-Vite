@@ -109,12 +109,12 @@ const AppLayout = ({ children, user, onAuth }) => {
                           Volver al Dashboard
                         </Link>
                       )}
-                      <Link to="/user/creator/stats" className="group relative flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:text-violet-700 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-10 after:-translate-x-1/2 after:scale-x-0 after:rounded-full after:bg-violet-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100">
-                        <StatsIcon className="h-5 w-5 text-violet-500 transition-transform duration-300 group-hover:scale-110" />
+                      <Link to="/user/creator/stats" className="group flex items-center gap-2 rounded-lg bg-transparent px-3 py-2 text-sm font-bold text-violet-300 transition-all duration-200 hover:bg-white/5 hover:text-violet-200">
+                        <StatsIcon className="h-5 w-5 text-violet-400 transition-colors duration-200 group-hover:text-violet-200" />
                         Mis Estadisticas
                       </Link>
-                      <Link to="/user/marketplace" className="group relative flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:text-indigo-700 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-10 after:-translate-x-1/2 after:scale-x-0 after:rounded-full after:bg-indigo-500 after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100">
-                        <BagIcon className="h-5 w-5 text-indigo-500 transition-transform duration-300 group-hover:scale-110" />
+                      <Link to="/user/marketplace" className="group flex items-center gap-2 rounded-lg bg-transparent px-3 py-2 text-sm font-bold text-violet-300 transition-all duration-200 hover:bg-white/5 hover:text-blue-300">
+                        <BagIcon className="h-5 w-5 text-violet-400 transition-colors duration-200 group-hover:text-blue-300" />
                         Marketplace
                       </Link>
                     </div>
@@ -129,13 +129,13 @@ const AppLayout = ({ children, user, onAuth }) => {
                       {foto ? <img src={foto} alt="Perfil" className="h-full w-full object-cover" /> : iniciales}
                     </button>
                     {open && (
-                      <div className="absolute right-0 z-50 mt-2 w-52 rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
-                        <div className="mb-1 border-b border-gray-50 px-4 py-2">
-                          <p className="text-xs text-gray-400">{isAdmin ? 'Administrador' : 'Mi Cuenta'}</p>
-                          <p className="truncate text-sm font-bold text-gray-800">{nombre}</p>
+                      <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-cyan-400/20 bg-slate-900/95 p-2 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
+                        <div className="mb-1 border-b border-cyan-400/20 px-3 py-2">
+                          <p className="text-xs text-slate-300">{isAdmin ? 'Administrador' : 'Mi Cuenta'}</p>
+                          <p className="truncate text-sm font-bold text-slate-100">{nombre}</p>
                         </div>
-                        <Link to="/user/configuracion" className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-600">Configuracion</Link>
-                        <button onClick={logout} className="block w-full border-t border-gray-50 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50">Cerrar Sesion</button>
+                        <Link to="/user/configuracion" className="block rounded-md px-3 py-2.5 text-sm font-medium text-slate-100 transition-colors hover:bg-slate-800 hover:text-cyan-200">Configuracion</Link>
+                        <button onClick={logout} className="block w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-slate-100 transition-colors hover:bg-slate-800 hover:text-rose-200">Cerrar Sesion</button>
                       </div>
                     )}
                   </div>

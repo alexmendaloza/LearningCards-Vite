@@ -805,6 +805,10 @@ body.dark-theme .feature-card p {
   color: var(--auth-muted);
 }
 
+.auth-subtitle {
+  color: #475569;
+}
+
 .auth-card {
   background: var(--auth-soft);
   border: 1px solid var(--auth-border);
@@ -863,7 +867,7 @@ body.dark-theme .feature-card p {
   flex: 1;
   padding: .76rem .75rem;
   border-radius: 999px;
-  color: #475569;
+  color: #64748b;
   font-size: .875rem;
   font-weight: 800;
   text-align: center;
@@ -871,11 +875,11 @@ body.dark-theme .feature-card p {
 }
 
 .auth-tab:hover {
-  color: #0f766e;
+  color: #334155;
 }
 
 .auth-tab.active {
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .auth-label {

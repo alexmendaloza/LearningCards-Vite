@@ -174,6 +174,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authErrors, setAuthErrors] = useState({});
   // Datos del formulario de acceso.
   const [login, setLogin] = useState({ email: '', password: '' });
   // Datos del formulario de registro.
@@ -206,6 +207,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const selectTab = (nextTab) => {
     setTab(nextTab);
     setError('');
+    setAuthErrors({});
     const tabs = document.getElementById('auth-tabs');
     if (tabs) {
       tabs.classList.remove('slider-moving');
@@ -214,6 +216,101 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
       window.setTimeout(() => tabs.classList.remove('slider-moving'), 700);
     }
   };
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const namePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/;
+  const authErrorClass = 'text-red-500 text-xs mt-1 block font-semibold';
+
+  const updateAuthError = (field, message) => {
+    setAuthErrors((current) => ({ ...current, [field]: message }));
+  };
+
+  const clearAuthError = (field) => {
+    setAuthErrors((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const handleLoginEmailChange = (value) => {
+    const nextValue = value.slice(0, 60);
+    setLogin({ ...login, email: nextValue });
+    if (nextValue.trim()) clearAuthError('loginGeneral');
+  };
+
+  const handleLoginPasswordChange = (value) => {
+    const nextValue = value.slice(0, 25);
+    setLogin({ ...login, password: nextValue });
+    if (nextValue) clearAuthError('loginGeneral');
+  };
+
+  const handleRegisterUsernameChange = (value) => {
+    const nextValue = value.slice(0, 20);
+    setRegister({ ...register, UserName: nextValue });
+    if (nextValue.trim()) clearAuthError('UserName');
+  };
+
+  const handleRegisterNameChange = (value) => {
+    const nextValue = value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '').slice(0, 50);
+    setRegister({ ...register, NombreCompleto: nextValue });
+    if (!nextValue.trim() || !namePattern.test(nextValue.trim())) {
+      updateAuthError('NombreCompleto', 'Por favor, ingresa un nombre válido (solo letras y espacios).');
+    } else {
+      clearAuthError('NombreCompleto');
+    }
+  };
+
+  const handleRegisterEmailChange = (value) => {
+    const nextValue = value.slice(0, 60);
+    setRegister({ ...register, email: nextValue });
+    if (!nextValue.trim() || emailPattern.test(nextValue.trim())) clearAuthError('email');
+  };
+
+  const handleRegisterPasswordChange = (value) => {
+    const nextValue = value.slice(0, 25);
+    setRegister({ ...register, password: nextValue });
+    if (nextValue && nextValue.length < 6) {
+      updateAuthError('password', 'La contraseña debe tener entre 6 y 25 caracteres.');
+    } else {
+      clearAuthError('password');
+    }
+  };
+
+  const validateRegisterField = (field) => {
+    if (field === 'UserName') {
+      if (!register.UserName.trim()) {
+        updateAuthError('UserName', 'El nombre de usuario es obligatorio.');
+        return false;
+      }
+      clearAuthError('UserName');
+    }
+    if (field === 'NombreCompleto') {
+      const value = register.NombreCompleto.trim();
+      if (!value || !namePattern.test(value)) {
+        updateAuthError('NombreCompleto', 'Por favor, ingresa un nombre válido (solo letras y espacios).');
+        return false;
+      }
+      clearAuthError('NombreCompleto');
+    }
+    if (field === 'email') {
+      if (!emailPattern.test(register.email.trim())) {
+        updateAuthError('email', 'Introduce una dirección de correo electrónico válida.');
+        return false;
+      }
+      clearAuthError('email');
+    }
+    if (field === 'password') {
+      if (register.password.length < 6 || register.password.length > 25) {
+        updateAuthError('password', 'La contraseña debe tener entre 6 y 25 caracteres.');
+        return false;
+      }
+      clearAuthError('password');
+    }
+    return true;
+  };
+
+  const validateRegisterForm = () => ['UserName', 'NombreCompleto', 'email', 'password'].every(validateRegisterField);
 
   // Permite cambiar el tema del formulario sin afectar la lógica de autenticación.
   const toggleAuthTheme = () => {
@@ -238,6 +335,11 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   // Envía credenciales al backend y actualiza la sesión global al iniciar.
   const submitLogin = async (event) => {
     event.preventDefault();
+    if (!login.email.trim() || !login.password) {
+      updateAuthError('loginGeneral', 'Por favor, rellena todos los campos obligatorios.');
+      return;
+    }
+    clearAuthError('loginGeneral');
     setLoading(true);
     setError('');
     try {
@@ -254,6 +356,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   // Registra una nueva cuenta y autentica automáticamente al usuario creado.
   const submitRegister = async (event) => {
     event.preventDefault();
+    if (!validateRegisterForm()) return;
     setLoading(true);
     setError('');
     try {
@@ -312,8 +415,8 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
           <div className="custom-scrollbar overflow-y-auto px-8 pb-8">
             {tab === 'login' ? (
               <form className="space-y-4 py-2" onSubmit={submitLogin}>
-                <Field label="Correo electronico" type="email" value={login.email} onChange={(value) => setLogin({ ...login, email: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
-                <Field label="Contrasena" type="password" value={login.password} onChange={(value) => setLogin({ ...login, password: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <Field label="Correo electronico" type="text" value={login.email} onChange={handleLoginEmailChange} className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <Field label="Contrasena" type="password" value={login.password} onChange={handleLoginPasswordChange} className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
                 <div className="flex items-center justify-between text-xs">
                   <label className="group flex cursor-pointer items-center gap-2">
                     <input type="checkbox" className="auth-checkbox rounded text-indigo-600 focus:ring-indigo-500" />
@@ -324,17 +427,18 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
                 <button disabled={loading} className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60">
                   {loading ? 'Cargando...' : 'Iniciar sesion'}
                 </button>
+                {authErrors.loginGeneral && <span className={authErrorClass}>{authErrors.loginGeneral}</span>}
               </form>
             ) : (
               <form className="space-y-4 py-2" onSubmit={submitRegister}>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Usuario" value={register.UserName} onChange={(value) => setRegister({ ...register, UserName: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Usuario" value={register.UserName} onChange={handleRegisterUsernameChange} onBlur={() => validateRegisterField('UserName')} error={authErrors.UserName} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                   <Select label="Genero" value={register.genero} onChange={(value) => setRegister({ ...register, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
-                <Field label="Nombre completo" value={register.NombreCompleto} onChange={(value) => setRegister({ ...register, NombreCompleto: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
-                <Field label="Correo electronico" type="email" value={register.email} onChange={(value) => setRegister({ ...register, email: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                <Field label="Nombre completo" value={register.NombreCompleto} onChange={handleRegisterNameChange} onBlur={() => validateRegisterField('NombreCompleto')} error={authErrors.NombreCompleto} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                <Field label="Correo electronico" type="email" value={register.email} onChange={handleRegisterEmailChange} onBlur={() => validateRegisterField('email')} error={authErrors.email} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Contrasena" type="password" value={register.password} onChange={(value) => setRegister({ ...register, password: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Contrasena" type="password" value={register.password} onChange={handleRegisterPasswordChange} onBlur={() => validateRegisterField('password')} error={authErrors.password} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                   <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} max={new Date().toISOString().split('T')[0]} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
                 <label className="block">
@@ -366,7 +470,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
 };
 
 // Campo reutilizable para entradas de texto simples dentro de formularios.
-const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', ...props }) => (
+const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', error = '', errorClassName = 'text-red-500 text-xs mt-1 block', ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
     <input
@@ -378,6 +482,7 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
       className="w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
       {...props}
     />
+    {error && <span className={errorClassName}>{error}</span>}
   </label>
 );
 
