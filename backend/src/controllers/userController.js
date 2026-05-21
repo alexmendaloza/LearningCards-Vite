@@ -175,9 +175,8 @@ export const creatorStats = async (req, res, next) => {
       pool.query(
         `SELECT DISTINCT categoria
            FROM Publicacion
-          WHERE fk_id_usuario = ? AND publico = 1 AND categoria IS NOT NULL AND categoria != ''
+          WHERE categoria IS NOT NULL AND categoria != ''
           ORDER BY categoria`,
-        [userId],
       ),
       pool.query(
         `SELECT c.id_Compra,

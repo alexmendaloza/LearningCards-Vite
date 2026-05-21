@@ -184,6 +184,67 @@ body {
   animation: success-particle-float 1.9s ease-out infinite;
 }
 
+.study-session {
+  background:
+    radial-gradient(circle at 16% 10%, rgba(124, 58, 237, 0.22), transparent 28%),
+    radial-gradient(circle at 86% 12%, rgba(14, 165, 233, 0.16), transparent 26%),
+    linear-gradient(135deg, #08111f 0%, #0f172a 52%, #1b1236 100%);
+}
+
+.study-card-canvas {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+  border-color: rgba(125, 211, 252, 0.24);
+  box-shadow:
+    0 28px 70px rgba(15, 23, 42, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@keyframes study-success-flash {
+  0% {
+    border-color: rgba(52, 211, 153, 0.24);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.52), 0 0 0 rgba(16, 185, 129, 0);
+  }
+  45% {
+    border-color: rgba(110, 231, 183, 0.95);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.52), 0 0 34px rgba(16, 185, 129, 0.42);
+  }
+  100% {
+    border-color: rgba(125, 211, 252, 0.24);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.52), 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes study-error-shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-10px); }
+  36% { transform: translateX(9px); }
+  54% { transform: translateX(-7px); }
+  72% { transform: translateX(5px); }
+}
+
+@keyframes study-feedback-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -35%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.study-success-flash {
+  animation: study-success-flash 0.48s ease-out both;
+}
+
+.study-error-shake {
+  animation: study-error-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.study-feedback-toast {
+  animation: study-feedback-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Shared Vite migration theme */
 :root {
   --app-bg: #f8fbff;
@@ -1769,6 +1830,13 @@ body.admin-dashboard-mode .admin-table-delete {
   box-shadow: 0 0 15px rgba(244, 63, 94, 0.2) !important;
 }
 
+body.admin-dashboard-mode .admin-table-restore {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border: 1px solid rgba(252, 211, 77, 0.35) !important;
+  color: #fcd34d !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2) !important;
+}
+
 body.admin-dashboard-mode .admin-table-view:hover {
   background: rgba(16, 185, 129, 0.28) !important;
   color: #34d399 !important;
@@ -1780,6 +1848,13 @@ body.admin-dashboard-mode .admin-table-delete:hover {
   background: rgba(244, 63, 94, 0.28) !important;
   color: #fb7185 !important;
   box-shadow: 0 0 25px rgba(244, 63, 94, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+body.admin-dashboard-mode .admin-table-restore:hover {
+  background: rgba(245, 158, 11, 0.28) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.4) !important;
   transform: translateY(-2px);
 }
 

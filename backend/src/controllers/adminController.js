@@ -140,6 +140,7 @@ export const deleteUser = async (req, res, next) => {
 export const listDecks = async (req, res, next) => {
   try {
     const { search, autor, estado, coleccion } = req.query;
+    const coleccionFiltro = String(coleccion || '').toLowerCase();
     const where = [];
     const params = [];
 
@@ -154,12 +155,13 @@ export const listDecks = async (req, res, next) => {
     }
     if (estado === 'publicado') where.push('p.publico = 1');
     if (estado === 'privado') where.push('(p.publico IS NULL OR p.publico = 0)');
-    if (coleccion === 'activo') where.push('m.enColeccion = 1');
-    if (coleccion === 'borrado') where.push('m.enColeccion = 0');
+    if (['activo', 'activos', '1'].includes(coleccionFiltro)) where.push('m.enColeccion = 1');
+    if (['borrado', 'borrados', '0'].includes(coleccionFiltro)) where.push('m.enColeccion = 0');
 
     // Consulta mazos junto con autor, publicacion y conteo de tarjetas para mostrar contexto completo.
     const [mazos] = await pool.query(
       `SELECT m.*,
+              COALESCE(m.enColeccion, 1) AS enColeccion,
               u.UserName,
               p.id_Publ,
               p.publico,
@@ -191,8 +193,8 @@ export const listDecks = async (req, res, next) => {
  */
 export const deleteDeck = async (req, res, next) => {
   try {
-    // Elimina el mazo indicado por parametro desde la tabla principal de mazos.
-    await pool.query('DELETE FROM Mazo WHERE IDMazo = ?', [req.params.id]);
+    // Marca el mazo como borrado logico para conservarlo visible en auditoria administrativa.
+    await pool.query('UPDATE Mazo SET enColeccion = 0 WHERE IDMazo = ?', [req.params.id]);
     return res.json({ success: true });
   } catch (error) {
     // Propaga errores por restricciones, permisos o conexion.

@@ -211,6 +211,7 @@ export const UserStatsPage = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawDone, setWithdrawDone] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
 
   const initialFilters = useMemo(() => ({
     search: searchParams.get('search') || '',
@@ -323,8 +324,8 @@ export const UserStatsPage = () => {
                   {categorias.map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
                 <input className="creator-input" type="number" min="0" step="0.01" placeholder="Ingresos minimos" value={filters.ingresos_min} onChange={(event) => setFilters({ ...filters, ingresos_min: event.target.value })} />
-                <input className="creator-input" type="date" value={filters.fecha_desde} onChange={(event) => setFilters({ ...filters, fecha_desde: event.target.value })} />
-                <input className="creator-input" type="date" value={filters.fecha_hasta} onChange={(event) => setFilters({ ...filters, fecha_hasta: event.target.value })} />
+                <input className="creator-input" type="date" max={today} value={filters.fecha_desde} onChange={(event) => setFilters({ ...filters, fecha_desde: event.target.value })} />
+                <input className="creator-input" type="date" max={today} value={filters.fecha_hasta} onChange={(event) => setFilters({ ...filters, fecha_hasta: event.target.value })} />
                 <div className="flex gap-2 md:col-span-3">
                   <button type="submit" className="rounded-xl bg-slate-900 px-5 py-2 text-xs font-black text-white">Aplicar</button>
                   <button type="button" onClick={() => setSearchParams({})} className="rounded-xl bg-white px-5 py-2 text-xs font-black text-slate-500">Limpiar</button>

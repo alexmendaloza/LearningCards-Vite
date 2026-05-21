@@ -332,40 +332,40 @@ const RatingsPanel = ({ publicacion, valoraciones, rating, comment, setRating, s
   <section className="ratings-panel marketplace-detail-panel rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
     <h2 className="mb-5 flex items-center gap-2 text-lg font-bold"><MessageSquare className="h-5 w-5 text-amber-500" /> Valoraciones y comentarios</h2>
 
-    <div className="ratings-summary mb-6 flex items-center gap-6 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-100 via-yellow-50 to-orange-50 p-5 shadow-sm">
+    <div className="ratings-summary mb-6 flex items-center gap-6 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-100 via-yellow-50 to-orange-50 p-5 shadow-sm dark:border-gray-300 dark:bg-gray-100">
       <div className="text-center">
         <div className="rating-score text-4xl font-black text-amber-600">{Number(publicacion.promedio_valoracion || 0).toFixed(1)}</div>
-        <div className="mt-1 flex justify-center"><StarRow value={publicacion.promedio_valoracion} /></div>
-        <div className="rating-count mt-1 text-xs font-bold text-slate-600">{publicacion.num_valoraciones} valoraciones</div>
+        <div className="mt-2 flex justify-center rounded-full bg-white/40 px-3 py-1.5"><StarRow value={publicacion.promedio_valoracion} /></div>
+        <div className="rating-count mt-2 text-xs font-bold text-gray-900 dark:text-gray-800">{publicacion.num_valoraciones} valoraciones</div>
       </div>
-      <div className="flex-1 space-y-1">
+      <div className="flex-1 space-y-2">
         {[5, 4, 3, 2, 1].map((star) => {
           const count = valoraciones.filter((val) => Number(val.puntuacion) === star).length;
           const pct = publicacion.num_valoraciones ? Math.round((count / publicacion.num_valoraciones) * 100) : 0;
           return (
             <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-4 text-right font-bold text-slate-700">{star}</span>
-              <div className="rating-bar-track h-2 flex-1 rounded-full bg-amber-200">
-                <div className="rating-bar-fill h-2 rounded-full bg-amber-500 transition-all" style={{ width: `${pct}%` }} />
+              <span className="w-4 text-right font-bold text-gray-900 dark:text-gray-800">{star}</span>
+              <div className="rating-bar-track h-2 flex-1 rounded-full bg-amber-200 dark:bg-amber-200">
+                <div className="rating-bar-fill h-2 rounded-full bg-amber-500 dark:bg-amber-500 transition-all" style={{ width: `${pct}%` }} />
               </div>
-              <span className="w-8 font-semibold text-slate-600">{count}</span>
+              <span className="w-8 text-right font-semibold text-gray-900 dark:text-gray-800">{count}</span>
             </div>
           );
         })}
       </div>
     </div>
 
-    <form onSubmit={sendRating} className="rating-form-card mb-6 rounded-xl border border-purple-200 bg-white p-4">
-      <h3 className="mb-3 font-semibold text-gray-800">{hasRating ? 'Actualizar tu valoracion' : 'Deja tu valoracion'}</h3>
-      <div className="mb-3 flex gap-1">
+    <form onSubmit={sendRating} className="rating-form-card mb-6 rounded-2xl border border-purple-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-4 font-semibold text-gray-900">{hasRating ? 'Actualizar tu valoracion' : 'Deja tu valoracion'}</h3>
+      <div className="mb-4 flex gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <button type="button" key={star} onClick={() => setRating(star)} className="star-btn text-3xl transition-transform hover:scale-110">
             <span className={`star ${star <= rating ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
           </button>
         ))}
       </div>
-      <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows="3" placeholder="Escribe un comentario (opcional)..." className="mb-3 w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-coral-300" />
-      <button disabled={!rating} className="marketplace-liquid-btn rounded-xl px-5 py-2 text-sm font-black text-white disabled:opacity-50">{hasRating ? 'Actualizar valoracion' : 'Enviar valoracion'}</button>
+      <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows="3" placeholder="Escribe un comentario (opcional)..." className="mb-4 w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-coral-300" />
+      <button disabled={!rating} className="marketplace-liquid-btn rounded-xl px-5 py-2 text-sm font-bold text-white disabled:opacity-50">{hasRating ? 'Actualizar valoracion' : 'Enviar valoracion'}</button>
     </form>
 
     <div className="space-y-4">
