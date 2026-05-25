@@ -175,6 +175,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [authErrors, setAuthErrors] = useState({});
   const [login, setLogin] = useState({ email: '', password: '' });
   // Datos del formulario de registro.
   const [register, setRegister] = useState({
@@ -213,7 +214,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
     setTab(nextTab);
     setError('');
     setSuccessMsg('');
-    
+    setAuthErrors({});
     // Si salimos de recover, reiniciamos la fase de recuperación
     if (nextTab !== 'recover') {
       setRecoverPhase('request');
@@ -221,7 +222,6 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
       setRecoverCode('');
       setRecoverPassword('');
     }
-
     const tabs = document.getElementById('auth-tabs');
     if (tabs) {
       tabs.classList.remove('slider-moving');
@@ -230,6 +230,101 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
       window.setTimeout(() => tabs.classList.remove('slider-moving'), 700);
     }
   };
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const namePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/;
+  const authErrorClass = 'text-red-500 text-xs mt-1 block font-semibold';
+
+  const updateAuthError = (field, message) => {
+    setAuthErrors((current) => ({ ...current, [field]: message }));
+  };
+
+  const clearAuthError = (field) => {
+    setAuthErrors((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const handleLoginEmailChange = (value) => {
+    const nextValue = value.slice(0, 60);
+    setLogin({ ...login, email: nextValue });
+    if (nextValue.trim()) clearAuthError('loginGeneral');
+  };
+
+  const handleLoginPasswordChange = (value) => {
+    const nextValue = value.slice(0, 25);
+    setLogin({ ...login, password: nextValue });
+    if (nextValue) clearAuthError('loginGeneral');
+  };
+
+  const handleRegisterUsernameChange = (value) => {
+    const nextValue = value.slice(0, 20);
+    setRegister({ ...register, UserName: nextValue });
+    if (nextValue.trim()) clearAuthError('UserName');
+  };
+
+  const handleRegisterNameChange = (value) => {
+    const nextValue = value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, '').slice(0, 50);
+    setRegister({ ...register, NombreCompleto: nextValue });
+    if (!nextValue.trim() || !namePattern.test(nextValue.trim())) {
+      updateAuthError('NombreCompleto', 'Por favor, ingresa un nombre válido (solo letras y espacios).');
+    } else {
+      clearAuthError('NombreCompleto');
+    }
+  };
+
+  const handleRegisterEmailChange = (value) => {
+    const nextValue = value.slice(0, 60);
+    setRegister({ ...register, email: nextValue });
+    if (!nextValue.trim() || emailPattern.test(nextValue.trim())) clearAuthError('email');
+  };
+
+  const handleRegisterPasswordChange = (value) => {
+    const nextValue = value.slice(0, 25);
+    setRegister({ ...register, password: nextValue });
+    if (nextValue && nextValue.length < 6) {
+      updateAuthError('password', 'La contraseña debe tener entre 6 y 25 caracteres.');
+    } else {
+      clearAuthError('password');
+    }
+  };
+
+  const validateRegisterField = (field) => {
+    if (field === 'UserName') {
+      if (!register.UserName.trim()) {
+        updateAuthError('UserName', 'El nombre de usuario es obligatorio.');
+        return false;
+      }
+      clearAuthError('UserName');
+    }
+    if (field === 'NombreCompleto') {
+      const value = register.NombreCompleto.trim();
+      if (!value || !namePattern.test(value)) {
+        updateAuthError('NombreCompleto', 'Por favor, ingresa un nombre válido (solo letras y espacios).');
+        return false;
+      }
+      clearAuthError('NombreCompleto');
+    }
+    if (field === 'email') {
+      if (!emailPattern.test(register.email.trim())) {
+        updateAuthError('email', 'Introduce una dirección de correo electrónico válida.');
+        return false;
+      }
+      clearAuthError('email');
+    }
+    if (field === 'password') {
+      if (register.password.length < 6 || register.password.length > 25) {
+        updateAuthError('password', 'La contraseña debe tener entre 6 y 25 caracteres.');
+        return false;
+      }
+      clearAuthError('password');
+    }
+    return true;
+  };
+
+  const validateRegisterForm = () => ['UserName', 'NombreCompleto', 'email', 'password'].every(validateRegisterField);
 
   // Permite cambiar el tema del formulario sin afectar la lógica de autenticación.
   const toggleAuthTheme = () => {
@@ -254,6 +349,11 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   // Envía credenciales al backend y actualiza la sesión global al iniciar.
   const submitLogin = async (event) => {
     event.preventDefault();
+    if (!login.email.trim() || !login.password) {
+      updateAuthError('loginGeneral', 'Por favor, rellena todos los campos obligatorios.');
+      return;
+    }
+    clearAuthError('loginGeneral');
     setLoading(true);
     setError('');
     setSuccessMsg('');
@@ -271,6 +371,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
   // Registra una nueva cuenta y autentica automáticamente al usuario creado.
   const submitRegister = async (event) => {
     event.preventDefault();
+    if (!validateRegisterForm()) return;
     setLoading(true);
     setError('');
     setSuccessMsg('');
@@ -397,8 +498,8 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
           <div className="custom-scrollbar overflow-y-auto px-8 pb-8">
             {tab === 'login' && (
               <form className="space-y-4 py-2" onSubmit={submitLogin}>
-                <Field label="Correo electronico" type="email" value={login.email} onChange={(value) => setLogin({ ...login, email: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
-                <Field label="Contrasena" type="password" value={login.password} onChange={(value) => setLogin({ ...login, password: value })} required className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <Field label="Correo electronico" type="text" value={login.email} onChange={handleLoginEmailChange} className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
+                <Field label="Contrasena" type="password" value={login.password} onChange={handleLoginPasswordChange} className="auth-field w-full rounded-xl px-4 py-3 text-sm outline-none transition" />
                 <div className="flex items-center justify-between text-xs">
                   <label className="group flex cursor-pointer items-center gap-2">
                     <input type="checkbox" className="auth-checkbox rounded text-indigo-600 focus:ring-indigo-500" />
@@ -409,19 +510,20 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
                 <button disabled={loading} className="auth-submit w-full rounded-xl py-3 font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60">
                   {loading ? 'Cargando...' : 'Iniciar sesion'}
                 </button>
+                {authErrors.loginGeneral && <span className={authErrorClass}>{authErrors.loginGeneral}</span>}
               </form>
             )}
             
             {tab === 'register' && (
               <form className="space-y-4 py-2" onSubmit={submitRegister}>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Usuario" value={register.UserName} onChange={(value) => setRegister({ ...register, UserName: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Usuario" value={register.UserName} onChange={handleRegisterUsernameChange} onBlur={() => validateRegisterField('UserName')} error={authErrors.UserName} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                   <Select label="Genero" value={register.genero} onChange={(value) => setRegister({ ...register, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
-                <Field label="Nombre completo" value={register.NombreCompleto} onChange={(value) => setRegister({ ...register, NombreCompleto: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
-                <Field label="Correo electronico" type="email" value={register.email} onChange={(value) => setRegister({ ...register, email: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                <Field label="Nombre completo" value={register.NombreCompleto} onChange={handleRegisterNameChange} onBlur={() => validateRegisterField('NombreCompleto')} error={authErrors.NombreCompleto} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                <Field label="Correo electronico" type="email" value={register.email} onChange={handleRegisterEmailChange} onBlur={() => validateRegisterField('email')} error={authErrors.email} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Contrasena" type="password" value={register.password} onChange={(value) => setRegister({ ...register, password: value })} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
+                  <Field label="Contrasena" type="password" value={register.password} onChange={handleRegisterPasswordChange} onBlur={() => validateRegisterField('password')} error={authErrors.password} errorClassName={authErrorClass} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                   <Field label="Nacimiento" type="date" value={register.fechanac} onChange={(value) => setRegister({ ...register, fechanac: value })} max={new Date().toISOString().split('T')[0]} required className="auth-field w-full rounded-xl px-4 py-2.5 text-sm outline-none transition" />
                 </div>
                 <label className="block">
@@ -519,7 +621,7 @@ export const LoginPage = ({ initialTab = 'login', onAuth }) => {
 };
 
 // Campo reutilizable para entradas de texto simples dentro de formularios.
-const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', ...props }) => (
+const Field = ({ label, value, onChange, type = 'text', required = false, placeholder = '', error = '', errorClassName = 'text-red-500 text-xs mt-1 block', ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
     <input
@@ -531,6 +633,7 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
       className="w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
       {...props}
     />
+    {error && <span className={errorClassName}>{error}</span>}
   </label>
 );
 
@@ -1200,6 +1303,7 @@ export const StudyPage = () => {
   // Advanced card types state
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState(null); // { correct: boolean, revealed: boolean }
+  const [visualFeedback, setVisualFeedback] = useState(null);
 
   const levenshtein = (a, b) => {
     const tmp = [];
@@ -1226,7 +1330,7 @@ export const StudyPage = () => {
 
   const cards = data?.tarjetas || [];
   const current = cards[index] || {};
-  const progress = cards.length ? (index / cards.length) * 100 : 0;
+  const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
 
   const finish = async (nextPass, nextFail) => {
     const end = new Date();
@@ -1251,7 +1355,13 @@ export const StudyPage = () => {
       setFlipped(false);
       setUserAnswer('');
       setFeedback(null);
+      setVisualFeedback(null);
     }
+  };
+
+  const answerWithFeedback = (known) => {
+    setVisualFeedback(known ? 'pass' : 'fail');
+    window.setTimeout(() => answer(known), 420);
   };
 
   const submitEscritura = (event) => {
@@ -1259,6 +1369,7 @@ export const StudyPage = () => {
     if (feedback) return;
     const correct = isCorrect(userAnswer, current.reverso);
     setFeedback({ correct, revealed: true });
+    setVisualFeedback(correct ? 'pass' : 'fail');
     setTimeout(() => answer(correct), 1500);
   };
 
@@ -1266,6 +1377,7 @@ export const StudyPage = () => {
     if (feedback) return;
     const correct = opt === current.reverso;
     setFeedback({ correct, revealed: true, selected: opt });
+    setVisualFeedback(correct ? 'pass' : 'fail');
     setTimeout(() => answer(correct), 1500);
   };
 
@@ -1294,20 +1406,21 @@ export const StudyPage = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-150px)] flex-col items-center px-4 py-10">
+    <div className="study-session flex min-h-[calc(100vh-150px)] flex-col items-center px-4 py-10">
       <div className="mb-12 w-full max-w-2xl">
         <div className="mb-3 flex items-center justify-between px-2">
-          <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-600">Mazo: {data.mazo.titulo}</span>
-          <span className="text-sm font-black text-gray-400"><span className="text-lg text-indigo-600">{index + 1}</span> / {cards.length}</span>
+          <span className="rounded-full border border-indigo-300/30 bg-indigo-500/10 px-4 py-1.5 text-sm font-black text-indigo-200 shadow-sm shadow-indigo-950/20">Mazo: {data.mazo.titulo}</span>
+          <span className="rounded-full bg-white/10 px-4 py-1 text-sm font-black text-indigo-100"><span className="text-lg text-violet-300">{index + 1}</span> / {cards.length}</span>
         </div>
-        <div className="h-5 rounded-full bg-white/40 p-1 shadow-inner"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all" style={{ width: `${progress}%` }} /></div>
+        <div className="h-5 rounded-full border border-white/10 bg-white/10 p-1 shadow-inner shadow-indigo-950/30"><div className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-500 to-fuchsia-500 transition-all duration-500 ease-out" style={{ width: `${progress}%` }} /></div>
       </div>
 
       <div className="w-full max-w-2xl">
         {current.tipo === 'opcion_multiple' ? (
-          <div className="rounded-3xl border border-white/80 bg-white p-8 shadow-xl">
+          <div className={`study-card-canvas relative rounded-[2rem] border p-8 text-center shadow-2xl shadow-indigo-950/50 ${visualFeedback === 'pass' ? 'study-success-flash' : ''} ${visualFeedback === 'fail' ? 'study-error-shake' : ''}`}>
+            <StudyFeedbackToast result={visualFeedback} />
             <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-500">Selecciona la opción correcta</span>
-            <p className="mb-8 text-2xl font-bold text-gray-800 md:text-3xl">{current.frente}</p>
+            <p className="mx-auto mb-10 max-w-xl text-3xl font-black leading-tight text-slate-50 drop-shadow md:text-4xl">{current.frente}</p>
             <div className="grid gap-3">
               {(typeof current.opciones === 'string' ? JSON.parse(current.opciones) : (current.opciones || [])).map((opt, i) => {
                 const isSelected = feedback?.selected === opt;
@@ -1323,7 +1436,7 @@ export const StudyPage = () => {
                     key={i}
                     onClick={() => selectOption(opt)}
                     disabled={feedback?.revealed}
-                    className={`flex items-center justify-between rounded-2xl border-2 px-6 py-4 font-bold transition-all ${btnClass}`}
+                    className={`flex items-center justify-between rounded-2xl border-2 px-6 py-4 font-bold transition-all duration-200 active:scale-95 ${btnClass}`}
                   >
                     <span>{opt}</span>
                     {feedback?.revealed && isTheCorrectOne && <span>✓</span>}
@@ -1334,9 +1447,10 @@ export const StudyPage = () => {
             </div>
           </div>
         ) : current.tipo === 'escritura' ? (
-          <div className="rounded-3xl border border-white/80 bg-white p-8 shadow-xl">
+          <div className={`study-card-canvas relative rounded-[2rem] border p-8 text-center shadow-2xl shadow-indigo-950/50 ${visualFeedback === 'pass' ? 'study-success-flash' : ''} ${visualFeedback === 'fail' ? 'study-error-shake' : ''}`}>
+            <StudyFeedbackToast result={visualFeedback} />
             <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-500">Escribe tu respuesta</span>
-            <p className="mb-8 text-2xl font-bold text-gray-800 md:text-3xl">{current.frente}</p>
+            <p className="mx-auto mb-10 max-w-xl text-3xl font-black leading-tight text-slate-50 drop-shadow md:text-4xl">{current.frente}</p>
             <form onSubmit={submitEscritura}>
               <input
                 autoFocus
@@ -1345,37 +1459,41 @@ export const StudyPage = () => {
                 disabled={feedback?.revealed}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 placeholder="Escribe aqui..."
-                className={`w-full rounded-2xl border-2 p-5 text-xl font-bold outline-none transition-all ${
+                className={`w-full rounded-2xl border-2 p-5 text-xl font-bold outline-none transition-all duration-200 active:scale-[0.99] ${
                   feedback ? (feedback.correct ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700') : 'border-gray-100 focus:border-indigo-400'
                 }`}
               />
               {!feedback && (
-                <button className="mt-4 w-full rounded-2xl bg-indigo-600 py-4 font-bold text-white shadow-lg shadow-indigo-100">Enviar respuesta</button>
+                <button className="mt-4 w-full rounded-2xl bg-indigo-600 py-4 font-bold text-white shadow-lg shadow-indigo-100 transition-all duration-200 active:scale-95">Enviar respuesta</button>
               )}
-              {feedback && !feedback.correct && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm font-bold text-gray-400">Respuesta correcta:</p>
-                  <p className="text-xl font-black text-green-600">{current.reverso}</p>
+              {feedback && (
+                <div className="mt-5 flex min-h-24 flex-col items-center justify-center rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 text-center shadow-inner shadow-emerald-950/20">
+                  <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-300">Respuesta correcta</p>
+                  <p className="max-w-full break-words text-2xl font-black leading-snug text-emerald-50">{current.reverso}</p>
                 </div>
               )}
             </form>
           </div>
         ) : (
           <>
-            <button onClick={() => setFlipped(!flipped)} className="relative flex min-h-[350px] w-full items-center justify-center rounded-3xl border border-white/80 bg-white p-8 text-center shadow-xl">
+            <button
+              onClick={() => setFlipped(!flipped)}
+              className={`study-card-canvas relative flex min-h-[390px] w-full items-center justify-center rounded-[2rem] border p-10 text-center shadow-2xl shadow-indigo-950/50 transition-all duration-300 active:scale-[0.99] ${visualFeedback === 'pass' ? 'study-success-flash' : ''} ${visualFeedback === 'fail' ? 'study-error-shake' : ''}`}
+            >
+              <StudyFeedbackToast result={visualFeedback} />
               <div>
-                <span className={`mb-4 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${flipped ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-500'}`}>{flipped ? 'Respuesta' : 'Pregunta'}</span>
-                <p className={`text-2xl font-bold md:text-3xl ${flipped ? 'text-white' : 'text-gray-800'}`}>{flipped ? current.reverso : current.frente}</p>
+                <span className={`mb-7 inline-block rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] ${flipped ? 'border-white/20 bg-white/20 text-white' : 'border-violet-300/20 bg-violet-500/10 text-violet-200'}`}>{flipped ? 'Respuesta' : 'Pregunta'}</span>
+                <p className={`mx-auto max-w-xl text-3xl font-black leading-tight drop-shadow md:text-4xl ${flipped ? 'text-white' : 'text-slate-50'}`}>{flipped ? current.reverso : current.frente}</p>
               </div>
-              {flipped && <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700" />}
+              {flipped && <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-purple-700" />}
             </button>
 
             {flipped && (
               <div className="mx-auto mt-12 w-full max-w-md">
-                <p className="mb-6 text-center text-sm font-medium italic text-gray-400">Que tal te ha ido con esta tarjeta?</p>
+                <p className="mb-6 text-center text-sm font-medium italic text-indigo-100/70">Que tal te ha ido con esta tarjeta?</p>
                 <div className="flex gap-4">
-                  <button onClick={() => answer(false)} className="flex-1 rounded-2xl border-2 border-red-100 bg-white py-5 text-sm font-black uppercase tracking-widest text-red-500">No lo sabia</button>
-                  <button onClick={() => answer(true)} className="flex-1 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-green-200">Lo sabia</button>
+                  <button onClick={() => answerWithFeedback(false)} className="flex-1 rounded-2xl border border-rose-300/30 bg-rose-500/10 py-5 text-sm font-black uppercase tracking-widest text-rose-200 transition-all duration-200 hover:bg-rose-500/20 active:scale-95">No lo sabia</button>
+                  <button onClick={() => answerWithFeedback(true)} className="flex-1 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-950/30 transition-all duration-200 hover:brightness-110 active:scale-95">Lo sabia</button>
                 </div>
               </div>
             )}
@@ -1383,20 +1501,37 @@ export const StudyPage = () => {
         )}
       </div>
 
-      <div className="mt-auto flex w-full max-w-2xl justify-around border-t border-gray-100 py-8">
-        <Counter label="Aciertos" value={pass} color="text-green-500" />
-        <Counter label="Fallos" value={fail} color="text-red-400" />
+      <div className="mt-auto flex w-full max-w-2xl justify-around border-t border-white/15 py-8">
+        <Counter label="Aciertos" value={pass} tone="pass" />
+        <Counter label="Fallos" value={fail} tone="fail" />
       </div>
     </div>
   );
 };
 
-const Counter = ({ label, value, color }) => (
-  <div className="flex flex-col items-center">
-    <span className="mb-1 text-xs font-bold uppercase tracking-tighter text-gray-400">{label}</span>
-    <span className={`text-2xl font-black ${color}`}>{value}</span>
-  </div>
-);
+const StudyFeedbackToast = ({ result }) => {
+  if (!result) return null;
+
+  const isPass = result === 'pass';
+
+  return (
+    <div className={`study-feedback-toast pointer-events-none absolute left-1/2 top-0 z-20 flex items-center gap-3 rounded-full border px-5 py-3 text-sm font-black text-white shadow-2xl backdrop-blur-md ${isPass ? 'border-emerald-300/30 bg-emerald-500/90 shadow-emerald-950/30' : 'border-rose-300/30 bg-rose-500/90 shadow-rose-950/30'}`}>
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-lg">{isPass ? '✓' : '×'}</span>
+      {isPass ? '¡Acertaste!' : '¡Oops! Inténtalo de nuevo'}
+    </div>
+  );
+};
+
+const Counter = ({ label, value, tone }) => {
+  const isPass = tone === 'pass';
+
+  return (
+    <div className={`min-w-36 rounded-2xl border px-6 py-4 text-center shadow-lg backdrop-blur-md ${isPass ? 'border-emerald-300/20 bg-emerald-400/10 shadow-emerald-950/20' : 'border-rose-300/20 bg-rose-400/10 shadow-rose-950/20'}`}>
+      <span className={`mb-1 block text-[10px] font-black uppercase tracking-[0.22em] ${isPass ? 'text-emerald-200' : 'text-rose-200'}`}>{label}</span>
+      <span className={`text-4xl font-black ${isPass ? 'text-emerald-300' : 'text-rose-300'}`}>{value}</span>
+    </div>
+  );
+};
 
 /**
  * Componente de la tienda o Marketplace.
@@ -2214,6 +2349,7 @@ export const AdminMazosPage = () => {
   const query = params.toString();
   const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos${query ? `?${query}` : ''}`)).data, [refresh, query]);
   const remove = async (id) => { if (confirm('Borrar mazo?')) { await api.delete(`/admin/mazos/${id}`); setRefresh((value) => value + 1); } };
+  const restore = async (id) => { if (confirm('Recuperar mazo?')) { await api.patch(`/admin/mazos/${id}/restore`); setRefresh((value) => value + 1); } };
 
   useEffect(() => {
     document.body.classList.add('admin-dashboard-mode');
@@ -2320,46 +2456,54 @@ export const AdminMazosPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {data.mazos.map((mazo) => (
-              <tr key={mazo.IDMazo} className="group transition-colors hover:bg-slate-50/50">
-                <td className="px-8 py-7">
-                  <span className="inline-block text-lg font-black text-slate-700 transition-all group-hover:translate-x-1 group-hover:text-indigo-500">{mazo.titulo}</span>
-                </td>
-                <td className="px-8 py-7">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-xs font-black text-indigo-500">
-                      {(mazo.UserName || 'S').slice(0, 1)}
+            {data.mazos.map((mazo) => {
+              const isDeleted = Number(mazo.enColeccion) === 0 || mazo.enColeccion === false;
+
+              return (
+                <tr key={mazo.IDMazo} className="group transition-colors hover:bg-slate-50/50">
+                  <td className="px-8 py-7">
+                    <span className="inline-block text-lg font-black text-slate-700 transition-all group-hover:translate-x-1 group-hover:text-indigo-500">{mazo.titulo}</span>
+                  </td>
+                  <td className="px-8 py-7">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-xs font-black text-indigo-500">
+                        {(mazo.UserName || 'S').slice(0, 1)}
+                      </div>
+                      <span className="text-base font-medium text-slate-500 transition-colors group-hover:text-slate-700">{mazo.UserName || 'Desconocido'}</span>
                     </div>
-                    <span className="text-base font-medium text-slate-500 transition-colors group-hover:text-slate-700">{mazo.UserName || 'Desconocido'}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-7">
-                  {Number(mazo.enColeccion) === 1 ? (
-                    <span className="admin-badge admin-badge-active">
-                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      Activo
-                    </span>
-                  ) : (
-                    <span className="admin-badge admin-badge-deleted">
-                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-                      Borrado
-                    </span>
-                  )}
-                </td>
-                <td className="px-8 py-7 text-center">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-sm font-black text-indigo-600 transition-transform group-hover:scale-110">{mazo.tarjetas_count}</span>
-                </td>
-                <td className="px-8 py-7 text-center">
-                  {Number(mazo.publico) === 1 ? <span className="admin-badge admin-badge-public">Publicado</span> : <span className="admin-badge admin-badge-private">Privado</span>}
-                </td>
-                <td className="px-8 py-7 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <button onClick={() => navigate(`/admin/mazos/${mazo.IDMazo}/tarjetas`)} className="admin-table-action admin-table-view uppercase tracking-widest">Ver</button>
-                    <button onClick={() => remove(mazo.IDMazo)} className="admin-table-action admin-table-delete uppercase tracking-widest">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-8 py-7">
+                    {isDeleted ? (
+                      <span className="admin-badge admin-badge-deleted">
+                        <span className="mr-2 h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                        Borrado
+                      </span>
+                    ) : (
+                      <span className="admin-badge admin-badge-active">
+                        <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        Activo
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-8 py-7 text-center">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 text-sm font-black text-indigo-600 transition-transform group-hover:scale-110">{mazo.tarjetas_count}</span>
+                  </td>
+                  <td className="px-8 py-7 text-center">
+                    {Number(mazo.publico) === 1 ? <span className="admin-badge admin-badge-public">Publicado</span> : <span className="admin-badge admin-badge-private">Privado</span>}
+                  </td>
+                  <td className="px-8 py-7 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      <button onClick={() => navigate(`/admin/mazos/${mazo.IDMazo}/tarjetas`)} className="admin-table-action admin-table-view uppercase tracking-widest">Ver</button>
+                      {isDeleted ? (
+                        <button onClick={() => restore(mazo.IDMazo)} className="admin-table-action admin-table-restore uppercase tracking-widest">Recuperar</button>
+                      ) : (
+                        <button onClick={() => remove(mazo.IDMazo)} className="admin-table-action admin-table-delete uppercase tracking-widest">Eliminar</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
