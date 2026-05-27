@@ -44,6 +44,11 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: 'Credenciales incorrectas.' });
     }
 
+    if (Number(usuario.activo) === 0) {
+      console.warn(`[LOGIN] Cuenta desactivada: "${identifier}"`);
+      return res.status(403).json({ message: 'Esta cuenta ha sido desactivada por el administrador.' });
+    }
+
     const bcryptPassword = String(usuario.contrasena || '').replace(/^\$2y\$/, '$2b$');
     const passwordMatches = bcrypt.compareSync(String(password), bcryptPassword);
 
@@ -89,6 +94,11 @@ export const adminLogin = async (req, res, next) => {
     if (!usuario) {
       console.warn(`[ADMIN-LOGIN] Usuario no encontrado: "${identifier}"`);
       return res.status(401).json({ message: 'Credenciales incorrectas.' });
+    }
+
+    if (Number(usuario.activo) === 0) {
+      console.warn(`[ADMIN-LOGIN] Cuenta desactivada: "${identifier}"`);
+      return res.status(403).json({ message: 'Esta cuenta ha sido desactivada por el administrador.' });
     }
 
     const bcryptPassword = String(usuario.contrasena || '').replace(/^\$2y\$/, '$2b$');
@@ -139,7 +149,7 @@ export const register = async (req, res, next) => {
     const [result] = await pool.query(
       `INSERT INTO Usuario
         (UserName, NombreCompleto, email, contrasena, fechanac, genero, fotoruta, rachaActual, ultDiaEst, IDNivel, rol)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 1, 'user')`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 1, 'user')`,
       [
         req.body.UserName,
         req.body.NombreCompleto,

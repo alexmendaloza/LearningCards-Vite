@@ -26,8 +26,14 @@ const useResource = (loader, deps = []) => {
 const normalizeCard = (card = {}) => {
   let opciones = card.opciones || [];
   if (typeof opciones === 'string') {
-    try { opciones = JSON.parse(opciones); } catch { opciones = []; }
+    try {
+      opciones = JSON.parse(opciones);
+      if (typeof opciones === 'string') opciones = JSON.parse(opciones);
+    } catch {
+      opciones = [];
+    }
   }
+  if (!Array.isArray(opciones)) opciones = [];
   return { ...card, tipo: card.tipo || 'basica', opciones };
 };
 
@@ -108,6 +114,7 @@ export const StudyPage = () => {
   if (loading) return <Loading text="Preparando estudio..." />;
   if (error) return <ErrorBox message={error} />;
   if (!cards.length) return <div className="py-20 text-center"><h1 className="text-2xl font-bold">Este mazo no contiene tarjetas.</h1><Link className="mt-4 inline-block text-indigo-600" to="/dashboard">Volver al dashboard</Link></div>;
+  if (!cards[index]) return <div className="study-page flex min-h-[calc(100vh-150px)] items-center justify-center p-5 text-center font-bold text-white">Cargando tarjetas de estudio...</div>;
 
   if (finished) {
     const total = finished.pass + finished.fail;
@@ -164,9 +171,13 @@ export const StudyPage = () => {
             {isBasic && <p className="mt-auto text-xs font-bold text-gray-300">Haz clic para voltear</p>}
             {isMultiple && (
               <div className="mt-auto grid w-full gap-3 md:grid-cols-2">
-                {current.opciones.map((option) => (
+                {current.opciones.length ? current.opciones.map((option) => (
                   <button key={option} type="button" onClick={(event) => { event.stopPropagation(); checkOption(option); }} className={`study-option ${selectedOption === option ? 'selected' : ''}`}>{option}</button>
-                ))}
+                )) : (
+                  <div className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-5 py-4 text-sm font-bold text-amber-100 md:col-span-2">
+                    Esta tarjeta no tiene opciones disponibles. Revisa la copia del mazo o continua con otra tarjeta.
+                  </div>
+                )}
               </div>
             )}
             {isTyping && (

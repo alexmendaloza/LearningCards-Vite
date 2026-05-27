@@ -1922,6 +1922,30 @@ body.admin-dashboard-mode .admin-role-user {
   color: #ffffff !important;
 }
 
+.admin-user-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .75rem;
+  padding: .5rem 1rem;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+body.admin-dashboard-mode .admin-user-status-active {
+  background: rgba(16, 185, 129, 0.16) !important;
+  border: 1px solid rgba(110, 231, 183, 0.3) !important;
+  color: #6ee7b7 !important;
+}
+
+body.admin-dashboard-mode .admin-user-status-inactive {
+  background: rgba(244, 63, 94, 0.16) !important;
+  border: 1px solid rgba(253, 164, 175, 0.3) !important;
+  color: #fda4af !important;
+}
+
 .admin-user-action {
   border-radius: .75rem;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -1953,6 +1977,18 @@ body.admin-dashboard-mode .admin-user-delete:hover {
   background: rgba(244, 63, 94, 0.2) !important;
   color: #fda4af !important;
   box-shadow: 0 0 18px rgba(244, 63, 94, 0.28) !important;
+}
+
+body.admin-dashboard-mode .admin-user-restore {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #6ee7b7 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.18) !important;
+}
+
+body.admin-dashboard-mode .admin-user-restore:hover {
+  background: rgba(16, 185, 129, 0.24) !important;
+  color: #a7f3d0 !important;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.32) !important;
 }
 
 body.admin-dashboard-mode .admin-report-page {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, CreditCard, LockKeyhole, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle2, CreditCard, Sparkles } from 'lucide-react';
 import api from '../api/axios';
 
 const empty = 'Sin descripcion';
@@ -58,8 +58,35 @@ const Loading = ({ text = 'Cargando...' }) => (
   <div className="py-16 text-center text-sm font-semibold text-slate-500 animate-pulse">{text}</div>
 );
 
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+const PAYPAL_MODE = import.meta.env.VITE_PAYPAL_MODE || 'sandbox';
+const PAYPAL_CURRENCY = 'USD';
+const PAYPAL_SCRIPT_ID = 'paypal-js-sdk';
+
+const loadPayPalSdk = () => new Promise((resolve, reject) => {
+  if (window.paypal) {
+    resolve(window.paypal);
+    return;
+  }
+
+  const existingScript = document.getElementById(PAYPAL_SCRIPT_ID);
+  if (existingScript) {
+    existingScript.addEventListener('load', () => resolve(window.paypal), { once: true });
+    existingScript.addEventListener('error', reject, { once: true });
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.id = PAYPAL_SCRIPT_ID;
+  script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=${PAYPAL_CURRENCY}&intent=capture`;
+  script.async = true;
+  script.onload = () => resolve(window.paypal);
+  script.onerror = () => reject(new Error('No fue posible cargar PayPal.'));
+  document.body.appendChild(script);
+});
+
 // Modal de confirmación visual para mazos adquiridos o descargados correctamente.
-const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, cardCount, onDashboard, onMarketplace }) => {
+const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, cardCount, message = '', onDashboard, onMarketplace }) => {
   const paid = mode === 'pago';
   const particles = [
     ['left-[9%] top-[16%]', 'bg-emerald-300', '0s'],
@@ -80,26 +107,28 @@ const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, card
 
       <div className="success-card relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-indigo-950/20">
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-400 via-indigo-500 to-fuchsia-500" />
-        <div className="px-7 pb-7 pt-9 text-center sm:px-9">
-          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50">
+        <div className="flex flex-col items-center justify-center gap-6 px-7 py-8 text-center sm:px-9">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50">
             <div className="success-check-ring flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-xl shadow-emerald-200">
               <CheckCircle2 className="h-11 w-11" />
             </div>
           </div>
 
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600">
-            <Sparkles className="h-3.5 w-3.5" />
-            {paid ? 'Compra completada' : 'Descarga completada'}
+          <div className="flex flex-col items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600">
+              <Sparkles className="h-3.5 w-3.5" />
+              {paid ? 'Compra completada' : 'Descarga completada'}
+            </div>
+
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              {message || 'Mazo agregado exitosamente al dashboard'}
+            </h2>
+            <p className="mx-auto max-w-sm text-sm leading-relaxed text-slate-500">
+              {paid ? 'El pago simulado fue aprobado y tu copia ya quedo registrada.' : 'Tu mazo gratuito ya fue agregado a tu coleccion.'}
+            </p>
           </div>
 
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Mazo agregado exitosamente al dashboard
-          </h2>
-          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
-            {paid ? 'El pago simulado fue aprobado y tu copia ya quedo registrada.' : 'Tu mazo gratuito ya fue agregado a tu coleccion.'}
-          </p>
-
-          <div className="my-7 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
+          <div className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-sm">
                 <BookOpen className="h-7 w-7" />
@@ -112,7 +141,7 @@ const AcquisitionSuccessModal = ({ mode = 'gratis', deckTitle, creatorName, card
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div className="mt-4 grid w-full gap-3 sm:grid-cols-[1fr_auto]">
             <button onClick={onDashboard} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:shadow-indigo-200">
               Ir al Dashboard
               <ArrowRight className="h-4 w-4" />
@@ -1179,6 +1208,22 @@ export const StudyPage = () => {
 
   const cards = data?.tarjetas || [];
   const current = cards[index] || {};
+  const getCardOptions = (card = {}) => {
+    if (!card.opciones) return [];
+    if (Array.isArray(card.opciones)) return card.opciones;
+    try {
+      const parsed = JSON.parse(card.opciones);
+      if (typeof parsed === 'string') {
+        const nestedParsed = JSON.parse(parsed);
+        return Array.isArray(nestedParsed) ? nestedParsed : [];
+      }
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (parseError) {
+      console.error('Error parseando opciones JSON:', parseError);
+      return [];
+    }
+  };
+  const currentOptions = getCardOptions(current);
   const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
 
   const finish = async (nextPass, nextFail) => {
@@ -1233,6 +1278,7 @@ export const StudyPage = () => {
   if (loading) return <Loading text="Preparando estudio..." />;
   if (error) return <ErrorBox message={error} />;
   if (!cards.length) return <div className="py-20 text-center"><h1 className="text-2xl font-bold">Este mazo no contiene tarjetas.</h1><Link className="mt-4 inline-block text-indigo-600" to="/user/dashboard">Volver al dashboard</Link></div>;
+  if (!cards[index]) return <div className="study-session flex min-h-[calc(100vh-150px)] items-center justify-center p-5 text-center font-bold text-white">Cargando tarjetas de estudio...</div>;
 
   if (finished) {
     const total = finished.pass + finished.fail;
@@ -1271,7 +1317,7 @@ export const StudyPage = () => {
             <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-500">Selecciona la opción correcta</span>
             <p className="mx-auto mb-10 max-w-xl text-3xl font-black leading-tight text-slate-50 drop-shadow md:text-4xl">{current.frente}</p>
             <div className="grid gap-3">
-              {(typeof current.opciones === 'string' ? JSON.parse(current.opciones) : (current.opciones || [])).map((opt, i) => {
+              {currentOptions.length ? currentOptions.map((opt, i) => {
                 const isSelected = feedback?.selected === opt;
                 const isTheCorrectOne = opt === current.reverso;
                 let btnClass = 'border-gray-100 hover:border-indigo-200 hover:bg-indigo-50';
@@ -1292,7 +1338,11 @@ export const StudyPage = () => {
                     {feedback?.revealed && isSelected && !isTheCorrectOne && <span>&times;</span>}
                   </button>
                 );
-              })}
+              }) : (
+                <div className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-5 py-4 text-sm font-bold text-amber-100">
+                  Esta tarjeta no tiene opciones disponibles. Revisa la copia del mazo o continua con otra tarjeta.
+                </div>
+              )}
             </div>
           </div>
         ) : current.tipo === 'escritura' ? (
@@ -1616,7 +1666,6 @@ export const PaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, [id]);
-  const [form, setForm] = useState({ nombre_titular: '', numero_tarjeta: '', vencimiento: '', cvv: '' });
   const [submitError, setSubmitError] = useState('');
   const [success, setSuccess] = useState(null);
   const redirected = useRef(false);
@@ -1641,45 +1690,21 @@ export const PaymentPage = () => {
     }
   }, [data, id, navigate]);
 
-  const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  const formatExpiry = (value) => {
-    const digits = value.replace(/\D/g, '').slice(0, 4);
-    return digits.length >= 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-  };
-
-  const validatePayment = () => {
-    const errors = [];
-    const cardNumber = form.numero_tarjeta.replace(/\s/g, '');
-    if (!form.nombre_titular.trim()) errors.push('El nombre del titular es obligatorio.');
-    if (!/^\d{16}$/.test(cardNumber)) errors.push('El numero de tarjeta debe tener 16 digitos.');
-    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(form.vencimiento)) errors.push('El vencimiento debe tener formato MM/AA.');
-    if (!/^\d{3}$/.test(form.cvv)) errors.push('El CVV debe tener 3 digitos.');
-    return errors;
-  };
-
-  const submit = async (event) => {
-    event.preventDefault();
+  const confirmPaypalPayment = async ({ orderId, payerId, captureId }) => {
     setSubmitError('');
-    const errors = validatePayment();
-    if (errors.length) {
-      setSubmitError(errors.join(' '));
-      return;
-    }
-    try {
-      await api.post(`/user/marketplace/${id}/confirmar`, {
-        ...form,
-        numero_tarjeta: form.numero_tarjeta.replace(/\s/g, ''),
-      });
-      setSuccess({
-        mode: 'pago',
-        deckTitle: data?.mazo?.titulo || 'Mazo',
-        creatorName: data?.creador?.NombreCompleto || data?.creador?.UserName || 'Desconocido',
-        cardCount: data?.tarjetas?.length || 0,
-      });
-    } catch (err) {
-      const serverErrors = err.response?.data?.errors ? Object.values(err.response.data.errors).join(' ') : '';
-      setSubmitError(serverErrors || err.response?.data?.message || 'No fue posible confirmar la compra.');
-    }
+    await api.post(`/user/marketplace/${id}/confirmar`, {
+      paypal_order_id: orderId,
+      paypal_payer_id: payerId,
+      paypal_capture_id: captureId,
+      provider: 'paypal',
+    });
+    setSuccess({
+      mode: 'pago',
+      deckTitle: data?.mazo?.titulo || 'Mazo',
+      creatorName: data?.creador?.NombreCompleto || data?.creador?.UserName || 'Desconocido',
+      cardCount: data?.tarjetas?.length || 0,
+      message: '¡Pago procesado con éxito! El mazo se ha añadido a tu colección.',
+    });
   };
 
   if (loading) return <Loading />;
@@ -1717,20 +1742,97 @@ export const PaymentPage = () => {
               </div>
             </div>
           </div>
-          <form onSubmit={submit} className="space-y-5 p-6">
-            <Field label="Nombre del titular" value={form.nombre_titular} onChange={(value) => setForm({ ...form, nombre_titular: value })} required />
-            <Field label="Numero de tarjeta" value={form.numero_tarjeta} onChange={(value) => setForm({ ...form, numero_tarjeta: formatCardNumber(value) })} placeholder="1234 5678 9012 3456" maxLength="19" required />
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Vencimiento" value={form.vencimiento} onChange={(value) => setForm({ ...form, vencimiento: formatExpiry(value) })} placeholder="MM/AA" maxLength="5" required />
-              <Field label="CVV" value={form.cvv} onChange={(value) => setForm({ ...form, cvv: value.replace(/\D/g, '').slice(0, 3) })} placeholder="123" maxLength="3" required />
-            </div>
+          <div className="space-y-5 p-6">
             <div className="border-t border-gray-100 pt-4"><div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>{money(publicacion.precio)}</span></div><div className="flex justify-between text-base font-bold text-gray-900"><span>Total</span><span className="text-indigo-600">{money(publicacion.precio)} USD</span></div></div>
-            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700"><AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>Este es un entorno de demostracion. Usa cualquier numero de tarjeta de 16 digitos, fecha futura y CVV de 3 digitos. No se realizaran cargos reales.</span></div>
-            <button className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-4 text-lg font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-200"><span className="inline-flex items-center justify-center gap-2"><CreditCard className="h-5 w-5" />Confirmar compra - {money(publicacion.precio)}</span></button>
-            <p className="flex items-center justify-center gap-1 text-center text-xs text-gray-400"><LockKeyhole className="h-3.5 w-3.5" />Pago seguro simulado · Al confirmar, el mazo se agregara a tu coleccion</p>
-          </form>
+            {!success && (
+              <>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700">
+                  Modo {PAYPAL_MODE}. Inicia sesion con una cuenta personal Sandbox de PayPal para simular el pago.
+                </div>
+                <PayPalButtons
+                  amount={publicacion.precio}
+                  publicationId={publicacion.id_Publ}
+                  deckTitle={mazo.titulo}
+                  onApprovePayment={confirmPaypalPayment}
+                  onCancel={() => setSubmitError('El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras.')}
+                  onError={(message) => setSubmitError(message)}
+                />
+                <p className="text-center text-xs text-gray-400">Pago seguro con PayPal Sandbox. Al aprobarse, el mazo se agregara a tu coleccion.</p>
+              </>
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const PayPalButtons = ({ amount, publicationId, deckTitle, onApprovePayment, onCancel, onError }) => {
+  const containerRef = useRef(null);
+  const renderedRef = useRef(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!PAYPAL_CLIENT_ID) {
+      setLoading(false);
+      onError('Falta configurar VITE_PAYPAL_CLIENT_ID en el archivo .env.');
+      return undefined;
+    }
+
+    loadPayPalSdk()
+      .then((paypal) => {
+        if (!active || !containerRef.current || renderedRef.current) return;
+        renderedRef.current = true;
+        setLoading(false);
+        paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'paypal',
+          },
+          createOrder: (paypalData, actions) => actions.order.create({
+            purchase_units: [{
+              reference_id: String(publicationId),
+              description: deckTitle || 'Mazo LearningCards',
+              amount: {
+                currency_code: PAYPAL_CURRENCY,
+                value: Number(amount || 0).toFixed(2),
+              },
+            }],
+          }),
+          onApprove: async (paypalData, actions) => {
+            try {
+              const details = await actions.order.capture();
+              const captureId = details?.purchase_units?.[0]?.payments?.captures?.[0]?.id || '';
+              await onApprovePayment({
+                orderId: paypalData.orderID,
+                payerId: paypalData.payerID,
+                captureId,
+              });
+            } catch (err) {
+              onError(err.response?.data?.message || err.message || 'PayPal aprobo el pago, pero no fue posible registrar la compra.');
+            }
+          },
+          onCancel,
+          onError: () => onError('PayPal no pudo procesar la simulacion. Revisa tu cuenta Sandbox e intenta de nuevo.'),
+        }).render(containerRef.current);
+      })
+      .catch((err) => {
+        setLoading(false);
+        onError(err.message || 'No fue posible cargar PayPal.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [amount, deckTitle, onApprovePayment, onCancel, onError, publicationId]);
+
+  return (
+    <div>
+      {loading && <Loading text="Cargando PayPal Sandbox..." />}
+      <div ref={containerRef} />
     </div>
   );
 };
@@ -2111,7 +2213,8 @@ export const AdminUsersPage = () => {
   const [refresh, setRefresh] = useState(0);
   const { loading, error, data } = useResource(async () => (await api.get('/admin/users')).data, [refresh]);
   const promote = async (id, name) => { if (confirm(`Ascender a ${name} a administrador?`)) { await api.patch(`/admin/users/${id}/toggle`); setRefresh((value) => value + 1); } };
-  const remove = async (id, name) => { if (confirm(`Borrar todos los datos de ${name}?`)) { await api.delete(`/admin/users/${id}`); setRefresh((value) => value + 1); } };
+  const remove = async (id, name) => { if (confirm(`Desactivar la cuenta de ${name}?`)) { await api.delete(`/admin/users/${id}`); setRefresh((value) => value + 1); } };
+  const restore = async (id, name) => { if (confirm(`Restaurar la cuenta de ${name}?`)) { await api.patch(`/admin/users/${id}/restore`); setRefresh((value) => value + 1); } };
 
   useEffect(() => {
     document.body.classList.add('admin-dashboard-mode');
@@ -2134,11 +2237,15 @@ export const AdminUsersPage = () => {
               <th className="px-8 py-6 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Usuario</th>
               <th className="px-8 py-6 text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Email</th>
               <th className="px-8 py-6 text-center text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Rol Actual</th>
+              <th className="px-8 py-6 text-center text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Estado</th>
               <th className="px-8 py-6 text-right text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {data.usuarios.map((user) => (
+            {data.usuarios.map((user) => {
+              const isInactive = Number(user.activo) === 0 || user.activo === false;
+
+              return (
               <tr key={user.IDUsuario} className="group transition-colors hover:bg-slate-50/50">
                 <td className="px-8 py-7">
                   <div className="flex items-center">
@@ -2157,12 +2264,21 @@ export const AdminUsersPage = () => {
                     {user.rol}
                   </span>
                 </td>
+                <td className="px-8 py-7 text-center">
+                  <span className={`admin-user-status ${isInactive ? 'admin-user-status-inactive' : 'admin-user-status-active'}`}>
+                    {isInactive ? 'Desactivado' : 'Activo'}
+                  </span>
+                </td>
                 <td className="px-8 py-7 text-right">
                   <div className="flex items-center justify-end gap-3">
                     {user.rol !== 'admin' ? (
                       <>
-                        <button onClick={() => promote(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-promote uppercase tracking-widest">Promover</button>
-                        <button onClick={() => remove(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-delete uppercase tracking-widest">Eliminar</button>
+                        {!isInactive && <button onClick={() => promote(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-promote uppercase tracking-widest">Promover</button>}
+                        {isInactive ? (
+                          <button onClick={() => restore(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-restore uppercase tracking-widest">Restaurar</button>
+                        ) : (
+                          <button onClick={() => remove(user.IDUsuario, user.UserName)} className="admin-user-action admin-user-delete uppercase tracking-widest">Eliminar</button>
+                        )}
                       </>
                     ) : (
                       <div className="flex items-center gap-2 text-slate-300">
@@ -2173,7 +2289,8 @@ export const AdminUsersPage = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

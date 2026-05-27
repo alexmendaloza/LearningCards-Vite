@@ -8,7 +8,9 @@
 --   - Inserta usuarios demo reales en la tabla Usuario.
 --   - Inserta mazos completos con 3-4 tarjetas.
 --   - Inserta publicaciones, compras, sesiones de estudio y valoraciones.
+--   - Incluye usuarios activos y desactivados por borrado logico (activo = 0).
 --   - Incluye mazos activos y mazos con borrado logico (enColeccion = 0).
+--   - Recrea copias adquiridas desde Marketplace con sus tarjetas y opciones JSON.
 --
 -- IMPORTANTE:
 --   Ejecutar en phpMyAdmin desde la pestana SQL.
@@ -16,9 +18,10 @@
 --
 -- Credenciales demo:
 --   Password para todos los usuarios: 123456
---   Admin: admin@learningcards.test
---   Usuarios: eva@learningcards.test, camila@learningcards.test, max@learningcards.test,
---             pedro@learningcards.test, zalo@learningcards.test
+--   Admin: admin@gmail.com
+--   Usuarios: eva@gmail.com, camila@gmail.com, max@gmail.com,
+--             pedro@gmail.com, zalo@gmail.com
+--   Nota: pedro se inserta desactivado para probar la restauracion desde Administracion.
 -- =========================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -54,6 +57,7 @@ CREATE TABLE Usuario (
   ultDiaEst DATE NULL,
   IDNivel BIGINT UNSIGNED NOT NULL DEFAULT 1,
   rol ENUM('user','admin') NOT NULL DEFAULT 'user',
+  activo TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = Activo, 0 = Borrado Logico',
   total_estudiadas INT NOT NULL DEFAULT 0,
   aciertos_totales INT NOT NULL DEFAULT 0,
   PRIMARY KEY (IDUsuario),
@@ -162,14 +166,14 @@ INSERT INTO NivelRacha (IDNivel, nombreNivel, diasReq) VALUES
 
 -- Password bcrypt para todos: 123456
 INSERT INTO Usuario
-  (IDUsuario, UserName, NombreCompleto, email, contrasena, fechanac, genero, fotoruta, rachaActual, ultDiaEst, IDNivel, rol, total_estudiadas, aciertos_totales)
+  (IDUsuario, UserName, NombreCompleto, email, contrasena, fechanac, genero, fotoruta, rachaActual, ultDiaEst, IDNivel, rol, activo, total_estudiadas, aciertos_totales)
 VALUES
-(1, 'admin', 'Administrador NovaLearn', 'admin@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1990-01-01', 'O', NULL, 0, CURDATE(), 1, 'admin', 0, 0),
-(2, 'eva', 'Eva Evangeli Evelia', 'eva@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2001-04-12', 'F', NULL, 6, CURDATE(), 2, 'user', 34, 27),
-(3, 'camila', 'Camila Torres', 'camila@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2000-08-22', 'F', NULL, 9, CURDATE(), 3, 'user', 42, 35),
-(4, 'max', 'Max Rodriguez', 'max@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1999-11-05', 'M', NULL, 3, CURDATE(), 2, 'user', 19, 14),
-(5, 'pedro', 'Pedro Castillo', 'pedro@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2002-02-18', 'M', NULL, 1, CURDATE(), 1, 'user', 12, 8),
-(6, 'zalo', 'Zalo Mendoza', 'zalo@learningcards.test', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1998-06-30', 'M', NULL, 16, CURDATE(), 4, 'user', 58, 49);
+(1, 'admin', 'Administrador NovaLearn', 'admin@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1990-01-01', 'O', NULL, 0, CURDATE(), 1, 'admin', 1, 0, 0),
+(2, 'eva', 'Eva Evangeli Evelia', 'eva@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2001-04-12', 'F', NULL, 6, CURDATE(), 2, 'user', 1, 34, 27),
+(3, 'camila', 'Camila Torres', 'camila@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2000-08-22', 'F', NULL, 9, CURDATE(), 3, 'user', 1, 42, 35),
+(4, 'max', 'Max Rodriguez', 'max@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1999-11-05', 'M', NULL, 3, CURDATE(), 2, 'user', 1, 19, 14),
+(5, 'pedro', 'Pedro Castillo', 'pedro@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '2002-02-18', 'M', NULL, 1, CURDATE(), 1, 'user', 0, 12, 8),
+(6, 'zalo', 'Zalo Mendoza', 'zalo@gmail.com', '$2b$10$vFD9fWB1cK81YMpZYOKleeKkhOK/77aZqCMYNaYpbAtou/l8lpzlS', '1998-06-30', 'M', NULL, 16, CURDATE(), 4, 'user', 1, 58, 49);
 
 -- =========================================================
 -- MAZOS
@@ -246,9 +250,9 @@ INSERT INTO Publicacion
 VALUES
 (1, 1, 0, 0.00, 'Technology', 'Mazo gratuito para repasar estructuras de datos en JavaScript.', NULL, '2026-05-01 09:00:00', 1, 4, 4.50, 2, 2),
 (2, 1, 1, 9.99, 'Medical', 'Tarjetas practicas para estudiar anatomia y sistema oseo.', NULL, '2026-05-02 10:30:00', 2, 3, 4.67, 3, 3),
-(3, 1, 1, 14.99, 'Languages', 'Phrasal verbs utiles para entrevistas y reuniones de trabajo.', NULL, '2026-05-03 12:00:00', 3, 2, 4.00, 2, 2),
+(3, 1, 1, 14.99, 'Languages', 'Phrasal verbs utiles para entrevistas y reuniones de trabajo.', NULL, '2026-05-03 12:00:00', 3, 2, 4.00, 2, 1),
 (4, 1, 1, 19.99, 'Mathematics', 'Conceptos clave de algebra lineal con tarjetas mixtas.', NULL, '2026-05-04 08:45:00', 4, 6, 5.00, 2, 2),
-(5, 1, 0, 0.00, 'Technology', 'Introduccion a React con hooks y flujo de componentes.', NULL, '2026-05-05 11:15:00', 5, 5, 4.00, 1, 2),
+(5, 1, 0, 0.00, 'Technology', 'Introduccion a React con hooks y flujo de componentes.', NULL, '2026-05-05 11:15:00', 5, 5, 4.00, 1, 1),
 (6, 1, 1, 24.99, 'Test Prep', 'Vocabulario TOEFL avanzado con sinonimos y antonimos.', NULL, '2026-05-06 14:20:00', 6, 2, 4.50, 2, 2),
 (7, 1, 0, 0.00, 'History', 'Repaso general de revoluciones y procesos historicos.', NULL, '2026-05-07 16:00:00', 7, 6, 0.00, 0, 1),
 (8, 1, 1, 12.99, 'Science', 'Biologia celular para sesiones cortas de estudio.', NULL, '2026-05-08 18:10:00', 8, 3, 5.00, 1, 2),
@@ -277,6 +281,56 @@ VALUES
 (13, '2026-05-17 08:55:00', 12.99, 'completada', 'Eva Evangeli Evelia', '8888', 2, 8),
 (14, '2026-05-17 20:00:00', 9.99, 'completada', 'Zalo Mendoza', '9999', 6, 2),
 (15, '2026-05-18 09:15:00', 0.00, 'completada', 'Camila Torres', '0000', 3, 1);
+
+-- =========================================================
+-- COPIAS ADQUIRIDAS DESDE MARKETPLACE
+-- =========================================================
+-- La aplicacion crea un mazo nuevo por cada compra/descarga.
+-- Estas copias permiten que el dashboard demo muestre mazos adquiridos
+-- y que el modo estudio conserve las opciones JSON de opcion multiple.
+
+INSERT INTO Mazo (IDMazo, titulo, descripcion, limite, IDUsuario, original, enColeccion) VALUES
+(11, 'Estructuras de Datos en JavaScript (copia)', 'Listas, pilas, colas y complejidad basica para desarrollo web.', 0, 2, 0, 1),
+(12, 'Anatomia Humana - Sistema Oseo (copia)', 'Repaso esencial del sistema oseo humano.', 0, 4, 0, 1),
+(13, 'Anatomia Humana - Sistema Oseo (copia)', 'Repaso esencial del sistema oseo humano.', 0, 5, 0, 1),
+(14, 'Ingles de Negocios - Phrasal Verbs (copia)', 'Phrasal verbs utiles para ambientes profesionales.', 0, 3, 0, 1),
+(15, 'Algebra Lineal y Matrices (copia)', 'Conceptos de matrices, vectores y determinantes.', 0, 2, 0, 1),
+(16, 'Conceptos Esenciales de React (copia)', 'Hooks, componentes y estado en aplicaciones React.', 0, 6, 0, 1),
+(17, 'Vocabulario TOEFL Avanzado (copia)', 'Sinonimos, antonimos y vocabulario academico.', 0, 3, 0, 1),
+(18, 'Biologia Celular (copia)', 'Organelos, membrana y procesos celulares.', 0, 4, 0, 1),
+(19, 'Historia Universal - Revoluciones (copia)', 'Eventos historicos y procesos sociales clave.', 0, 5, 0, 1),
+(20, 'Quimica General Basica (copia)', 'Elementos, enlaces y reacciones introductorias.', 0, 3, 0, 1),
+(21, 'Algebra Lineal y Matrices (copia)', 'Conceptos de matrices, vectores y determinantes.', 0, 5, 0, 1),
+(22, 'Vocabulario TOEFL Avanzado (copia)', 'Sinonimos, antonimos y vocabulario academico.', 0, 6, 0, 1),
+(23, 'Biologia Celular (copia)', 'Organelos, membrana y procesos celulares.', 0, 2, 0, 1),
+(24, 'Anatomia Humana - Sistema Oseo (copia)', 'Repaso esencial del sistema oseo humano.', 0, 6, 0, 1),
+(25, 'Estructuras de Datos en JavaScript (copia)', 'Listas, pilas, colas y complejidad basica para desarrollo web.', 0, 3, 0, 1);
+
+INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo)
+SELECT t.frente,
+       t.reverso,
+       t.tipo,
+       t.opciones,
+       t.orden,
+       copias.IDMazoCopia
+FROM Tarjeta t
+JOIN (
+  SELECT 1 AS IDMazoOriginal, 11 AS IDMazoCopia
+  UNION ALL SELECT 2, 12
+  UNION ALL SELECT 2, 13
+  UNION ALL SELECT 3, 14
+  UNION ALL SELECT 4, 15
+  UNION ALL SELECT 5, 16
+  UNION ALL SELECT 6, 17
+  UNION ALL SELECT 8, 18
+  UNION ALL SELECT 7, 19
+  UNION ALL SELECT 10, 20
+  UNION ALL SELECT 4, 21
+  UNION ALL SELECT 6, 22
+  UNION ALL SELECT 8, 23
+  UNION ALL SELECT 2, 24
+  UNION ALL SELECT 1, 25
+) copias ON copias.IDMazoOriginal = t.IDMazo;
 
 -- =========================================================
 -- VALORACIONES
@@ -325,8 +379,8 @@ VALUES
 
 ALTER TABLE NivelRacha AUTO_INCREMENT = 6;
 ALTER TABLE Usuario AUTO_INCREMENT = 7;
-ALTER TABLE Mazo AUTO_INCREMENT = 11;
-ALTER TABLE Tarjeta AUTO_INCREMENT = 36;
+ALTER TABLE Mazo AUTO_INCREMENT = 26;
+ALTER TABLE Tarjeta AUTO_INCREMENT = 92;
 ALTER TABLE Publicacion AUTO_INCREMENT = 11;
 ALTER TABLE Compra AUTO_INCREMENT = 16;
 ALTER TABLE SesionEstudio AUTO_INCREMENT = 13;
@@ -341,8 +395,10 @@ UNION ALL SELECT 'Mazos', COUNT(*) FROM Mazo
 UNION ALL SELECT 'Tarjetas', COUNT(*) FROM Tarjeta
 UNION ALL SELECT 'Publicaciones', COUNT(*) FROM Publicacion
 UNION ALL SELECT 'Compras', COUNT(*) FROM Compra
+UNION ALL SELECT 'Copias Marketplace', COUNT(*) FROM Mazo WHERE original = 0
 UNION ALL SELECT 'Sesiones', COUNT(*) FROM SesionEstudio
 UNION ALL SELECT 'Valoraciones', COUNT(*) FROM Valoracion
-UNION ALL SELECT 'Mazos borrados logicos', COUNT(*) FROM Mazo WHERE enColeccion = 0;
+UNION ALL SELECT 'Mazos borrados logicos', COUNT(*) FROM Mazo WHERE enColeccion = 0
+UNION ALL SELECT 'Usuarios desactivados', COUNT(*) FROM Usuario WHERE activo = 0;
 
 -- Fin del script.

@@ -54,6 +54,7 @@ export const initSchema = async () => {
       ultDiaEst DATE NULL,
       IDNivel BIGINT UNSIGNED NOT NULL DEFAULT 1,
       rol ENUM('user','admin') NOT NULL DEFAULT 'user',
+      activo TINYINT(1) NOT NULL DEFAULT 1,
       total_estudiadas INT NOT NULL DEFAULT 0,
       aciertos_totales INT NOT NULL DEFAULT 0,
       PRIMARY KEY (IDUsuario),
@@ -172,6 +173,12 @@ export const initSchema = async () => {
   `);
 
   try {
+    const [userColumns] = await pool.query('SHOW COLUMNS FROM Usuario');
+    const userNames = userColumns.map((c) => c.Field);
+    if (!userNames.includes('activo')) {
+      await pool.query("ALTER TABLE Usuario ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = Activo, 0 = Borrado Logico'");
+    }
+
     const [columns] = await pool.query('SHOW COLUMNS FROM Tarjeta');
     const names = columns.map((c) => c.Field);
     if (!names.includes('tipo')) {

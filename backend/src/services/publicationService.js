@@ -78,9 +78,14 @@ export const clonePublicationToUser = async (connection, publicacion, userId, pa
 
   const [cards] = await connection.query('SELECT * FROM Tarjeta WHERE IDMazo = ? ORDER BY orden, IDTarjeta', [sourceDeck.IDMazo]);
   for (const card of cards) {
+    const opciones = typeof card.opciones === 'string'
+      ? card.opciones
+      : card.opciones
+        ? JSON.stringify(card.opciones)
+        : null;
     await connection.query(
       'INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo) VALUES (?, ?, ?, ?, ?, ?)',
-      [card.frente, card.reverso, card.tipo, card.opciones ? JSON.stringify(card.opciones) : null, card.orden, newDeck.insertId],
+      [card.frente, card.reverso, card.tipo, opciones, card.orden, newDeck.insertId],
     );
   }
 
