@@ -9,6 +9,8 @@ import { saveDataUrlImage } from '../utils/fileUpload.js';
 import { cleanUser } from '../utils/userUtils.js';
 import { todaySql } from '../utils/dates.js';
 import { hasErrors, validate } from '../utils/validation.js';
+import { sendRecoveryEmail } from '../../../server/mailer.js';
+import crypto from 'crypto';
 
 /**
  * Devuelve los datos del usuario autenticado en sesión.
@@ -186,4 +188,97 @@ export const logout = (_req, res) => {
 export const adminLogout = (_req, res) => {
   clearSession(res);
   res.json({ success: true });
+};
+
+/**
+ * Solicita el envío de un código de recuperación por correo.
+ * Body: { email }
+ */
+export const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const errors = validate({ email: ['required', 'email'] }, req.body);
+    if (hasErrors(res, errors)) return;
+
+    const [[userRows]] = await pool.query('SELECT * FROM Usuario WHERE email = ? LIMIT 1', [email]);
+    const user = userRows && userRows[0] ? userRows[0] : null;
+
+    // Evita enumeración de usuarios: responder siempre éxito.
+    if (!user) {
+      console.log(`[PASSWORD RESET] Solicitud para email no registrado: ${email}`);
+      return res.json({ success: true });
+    }
+
+    // Asegurar existencia de tabla para códigos de recuperación
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS PasswordReset (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        fk_id_usuario BIGINT UNSIGNED NOT NULL,
+        code VARCHAR(10) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used TINYINT(1) NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_user_code (fk_id_usuario, code),
+        CONSTRAINT fk_pr_usuario FOREIGN KEY (fk_id_usuario) REFERENCES Usuario(IDUsuario) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Generar código numérico de 6 dígitos
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    await pool.query(
+      'INSERT INTO PasswordReset (fk_id_usuario, code, expires_at) VALUES (?, ?, ?)',
+      [user.IDUsuario, code, expiresAt],
+    );
+
+    // Enviar correo (simulado si no hay SMTP)
+    const sent = await sendRecoveryEmail(user.email, code, user.UserName || user.NombreCompleto || '');
+    if (!sent) {
+      console.warn('[PASSWORD RESET] No se pudo enviar el correo de recuperación');
+      return res.status(500).json({ success: false, message: 'No se pudo enviar el correo de recuperación.' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('[PASSWORD RESET] Error interno:', error);
+    return next(error);
+  }
+};
+
+/**
+ * Verifica código y restablece la contraseña.
+ * Body: { email, code, newPassword }
+ */
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    const errors = validate({ email: ['required', 'email'], code: ['required'], newPassword: ['required', 'min:6'] }, req.body);
+    if (hasErrors(res, errors)) return;
+
+    const [[userRows]] = await pool.query('SELECT * FROM Usuario WHERE email = ? LIMIT 1', [email]);
+    const user = userRows && userRows[0] ? userRows[0] : null;
+    if (!user) return res.status(400).json({ success: false, message: 'Datos inválidos.' });
+
+    const [[rows]] = await pool.query(
+      'SELECT * FROM PasswordReset WHERE fk_id_usuario = ? AND code = ? AND used = 0 AND expires_at >= NOW() ORDER BY id DESC LIMIT 1',
+      [user.IDUsuario, String(code)],
+    );
+
+    const token = rows && rows[0] ? rows[0] : null;
+    if (!token) return res.status(400).json({ success: false, message: 'Código inválido o expirado.' });
+
+    // Actualizar contraseña
+    const hashed = bcrypt.hashSync(String(newPassword), 10);
+    await pool.query('UPDATE Usuario SET contrasena = ? WHERE IDUsuario = ?', [hashed, user.IDUsuario]);
+
+    // Marcar token como usado
+    await pool.query('UPDATE PasswordReset SET used = 1 WHERE id = ?', [token.id]);
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('[PASSWORD RESET] Error interno:', error);
+    return next(error);
+  }
 };

@@ -1,7 +1,28 @@
 /**
  * @fileoverview Servidor principal de la API de LearningCards (Express).
- * Maneja las rutas de autenticación, gestión de usuarios, mazos, tarjetas,
- * publicaciones del marketplace y reportes.
+ *
+ * Contiene la implementación de rutas HTTP usadas por la aplicación, utilidades
+ * auxiliares (validaciones, manejo de sesión JWT, helpers para archivos) y
+ * la lógica de inicialización del esquema de base de datos mínima necesaria.
+ *
+ * Variables de entorno relevantes:
+ *  - `API_PORT` (puerto en el que escucha la API, por defecto 3001)
+ *  - `CLIENT_ORIGIN` (origen CORS permitido, por defecto http://localhost:5173)
+ *  - `JWT_SECRET` (secreto para firmar tokens JWT)
+ *  - `DB_*` (configuración de la conexión a MySQL en `backend/src/config/db.js`)
+ *
+ * Endpoints principales relacionados con recuperación de contraseña:
+ *  - POST `/api/recover-password/request` : solicita un código por correo
+ *  - POST `/api/recover-password/reset` : restablece la contraseña usando código
+ *
+ * Ejecución local (desde `backend`):
+ * ```bash
+ * cd backend
+ * npm start
+ * ```
+ *
+ * Nota: el servidor crea columnas/tablas necesarias si faltan (migraciones ligeras
+ * incluidas en `initSchema`).
  */
 
 import bcrypt from 'bcryptjs';
@@ -19,7 +40,7 @@ import {
   getSchema,
   pool,
   quoteIdentifier,
-} from './db.js';
+} from '../backend/src/config/db.js';
 import { sendRecoveryEmail } from './mailer.js';
 
 const app = express();
@@ -472,6 +493,24 @@ const getPublicationDetail = async (id, userId) => {
   };
 };
 
+const normalizeOptions = (value) => {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'object') return value;
+
+  let parsed = value;
+  for (let i = 0; i < 5; i += 1) {
+    if (typeof parsed !== 'string') break;
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      break;
+    }
+  }
+
+  return Array.isArray(parsed) ? parsed : null;
+};
+
 const clonePublicationToUser = async (connection, publicacion, userId, payment = {}) => {
   const [deckRows] = await connection.query('SELECT * FROM Mazo WHERE IDMazo = ? LIMIT 1', [publicacion.fk_id_mazo]);
   const sourceDeck = deckRows[0];
@@ -485,9 +524,10 @@ const clonePublicationToUser = async (connection, publicacion, userId, payment =
 
   const [cards] = await connection.query('SELECT * FROM Tarjeta WHERE IDMazo = ? ORDER BY orden, IDTarjeta', [sourceDeck.IDMazo]);
   for (const card of cards) {
+    const options = normalizeOptions(card.opciones);
     await connection.query(
       'INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo) VALUES (?, ?, ?, ?, ?, ?)',
-      [card.frente, card.reverso, card.tipo, card.opciones ? JSON.stringify(card.opciones) : null, card.orden, newDeck.insertId],
+      [card.frente, card.reverso, card.tipo, options ? JSON.stringify(options) : null, card.orden, newDeck.insertId],
     );
   }
 

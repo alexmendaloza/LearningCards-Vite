@@ -1,11 +1,60 @@
 /**
  * @fileoverview Servicio de correo electrónico para LearningCards.
- * Configura Nodemailer para enviar correos transaccionales (como la recuperación de contraseña).
- * Cuenta con un fallback seguro que imprime los datos en consola en entornos de desarrollo sin SMTP.
+ *
+ * Proporciona utilidades centralizadas para el envío de correos transaccionales
+ * (por ejemplo el código de recuperación de contraseña). El módulo:
+ *  - Intenta cargar variables de entorno desde `.env` en el directorio de trabajo
+ *    y hasta dos niveles arriba (útil cuando se arranca desde `backend/`).
+ *  - Lee la configuración SMTP y crea un `nodemailer` transporter cuando las
+ *    variables están configuradas.
+ *  - Ofrece un fallback seguro que imprime el contenido del correo en consola
+ *    para entornos de desarrollo donde no haya un servidor SMTP válido.
+ *
+ * Variables de entorno soportadas:
+ *  - `SMTP_HOST` (host SMTP, e.g. smtp.gmail.com)
+ *  - `SMTP_PORT` (puerto, e.g. 465 ó 587)
+ *  - `SMTP_SECURE` ('true' si se usa TLS implícito en 465)
+ *  - `SMTP_USER` (usuario SMTP / correo)
+ *  - `SMTP_PASS` (password o app password)
+ *  - `SMTP_FROM` (remitente por defecto, e.g. "LearningCards <no-reply@...>")
+ *  - `SMTP_ALLOW_SELF_SIGNED` ('true' para aceptar certificados autofirmados — solo desarrollo)
+ *
+ * Seguridad:
+ *  - Si `SMTP_ALLOW_SELF_SIGNED=true` se establece `tls.rejectUnauthorized=false`
+ *    al crear el transporter. Esto deshabilita la validación de certificados TLS
+ *    y solo debe usarse en entornos de desarrollo controlados.
  */
 
 import nodemailer from 'nodemailer';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Intentamos localizar y cargar un archivo .env en el workspace o carpetas
+// padre para que la configuración funcione independientemente desde dónde
+// se arranque el servidor (root o backend/).
+const cwd = process.cwd();
+const tryPaths = [cwd, path.resolve(cwd, '..'), path.resolve(cwd, '..', '..')];
+let loaded = null;
+for (const p of tryPaths) {
+  const envPath = path.join(p, '.env');
+  const result = dotenv.config({ path: envPath });
+  if (!result.error) {
+    console.log(`[MAILER] Cargado .env desde: ${envPath}`);
+    loaded = envPath;
+    break;
+  }
+}
+if (!loaded) {
+  // Como último recurso, intentar cargar relativo al archivo actual (a veces útil en ESM).
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const alt = path.resolve(__dirname, '..', '.env');
+  const resultAlt = dotenv.config({ path: alt });
+  if (!resultAlt.error) {
+    console.log(`[MAILER] Cargado .env desde: ${alt}`);
+    loaded = alt;
+  }
+}
 
 // Configuración SMTP desde variables de entorno
 const smtpConfig = {
@@ -29,7 +78,13 @@ let transporter = null;
 
 if (isSmtpConfigured) {
   console.log(`[MAILER] SMTP configurado en ${smtpConfig.host}:${smtpConfig.port}`);
-  transporter = nodemailer.createTransport(smtpConfig);
+  const allowSelfSigned = process.env.SMTP_ALLOW_SELF_SIGNED === 'true';
+  const transportOptions = { ...smtpConfig };
+  if (allowSelfSigned) {
+    transportOptions.tls = { rejectUnauthorized: false };
+    console.warn('[MAILER] ADVERTENCIA: Se permiten certificados autofirmados (SMTP_ALLOW_SELF_SIGNED=true). Solo use esto en entornos de desarrollo.');
+  }
+  transporter = nodemailer.createTransport(transportOptions);
 } else {
   console.warn(
     '[MAILER] ADVERTENCIA: Las variables SMTP (.env) no están completamente configuradas. Los correos se imprimirán únicamente en la consola del servidor.'

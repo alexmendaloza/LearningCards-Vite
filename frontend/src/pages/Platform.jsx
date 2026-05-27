@@ -1079,6 +1079,23 @@ export const MazoFormPage = () => {
   const [cardModal, setCardModal] = useState(null);
   const [error, setError] = useState('');
 
+  const parseCardOptions = (value) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+
+    let parsed = value;
+    for (let i = 0; i < 5; i += 1) {
+      if (typeof parsed !== 'string') break;
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        break;
+      }
+    }
+
+    return Array.isArray(parsed) ? parsed : [];
+  };
+
   const load = async () => {
     if (!editing) return;
     try {
@@ -1194,9 +1211,9 @@ export const MazoFormPage = () => {
                     <span className="ml-2 rounded bg-purple-100 px-1 text-[8px] text-purple-600">{(card.tipo || 'basica').toUpperCase()}</span>
                   </div>
                   <div className="rounded-xl bg-purple-50 p-3">{card.reverso}</div>
-                  {card.tipo === 'opcion_multiple' && card.opciones && (
+                  {card.tipo === 'opcion_multiple' && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {(typeof card.opciones === 'string' ? JSON.parse(card.opciones) : (card.opciones || [])).map((opt, i) => (
+                      {parseCardOptions(card.opciones).map((opt, i) => (
                         <span key={i} className="rounded-lg bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">{opt}</span>
                       ))}
                     </div>
@@ -1204,7 +1221,14 @@ export const MazoFormPage = () => {
                 </div>
               </div>
               <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex">
-                <button onClick={() => setCardModal({ ...card, tipo: card.tipo || 'basica', opciones: typeof card.opciones === 'string' ? JSON.parse(card.opciones) : (card.opciones || ['', '', '', '']) })} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
+                <button onClick={() => {
+                  const parsedOptions = parseCardOptions(card.opciones);
+                  setCardModal({
+                    ...card,
+                    tipo: card.tipo || 'basica',
+                    opciones: parsedOptions.length ? parsedOptions : ['', '', '', ''],
+                  });
+                }} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
                 <button onClick={() => deleteCard(card.IDTarjeta)} className="rounded-lg bg-red-500 p-2 text-sm text-white">Eliminar</button>
               </div>
             </div>
