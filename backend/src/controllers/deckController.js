@@ -80,7 +80,7 @@ export const deleteDeck = async (req, res, next) => {
   try {
     const [result] = await pool.query('UPDATE Mazo SET enColeccion = 0 WHERE IDMazo = ? AND IDUsuario = ?', [req.params.id, req.usuario.IDUsuario]);
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Mazo no encontrado.' });
-    await pool.query('UPDATE Mazo SET enColeccion = 0 WHERE IDMazo = ?', [req.params.id]);
+    await pool.query('UPDATE Publicacion SET publico = 0 WHERE fk_id_mazo = ?', [req.params.id]);
     return res.json({ success: true });
   } catch (error) {
     return next(error);

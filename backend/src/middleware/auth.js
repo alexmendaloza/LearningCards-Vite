@@ -59,14 +59,15 @@ export const requireUser = async (req, res, next) => {
 
     const [rows] = await pool.query(
       `SELECT u.*, n.nombreNivel, n.diasReq
-         FROM Usuario u
-         LEFT JOIN NivelRacha n ON n.IDNivel = u.IDNivel
+        FROM Usuario u
+        LEFT JOIN NivelRacha n ON n.IDNivel = u.IDNivel
         WHERE u.IDUsuario = ?
         LIMIT 1`,
       [payload.id],
     );
 
     if (!rows[0]) return res.status(401).json({ message: 'Sesion no valida.' });
+    if (Number(rows[0].activo) === 0) return res.status(403).json({ message: 'Esta cuenta ha sido desactivada por el administrador.' });
     req.usuario = rows[0];
     return next();
   } catch (error) {

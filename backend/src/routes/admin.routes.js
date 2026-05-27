@@ -5,6 +5,7 @@ import {
   listUsers,
   promoteUser,
   deleteUser,
+  restoreUser,
   listDecks,
   deleteDeck,
   restoreDeck,
@@ -19,6 +20,7 @@ router.get('/admin/dashboard', requireAdmin, dashboard);
 router.get('/admin/users', requireAdmin, listUsers);
 router.patch('/admin/users/:id/promote', requireAdmin, promoteUser);
 router.delete('/admin/users/:id', requireAdmin, deleteUser);
+router.patch('/admin/users/:id/restore', requireAdmin, restoreUser);
 router.get('/admin/decks', requireAdmin, listDecks);
 router.delete('/admin/decks/:id', requireAdmin, deleteDeck);
 router.post('/admin/decks/:id/restore', requireAdmin, restoreDeck);

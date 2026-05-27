@@ -115,6 +115,39 @@ export const acquireFreeDeck = async (req, res, next) => {
 export const confirmPayment = async (req, res, next) => {
   const connection = await pool.getConnection();
   try {
+    const isPaypalPayment = req.body.provider === 'paypal' || Boolean(req.body.paypal_order_id);
+    if (isPaypalPayment) {
+      const errors = validate({
+        paypal_order_id: ['required', 'max:100'],
+        paypal_payer_id: ['required', 'max:100'],
+      }, req.body);
+      if (hasErrors(res, errors)) return;
+
+      const publicacion = await getPublication(req.params.id);
+      if (!publicacion) return res.status(404).json({ message: 'Publicacion no encontrada.' });
+      if (Number(publicacion.pago) !== 1) return res.status(409).json({ message: 'Esta publicacion no requiere pago.' });
+
+      const [exists] = await pool.query('SELECT id_Compra FROM Compra WHERE fk_id_usuario = ? AND fk_id_publicacion = ? LIMIT 1', [req.usuario.IDUsuario, req.params.id]);
+      if (exists[0]) return res.status(409).json({ message: 'Ya tienes este mazo.' });
+
+      await connection.beginTransaction();
+      const newDeckId = await clonePublicationToUser(connection, publicacion, req.usuario.IDUsuario, {
+        precioPagado: publicacion.precio,
+        nombre_titular: `PayPal ${String(req.body.paypal_payer_id).slice(0, 80)}`,
+        ultimos_digitos: String(req.body.paypal_order_id).slice(-4),
+      });
+      await connection.commit();
+      return res.status(201).json({
+        success: true,
+        IDMazo: newDeckId,
+        paypal: {
+          orderId: req.body.paypal_order_id,
+          payerId: req.body.paypal_payer_id,
+          captureId: req.body.paypal_capture_id || null,
+        },
+      });
+    }
+
     const cardNumber = String(req.body.numero_tarjeta || '').replaceAll(' ', '');
     const errors = validate({
       nombre_titular: ['required', 'max:100'],

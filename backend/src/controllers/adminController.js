@@ -56,7 +56,7 @@ export const dashboard = async (_req, res, next) => {
 export const listUsers = async (req, res, next) => {
   try {
     // Consulta todos los usuarios excepto la cuenta que realiza la accion administrativa.
-    const [usuarios] = await pool.query('SELECT IDUsuario, UserName, NombreCompleto, email, rol FROM Usuario WHERE IDUsuario != ? ORDER BY IDUsuario DESC', [req.usuario.IDUsuario]);
+    const [usuarios] = await pool.query('SELECT IDUsuario, UserName, NombreCompleto, email, rol, activo FROM Usuario WHERE IDUsuario != ? ORDER BY IDUsuario DESC', [req.usuario.IDUsuario]);
     return res.json({ usuarios });
   } catch (error) {
     // Envia errores de consulta o conexion al middleware global.
@@ -117,11 +117,32 @@ export const deleteUser = async (req, res, next) => {
     // Protege cuentas administrativas contra eliminacion desde el panel.
     if (users[0].rol === 'admin') return res.status(400).json({ message: 'Las cuentas de administrador estan protegidas y no pueden ser eliminadas.' });
 
-    // Elimina definitivamente el usuario validado.
-    await pool.query('DELETE FROM Usuario WHERE IDUsuario = ?', [req.params.id]);
+    // Desactiva la cuenta sin eliminar sus relaciones historicas.
+    await pool.query('UPDATE Usuario SET activo = 0 WHERE IDUsuario = ?', [req.params.id]);
     return res.json({ success: true });
   } catch (error) {
     // Delega restricciones SQL o fallos de conexion al manejador global.
+    return next(error);
+  }
+};
+
+/**
+ * Restaura una cuenta de usuario desactivada por administracion.
+ *
+ * Conserva todos sus datos historicos y vuelve a permitir el inicio de sesion
+ * al fijar la bandera `activo` en 1.
+ *
+ * @param {Object} req - Solicitud HTTP con `req.params.id` como identificador del usuario.
+ * @param {Object} res - Respuesta HTTP usada para confirmar la restauracion.
+ * @param {Function} next - Middleware de Express que recibe errores para el manejador global.
+ * @returns {Promise<Object>} Respuesta JSON con `{ success: true }` o error HTTP 404.
+ */
+export const restoreUser = async (req, res, next) => {
+  try {
+    const [result] = await pool.query('UPDATE Usuario SET activo = 1 WHERE IDUsuario = ?', [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Usuario no encontrado.' });
+    return res.json({ success: true });
+  } catch (error) {
     return next(error);
   }
 };
