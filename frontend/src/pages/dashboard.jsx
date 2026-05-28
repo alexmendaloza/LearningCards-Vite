@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
+//Pagina principal del usuario
+
 const Dashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

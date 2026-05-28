@@ -159,9 +159,10 @@ export const StudyPage = () => {
         </div>
       </div>
 
-      <div className="study-card-shell w-full max-w-2xl perspective-1000">
-        <button
-          type="button"
+      <div className="study-card-shell relative w-full max-w-2xl perspective-1000">
+        <div
+          role={isBasic ? 'button' : undefined}
+          tabIndex={isBasic ? 0 : undefined}
           onClick={() => isBasic && setFlipped((value) => !value)}
           className={`study-card relative min-h-[350px] w-full preserve-3d transition-all duration-700 ${flipped ? 'rotate-y-180' : ''} ${motion}`}
         >
@@ -186,13 +187,15 @@ export const StudyPage = () => {
                 <button type="button" onClick={(event) => { event.stopPropagation(); checkText(); }} className="marketplace-liquid-btn rounded-xl px-5 py-3 text-sm font-black text-white">Comprobar</button>
               </div>
             )}
-            {feedback && !isBasic && <Feedback result={feedback} answer={current.reverso} onContinue={() => next(feedback === 'pass')} />}
           </div>
           <div className="card-face rotate-y-180 backface-hidden bg-gradient-to-br from-indigo-600 to-purple-700">
             <span className="absolute left-6 top-6 rounded-full border border-white/20 bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Respuesta</span>
             <p className="mt-6 text-center text-2xl font-bold leading-tight text-white md:text-3xl">{current.reverso}</p>
           </div>
-        </button>
+        </div>
+        {feedback && !isBasic && (
+          <Feedback result={feedback} answer={current.reverso} onContinue={() => next(feedback === 'pass')} />
+        )}
       </div>
 
       {isBasic && flipped && (
@@ -200,7 +203,7 @@ export const StudyPage = () => {
           <p className="mb-6 text-center text-sm font-medium italic text-gray-400">Que tal te ha ido con esta tarjeta?</p>
           <div className="flex gap-4">
             <button onClick={() => next(false)} className="study-fail-btn flex-1 rounded-2xl border-2 border-red-100 bg-white py-5 text-sm font-black uppercase tracking-widest text-red-500">No lo sabia</button>
-            <button onClick={() => next(true)} className="study-pass-btn flex-1 rounded-2xl py-5 text-sm font-black uppercase tracking-widest text-white"><Flame className="mx-auto mb-1 h-5 w-5" />Lo sabia</button>
+            <button onClick={() => next(true)} className="study-pass-btn flex-1 rounded-2xl bg-indigo-600 py-5 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700"><Flame className="mx-auto mb-1 h-5 w-5" />Lo sabia</button>
           </div>
         </div>
       )}
@@ -214,7 +217,7 @@ export const StudyPage = () => {
 };
 
 const Feedback = ({ result, answer, onContinue }) => (
-  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl bg-white/95 p-6 text-center shadow-inner backdrop-blur-md">
+  <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-3xl bg-white/95 p-6 text-center shadow-inner backdrop-blur-md pointer-events-auto">
     <h3 className={`mb-2 text-3xl font-black ${result === 'pass' ? 'text-green-500' : 'text-red-500'}`}>{result === 'pass' ? 'Correcto' : 'Incorrecto'}</h3>
     <p className="mb-6 text-gray-500">La respuesta era:<br /><strong className="text-lg text-gray-800">{answer}</strong></p>
     <button onClick={onContinue} className="study-dark-btn w-full max-w-[200px] rounded-2xl px-10 py-3 font-bold text-white">Continuar</button>
