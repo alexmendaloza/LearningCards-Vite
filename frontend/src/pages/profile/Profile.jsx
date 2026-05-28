@@ -30,7 +30,7 @@ const Alert = ({ children }) => (
   <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-800">{children}</div>
 );
 
-const useResource = (loader, deps = []) => {
+const useResource = (loader, ...deps) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
     let active = true;
@@ -44,7 +44,7 @@ const useResource = (loader, deps = []) => {
 
 export const ProfilePage = ({ onAuth }) => {
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get('/user/configuracion')).data, []);
+  const { loading, error, data } = useResource(async () => (await api.get('/user/configuracion')).data);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
   const [submitError, setSubmitError] = useState('');

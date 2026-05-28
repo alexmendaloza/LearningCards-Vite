@@ -18,7 +18,7 @@ export const ModeracionMazos = () => {
     coleccion: params.get('coleccion') || '',
   });
   const query = params.toString();
-  const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos${query ? `?${query}` : ''}`)).data, [refresh, query]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos${query ? `?${query}` : ''}`)).data, refresh, query);
   const remove = async (id) => { if (confirm('Borrar mazo?')) { await api.delete(`/admin/mazos/${id}`); setRefresh((value) => value + 1); } };
   const restore = async (id) => { if (confirm('Recuperar mazo?')) { await api.patch(`/admin/mazos/${id}/restore`); setRefresh((value) => value + 1); } };
 

@@ -42,7 +42,7 @@ const AdminHomeDashboard = () => {
     return () => document.body.classList.remove('admin-dashboard-mode');
   }, []);
 
-  const { loading, error, data } = useResource(async () => (await api.get('/admin/dashboard')).data, []);
+  const { loading, error, data } = useResource(async () => (await api.get('/admin/dashboard')).data);
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
   const recentSales = data.comprasRecientes || [];

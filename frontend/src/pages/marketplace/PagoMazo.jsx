@@ -13,7 +13,7 @@ import { AcquisitionSuccessModal, money } from './MarketplaceShared';
 export const PaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, [id]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, id);
   const [submitError, setSubmitError] = useState('');
   const [success, setSuccess] = useState(null);
   const redirected = useRef(false);
@@ -57,6 +57,7 @@ export const PaymentPage = () => {
 
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
+  if (!data) return <ErrorBox message="No se pudo cargar la publicación." />;
 
   const { publicacion, creador, mazo, tarjetas } = data;
   const creatorName = creador?.NombreCompleto || creador?.UserName || mazo.NombreCompleto || 'Desconocido';

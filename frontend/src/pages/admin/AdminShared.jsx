@@ -10,7 +10,7 @@ export const Loading = ({ text = 'Cargando...' }) => (
   <div className="py-16 text-center text-sm font-semibold text-slate-500 animate-pulse">{text}</div>
 );
 
-export const useResource = (loader, deps = []) => {
+export const useResource = (loader, ...deps) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
     let active = true;

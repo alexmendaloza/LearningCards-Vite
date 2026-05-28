@@ -123,7 +123,7 @@ const ReporteGlobalAdmin = () => {
   });
   const today = dateValue(new Date());
   const query = params.toString();
-  const { loading, error, data } = useResource(async () => (await api.get(`/admin/ventas${query ? `?${query}` : ''}`)).data, [query]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/admin/ventas${query ? `?${query}` : ''}`)).data, query);
 
   useEffect(() => {
     document.body.classList.add('admin-dashboard-mode');

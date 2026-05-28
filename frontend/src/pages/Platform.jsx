@@ -67,7 +67,7 @@ const Loading = ({ text = 'Cargando...' }) => (
   <div className="py-16 text-center text-sm font-semibold text-slate-500 animate-pulse">{text}</div>
 );
 
-const useResource = (loader, deps = []) => {
+const useResource = (loader, ...deps) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
     let active = true;
@@ -602,7 +602,7 @@ export const DashboardPage = () => {
   const { loading, error, data } = useResource(async () => {
     const { data: payload } = await api.get(`/user/dashboard${query ? `?${query}` : ''}`);
     return payload;
-  }, [query]);
+  }, query);
 
   const applyFilters = (event) => {
     event.preventDefault();
@@ -967,6 +967,7 @@ export const MazoFormPage = () => {
   const [deck, setDeck] = useState({ titulo: '', descripcion: '' });
   const [cards, setCards] = useState([]);
   const [cardModal, setCardModal] = useState(null);
+  const [cardErrors, setCardErrors] = useState({});
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -1012,21 +1013,48 @@ export const MazoFormPage = () => {
     reverso: card.reverso || '',
   });
 
-  const parseCardOptions = (value) => {
-    if (!value) return [];
-    if (Array.isArray(value)) return value;
+  const validateCardForm = () => {
+    const errors = {};
+    const tipo = cardModal?.tipo || 'basica';
+    const frente = String(cardModal?.frente || '').trim();
+    const reverso = String(cardModal?.reverso || '').trim();
+    const options = parseOptions(cardModal?.opciones);
 
-    let parsed = value;
-    for (let i = 0; i < 5; i += 1) {
-      if (typeof parsed !== 'string') break;
-      try {
-        parsed = JSON.parse(parsed);
-      } catch {
-        break;
+    if (!frente) {
+      errors.frente = 'El frente es obligatorio.';
+    } else if (frente.length > 150) {
+      errors.frente = 'El frente no puede exceder 150 caracteres.';
+    }
+
+    if (tipo === 'escritura') {
+      if (!reverso) {
+        errors.reverso = 'La respuesta es obligatoria.';
+      } else if (reverso.length > 75) {
+        errors.reverso = 'La respuesta no puede exceder 75 caracteres.';
+      }
+    } else if (tipo === 'opcion_multiple') {
+      const validOptions = options.filter((opt) => typeof opt === 'string' && opt.trim() !== '');
+      if (validOptions.length < 2) {
+        errors.opciones = 'Debes incluir al menos 2 opciones.';
+      }
+      if (validOptions.some((opt) => opt.length > 50)) {
+        errors.opciones = 'Cada opción no puede exceder 50 caracteres.';
+      }
+      if (!reverso) {
+        errors.reverso = 'Selecciona la respuesta correcta.';
+      } else if (!validOptions.includes(reverso)) {
+        errors.reverso = 'La respuesta correcta debe estar entre las opciones.';
+      }
+    } else {
+      if (!reverso) {
+        errors.reverso = 'El reverso es obligatorio.';
+      } else if (reverso.length > 150) {
+        errors.reverso = 'El reverso no puede exceder 150 caracteres.';
       }
     }
 
-    return Array.isArray(parsed) ? parsed : [];
+    setCardErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const load = async () => {
@@ -1066,29 +1094,23 @@ export const MazoFormPage = () => {
 
   const saveCard = async (event) => {
     event.preventDefault();
+    setError('');
+    if (!validateCardForm()) return;
+
     try {
       const options = parseOptions(cardModal.opciones);
       const payload = { ...cardModal, IDMazo: id };
 
       if (cardModal.tipo === 'opcion_multiple') {
         const validOptions = options.filter((o) => typeof o === 'string' && o.trim() !== '');
-        if (validOptions.length < 2) {
-          alert('Debes incluir al menos 2 opciones.');
-          return;
-        }
-        if (!validOptions.includes(cardModal.reverso)) {
-          alert('La respuesta correcta debe estar entre las opciones seleccionadas.');
-          return;
-        }
         payload.opciones = validOptions;
       } else {
         payload.opciones = null;
       }
 
-      console.log('FRONTEND SENDING:', JSON.stringify(payload, null, 2));
-      const res = await api.post('/tarjetas', payload);
-      console.log('SERVER RESPONSE:', res.data);
+      await api.post('/tarjetas', payload);
       setCardModal(null);
+      setCardErrors({});
       await load();
     } catch (err) {
       alert(err.response?.data?.message || 'Error al guardar la tarjeta.');
@@ -1153,7 +1175,7 @@ export const MazoFormPage = () => {
 
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">FLASHCARDS</h2>
-            <button onClick={() => setCardModal({ frente: '', reverso: '', tipo: 'basica', opciones: ['', '', '', ''] })} className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-2 font-semibold text-white">+ Anadir tarjeta</button>
+            <button onClick={() => { setCardErrors({}); setCardModal({ frente: '', reverso: '', tipo: 'basica', opciones: ['', '', '', ''] }); }} className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-2 font-semibold text-white">+ Anadir tarjeta</button>
           </div>
           {cards.length ? cards.map((card, index) => {
             const opciones = parseOptions(card.opciones);
@@ -1181,7 +1203,7 @@ export const MazoFormPage = () => {
                   </div>
                 </div>
                 <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex">
-                  <button onClick={() => setCardModal({ ...card, tipo: card.tipo || 'basica', opciones: opciones.length ? opciones : ['', '', '', ''] })} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
+                  <button onClick={() => { setCardErrors({}); setCardModal({ ...card, tipo: card.tipo || 'basica', opciones: opciones.length ? opciones : ['', '', '', ''] }); }} className="rounded-lg bg-gray-200 p-2 text-sm">Editar</button>
                   <button onClick={() => deleteCard(card.IDTarjeta)} className="rounded-lg bg-red-500 p-2 text-sm text-white">Eliminar</button>
                 </div>
               </div>
@@ -1213,7 +1235,14 @@ export const MazoFormPage = () => {
               />
             </div>
 
-            <TextArea label={(cardModal.tipo || 'basica') === 'escritura' ? 'Pregunta / Enunciado' : 'Frente'} value={cardModal.frente} onChange={(value) => setCardModal({ ...cardModal, frente: value })} required />
+            <TextArea
+            label={(cardModal.tipo || 'basica') === 'escritura' ? 'Pregunta / Enunciado' : 'Frente'}
+            value={cardModal.frente}
+            onChange={(value) => setCardModal({ ...cardModal, frente: value })}
+            required
+            maxLength={150}
+            error={cardErrors.frente}
+          />
 
             {(cardModal.tipo || 'basica') === 'opcion_multiple' ? (
               <div className="mt-4">
@@ -1246,6 +1275,7 @@ export const MazoFormPage = () => {
                           setCardModal({ ...cardModal, ...updates });
                         }}
                         placeholder={`Opción ${i + 1}`}
+                        maxLength={50}
                         className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400"
                       />
                       {cardModal.opciones.length > 2 && (
@@ -1272,16 +1302,25 @@ export const MazoFormPage = () => {
                     + Añadir opción
                   </button>
                 )}
+                {cardErrors.opciones && <span className="text-red-500 text-xs mt-1 block">{cardErrors.opciones}</span>}
+                {cardErrors.reverso && <span className="text-red-500 text-xs mt-1 block">{cardErrors.reverso}</span>}
                 <p className="mt-2 text-[10px] text-gray-400 italic">* Selecciona el círculo a la izquierda de la respuesta correcta.</p>
               </div>
             ) : (
               <div className="mt-2">
-                <TextArea label={(cardModal.tipo || 'basica') === 'escritura' ? 'Respuesta Exacta' : 'Reverso'} value={cardModal.reverso} onChange={(value) => setCardModal({ ...cardModal, reverso: value })} required />
+                <TextArea
+                  label={(cardModal.tipo || 'basica') === 'escritura' ? 'Respuesta Exacta' : 'Reverso'}
+                  value={cardModal.reverso}
+                  onChange={(value) => setCardModal({ ...cardModal, reverso: value })}
+                  required
+                  maxLength={(cardModal.tipo || 'basica') === 'escritura' ? 75 : 150}
+                  error={cardErrors.reverso}
+                />
               </div>
             )}
 
             <div className="mt-6 flex justify-end gap-2">
-              <button type="button" onClick={() => setCardModal(null)} className="rounded-xl border px-4 py-2">Cancelar</button>
+              <button type="button" onClick={() => { setCardModal(null); setCardErrors({}); }} className="rounded-xl border px-4 py-2">Cancelar</button>
               <button className="rounded-xl bg-purple-600 px-4 py-2 text-white">Guardar</button>
             </div>
           </form>
@@ -1299,9 +1338,19 @@ export const MazoFormPage = () => {
 export const PublishPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get(`/mazos/${id}/publicar`)).data, [id]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/mazos/${id}/publicar`)).data, id);
   const [form, setForm] = useState({ categoria: '', descripcion_publica: '', imagen_url: '', pago: '0', precio: '' });
   const [submitError, setSubmitError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+
+  const validatePublishForm = () => {
+    const errors = {};
+    if (form.descripcion_publica && String(form.descripcion_publica).length > 250) {
+      errors.descripcion_publica = 'La descripción no puede exceder 250 caracteres.';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   useEffect(() => {
     if (data) {
@@ -1318,6 +1367,10 @@ export const PublishPage = () => {
   const submit = async (event) => {
     event.preventDefault();
     setSubmitError('');
+    if (!validatePublishForm()) {
+      setSubmitError('Revisa los campos del formulario antes de enviar.');
+      return;
+    }
     try {
       await api.post(`/mazos/${id}/publicar`, form);
       navigate('/user/marketplace');
@@ -1354,7 +1407,8 @@ export const PublishPage = () => {
             value={form.descripcion_publica}
             onChange={(value) => setForm({ ...form, descripcion_publica: value })}
             placeholder="Describe qué aprenderán los usuarios con este mazo..."
-            maxLength={500}
+            maxLength={250}
+            error={formErrors.descripcion_publica}
           />
           <Field
             label="URL de imagen de portada"
@@ -1389,7 +1443,7 @@ export const PublishPage = () => {
  */
 export const ProfilePage = ({ onAuth }) => {
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get('/user/configuracion')).data, []);
+  const { loading, error, data } = useResource(async () => (await api.get('/user/configuracion')).data);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -1562,7 +1616,7 @@ export const AdminLoginPage = ({ onAuth }) => {
 export const AdminMazoDetailPage = () => {
   const { id } = useParams();
   const [refresh, setRefresh] = useState(0);
-  const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos/${id}/tarjetas`)).data, [id, refresh]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/admin/mazos/${id}/tarjetas`)).data, id, refresh);
   const restore = async () => { await api.patch(`/admin/mazos/${id}/restore`); setRefresh((value) => value + 1); };
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;

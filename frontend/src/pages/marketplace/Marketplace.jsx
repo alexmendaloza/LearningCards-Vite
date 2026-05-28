@@ -32,7 +32,7 @@ const Alert = ({ children, tone = 'green' }) => (
   </div>
 );
 
-const useResource = (loader, deps = []) => {
+const useResource = (loader, ...deps) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
     let active = true;
@@ -57,7 +57,7 @@ export const MarketplacePage = () => {
     return next;
   }, [params, routeCategory]);
   const query = queryParams.toString();
-  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace${query ? `?${query}` : ''}`)).data, [query]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace${query ? `?${query}` : ''}`)).data, query);
   const [form, setForm] = useState({
     search: params.get('search') || '',
     categoria: category,
@@ -183,7 +183,7 @@ export const MarketplaceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
-  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, [id, refresh]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, id, refresh);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [message, setMessage] = useState('');
@@ -225,8 +225,18 @@ export const MarketplaceDetailPage = () => {
 
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} />;
+  if (!data) return <ErrorBox message="No se pudo cargar la publicación." />;
 
-  const { publicacion, creador, mazo, tarjetas, valoraciones, yaAdquirido, esPropio } = data;
+  const publicacion = data.publicacion || null;
+  const creador = data.creador || {};
+  const mazo = data.mazo || {};
+  const tarjetas = Array.isArray(data.tarjetas) ? data.tarjetas : [];
+  const valoraciones = Array.isArray(data.valoraciones) ? data.valoraciones : [];
+  const yaAdquirido = Boolean(data.yaAdquirido);
+  const esPropio = Boolean(data.esPropio);
+
+  if (!publicacion || !mazo) return <ErrorBox message="Información de la publicación incompleta." />;
+
   const creatorName = creador?.NombreCompleto || creador?.UserName || mazo.NombreCompleto || 'Desconocido';
 
   return (

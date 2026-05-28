@@ -8,7 +8,7 @@ import { ErrorBox, Loading, LockIcon, useResource } from './AdminShared';
  */
 export const GestionUsuarios = () => {
   const [refresh, setRefresh] = useState(0);
-  const { loading, error, data } = useResource(async () => (await api.get('/admin/users')).data, [refresh]);
+  const { loading, error, data } = useResource(async () => (await api.get('/admin/users')).data, refresh);
   const [usuarios, setUsuarios] = useState([]);
   const promote = async (id, name) => { if (confirm(`Ascender a ${name} a administrador?`)) { await api.patch(`/admin/users/${id}/toggle`); setRefresh((value) => value + 1); } };
   const remove = async (id, name) => {

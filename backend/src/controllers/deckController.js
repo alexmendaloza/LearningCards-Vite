@@ -112,15 +112,51 @@ export const deleteDeck = async (req, res, next) => {
  */
 export const saveCard = async (req, res, next) => {
   try {
-    const errors = validate({ frente: ['required'], reverso: ['required'], IDMazo: ['required'] }, req.body);
+    const tipo = req.body.tipo || 'basica';
+    const errors = validate({ frente: ['required', 'max:150'], reverso: ['required'], IDMazo: ['required'] }, req.body);
+
+    const opcionesRaw = req.body.opciones;
+    let opciones = [];
+    if (Array.isArray(opcionesRaw)) opciones = opcionesRaw;
+    else if (typeof opcionesRaw === 'string') {
+      try {
+        opciones = JSON.parse(opcionesRaw);
+      } catch {
+        opciones = [];
+      }
+    }
+    const validOptions = Array.isArray(opciones) ? opciones.filter((o) => typeof o === 'string' && o.trim() !== '') : [];
+
+    if (tipo === 'escritura') {
+      if (req.body.reverso && String(req.body.reverso).length > 75) {
+        errors.reverso = 'Maximo 75 caracteres.';
+      }
+    } else if (tipo === 'opcion_multiple') {
+      if (validOptions.length < 2) {
+        errors.opciones = 'Debes incluir al menos 2 opciones.';
+      }
+      if (validOptions.some((o) => o.length > 50)) {
+        errors.opciones = 'Cada opción no puede exceder 50 caracteres.';
+      }
+      if (!validOptions.includes(String(req.body.reverso || '').trim())) {
+        errors.reverso = 'La respuesta correcta debe estar entre las opciones.';
+      }
+    } else {
+      if (req.body.reverso && String(req.body.reverso).length > 150) {
+        errors.reverso = 'Maximo 150 caracteres.';
+      }
+    }
+
     if (hasErrors(res, errors)) return;
     const [mazos] = await pool.query('SELECT * FROM Mazo WHERE IDMazo = ? AND IDUsuario = ? LIMIT 1', [req.body.IDMazo, req.usuario.IDUsuario]);
     if (!mazos[0]) return res.status(403).json({ message: 'No autorizado.' });
 
+    const opcionesPayload = tipo === 'opcion_multiple' ? validOptions : null;
+
     if (req.body.IDTarjeta) {
       await pool.query(
         'UPDATE Tarjeta SET frente = ?, reverso = ?, tipo = ?, opciones = ? WHERE IDTarjeta = ? AND IDMazo = ?',
-        [req.body.frente, req.body.reverso, req.body.tipo || 'basica', req.body.opciones ? JSON.stringify(req.body.opciones) : null, req.body.IDTarjeta, req.body.IDMazo],
+        [req.body.frente, req.body.reverso, tipo, opcionesPayload ? JSON.stringify(opcionesPayload) : null, req.body.IDTarjeta, req.body.IDMazo],
       );
       return res.json({ success: true });
     }
@@ -128,7 +164,7 @@ export const saveCard = async (req, res, next) => {
     const [counts] = await pool.query('SELECT COUNT(*) AS total FROM Tarjeta WHERE IDMazo = ?', [req.body.IDMazo]);
     const [result] = await pool.query(
       'INSERT INTO Tarjeta (frente, reverso, tipo, opciones, orden, IDMazo) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.body.frente, req.body.reverso, req.body.tipo || 'basica', req.body.opciones ? JSON.stringify(req.body.opciones) : null, Number(counts[0].total || 0) + 1, req.body.IDMazo],
+      [req.body.frente, req.body.reverso, tipo, opcionesPayload ? JSON.stringify(opcionesPayload) : null, Number(counts[0].total || 0) + 1, req.body.IDMazo],
     );
     return res.status(201).json({ IDTarjeta: result.insertId });
   } catch (error) {
@@ -252,7 +288,7 @@ export const publishDeck = async (req, res, next) => {
   try {
     const errors = validate({
       categoria: ['required', 'max:60'],
-      descripcion_publica: ['max:500'],
+      descripcion_publica: ['max:250'],
       imagen_url: ['max:300'],
       pago: ['required'],
     }, req.body);

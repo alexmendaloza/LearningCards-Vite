@@ -11,7 +11,7 @@ const ErrorBox = ({ message }) => message ? (
   <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">{message}</div>
 ) : null;
 
-const useResource = (loader, deps = []) => {
+const useResource = (loader, ...deps) => {
   const [state, setState] = useState({ loading: true, error: '', data: null });
   useEffect(() => {
     let active = true;
@@ -56,7 +56,7 @@ const similarity = (left = '', right = '') => {
 export const StudyPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { loading, error, data } = useResource(async () => (await api.get(`/estudiar/${id}`)).data, [id]);
+  const { loading, error, data } = useResource(async () => (await api.get(`/estudiar/${id}`)).data, id);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [pass, setPass] = useState(0);
@@ -145,7 +145,7 @@ export const StudyPage = () => {
 
   const isBasic = current.tipo === 'basica';
   const isMultiple = current.tipo === 'opcion_multiple';
-  const isTyping = current.tipo === 'teclear';
+  const isTyping = current.tipo === 'escritura';
 
   return (
     <div className="study-page flex min-h-[calc(100vh-150px)] flex-col items-center overflow-hidden px-4 py-10">

@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
 import Home from './pages/Home';
 import {
