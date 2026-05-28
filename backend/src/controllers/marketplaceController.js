@@ -17,7 +17,7 @@ import { clonePublicationToUser, getPublication, getPublicationDetail, recalcula
 export const listMarketplace = async (req, res, next) => {
   try {
     const params = [];
-    const where = ['p.publico = 1'];
+    const where = ['p.publico = 1', 'm.enColeccion = 1', 'u.activo = 1', 'dueno.activo = 1'];
     if (req.query.search) {
       where.push('(m.titulo LIKE ? OR m.descripcion LIKE ? OR u.NombreCompleto LIKE ? OR u.UserName LIKE ? OR p.categoria LIKE ?)');
       for (let i = 0; i < 5; i += 1) params.push(`%${req.query.search}%`);
@@ -46,6 +46,7 @@ export const listMarketplace = async (req, res, next) => {
          FROM Publicacion p
          JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
          JOIN Usuario u ON u.IDUsuario = p.fk_id_usuario
+         JOIN Usuario dueno ON dueno.IDUsuario = m.IDUsuario
         WHERE ${where.join(' AND ')}
         ORDER BY ${order}`,
       params,

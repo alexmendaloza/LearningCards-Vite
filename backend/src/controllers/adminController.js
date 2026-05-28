@@ -107,22 +107,40 @@ export const promoteUser = async (req, res, next) => {
  * @returns {Promise<Object>} Respuesta JSON con `{ success: true }` o error HTTP 400/404.
  */
 export const deleteUser = async (req, res, next) => {
+  let connection;
   try {
+    connection = await pool.getConnection();
     // Recupera el usuario para validar existencia y rol antes del borrado.
-    const [users] = await pool.query('SELECT * FROM Usuario WHERE IDUsuario = ? LIMIT 1', [req.params.id]);
+    const [users] = await connection.query('SELECT * FROM Usuario WHERE IDUsuario = ? LIMIT 1', [req.params.id]);
 
     // Evita ejecutar DELETE sobre un usuario inexistente.
-    if (!users[0]) return res.status(404).json({ message: 'Usuario no encontrado.' });
+    if (!users[0]) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
 
     // Protege cuentas administrativas contra eliminacion desde el panel.
-    if (users[0].rol === 'admin') return res.status(400).json({ message: 'Las cuentas de administrador estan protegidas y no pueden ser eliminadas.' });
+    if (users[0].rol === 'admin') {
+      return res.status(400).json({ message: 'Las cuentas de administrador estan protegidas y no pueden ser eliminadas.' });
+    }
 
-    // Desactiva la cuenta sin eliminar sus relaciones historicas.
-    await pool.query('UPDATE Usuario SET activo = 0 WHERE IDUsuario = ?', [req.params.id]);
+    await connection.beginTransaction();
+    await connection.query('UPDATE Usuario SET activo = 0 WHERE IDUsuario = ?', [req.params.id]);
+    await connection.query(
+      `UPDATE Publicacion p
+          JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
+         SET p.publico = 0
+       WHERE p.publico = 1
+         AND (p.fk_id_usuario = ? OR m.IDUsuario = ?)`,
+      [req.params.id, req.params.id],
+    );
+    await connection.commit();
     return res.json({ success: true });
   } catch (error) {
+    if (connection) await connection.rollback();
     // Delega restricciones SQL o fallos de conexion al manejador global.
     return next(error);
+  } finally {
+    if (connection) connection.release();
   }
 };
 

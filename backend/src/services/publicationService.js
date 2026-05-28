@@ -18,7 +18,12 @@ export const getPublication = async (id) => {
        FROM Publicacion p
        JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
        JOIN Usuario u ON u.IDUsuario = p.fk_id_usuario
+       JOIN Usuario dueno ON dueno.IDUsuario = m.IDUsuario
       WHERE p.id_Publ = ?
+        AND p.publico = 1
+        AND m.enColeccion = 1
+        AND u.activo = 1
+        AND dueno.activo = 1
       LIMIT 1`,
     [id],
   );

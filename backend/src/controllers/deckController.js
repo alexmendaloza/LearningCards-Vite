@@ -8,6 +8,21 @@ import { pool } from '../config/db.js';
 import { nowSql, todaySql } from '../utils/dates.js';
 import { hasErrors, isValidUrl, validate } from '../utils/validation.js';
 
+const normalizeCardOptions = (card) => {
+  const opcionesRaw = card.opciones;
+  if (Array.isArray(opcionesRaw)) return { ...card, opciones: opcionesRaw };
+  if (!opcionesRaw) return { ...card, opciones: [] };
+  if (typeof opcionesRaw === 'string') {
+    try {
+      const parsed = JSON.parse(opcionesRaw);
+      return { ...card, opciones: Array.isArray(parsed) ? parsed : [] };
+    } catch {
+      return { ...card, opciones: [] };
+    }
+  }
+  return { ...card, opciones: [] };
+};
+
 /**
  * Crea un nuevo mazo para el usuario autenticado.
  * - Body: { titulo, descripcion }
@@ -42,7 +57,8 @@ export const getDeck = async (req, res, next) => {
     if (!mazo) return res.status(404).json({ message: 'Mazo no encontrado.' });
     if (mazo.IDUsuario !== req.usuario.IDUsuario && req.usuario.rol !== 'admin') return res.status(403).json({ message: 'No autorizado.' });
     const [tarjetas] = await pool.query('SELECT * FROM Tarjeta WHERE IDMazo = ? ORDER BY orden, IDTarjeta', [req.params.id]);
-    return res.json({ mazo, tarjetas });
+    const sanitizedTarjetas = tarjetas.map(normalizeCardOptions);
+    return res.json({ mazo, tarjetas: sanitizedTarjetas });
   } catch (error) {
     return next(error);
   }
