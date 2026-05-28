@@ -187,7 +187,17 @@ export const initSchema = async () => {
     if (!names.includes('opciones')) {
       await pool.query('ALTER TABLE Tarjeta ADD COLUMN opciones JSON NULL');
     }
+
+    await pool.query(
+      `UPDATE Publicacion p
+          JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
+          JOIN Usuario publicador ON publicador.IDUsuario = p.fk_id_usuario
+          JOIN Usuario dueno ON dueno.IDUsuario = m.IDUsuario
+         SET p.publico = 0
+       WHERE p.publico = 1
+         AND (publicador.activo = 0 OR dueno.activo = 0)`,
+    );
   } catch (error) {
-    console.warn('Error al migrar la tabla Tarjeta:', error.message);
+    console.warn('Error al migrar compatibilidad de tablas:', error.message);
   }
 };

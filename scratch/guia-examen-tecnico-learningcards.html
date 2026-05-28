@@ -204,9 +204,12 @@
 
     <div class="card">
       <h3>8. Pagos / Compra de Mazos</h3>
-      <p><span class="label">Frontend:</span> <code>frontend/src/pages/Platform.jsx</code>, componente <code>PaymentPage</code>.</p>
+      <p><span class="label">Ruta React:</span> <code>/user/marketplace/:id/pagar</code>, declarada en <code>frontend/src/App.jsx</code>.</p>
+      <p><span class="label">Pantalla:</span> <code>frontend/src/pages/marketplace/PagoMazo.jsx</code>, componente <code>PaymentPage</code>.</p>
+      <p><span class="label">Boton PayPal:</span> <code>frontend/src/components/checkout/PaypalCheckout.jsx</code>, componente <code>PaypalCheckout</code>.</p>
       <p><span class="label">Backend:</span> <code>backend/src/controllers/marketplaceController.js</code>, funcion <code>confirmPayment</code>.</p>
-      <p>Nota tecnica: en esta version academica el pago es simulado con tarjeta; no hay integracion real con PayPal.</p>
+      <p><span class="label">Endpoint usado:</span> <code>POST /api/user/marketplace/:id/confirmar</code>, definido en <code>backend/src/routes/marketplace.routes.js</code>.</p>
+      <p>Secuencia: PayPal Sandbox crea la orden en el navegador; al aprobar, <code>PaypalCheckout</code> captura <code>orderId</code>, <code>payerId</code> y <code>captureId</code>; luego <code>PagoMazo.jsx</code> los envia al backend con <code>provider: 'paypal'</code>. El backend valida la publicacion, evita compras duplicadas y llama a <code>clonePublicationToUser</code> para clonar el mazo y registrar la compra.</p>
     </div>
 
     <div class="card">
@@ -215,12 +218,78 @@
       <p><span class="label">Creador:</span> <code>frontend/src/pages/reports/UserStats.jsx</code> y backend <code>userController.creatorStats</code>.</p>
       <p><span class="label">Admin:</span> <code>frontend/src/pages/Platform.jsx</code>, <code>AdminPrintLayout</code>, y backend <code>adminController.salesReport</code>.</p>
       <p>El PDF se obtiene con <code>window.print()</code>; el backend compila los datos y el frontend renderiza una vista imprimible.</p>
+      <ul>
+        <li>Reporte de progreso del usuario: ruta <code>/user/reportes</code>.</li>
+        <li>Estadisticas de creador: ruta <code>/user/creator/stats</code>.</li>
+        <li>Reporte administrativo de ventas: ruta <code>/admin/ventas</code>.</li>
+      </ul>
     </div>
 
     <div class="card">
       <h3>10. Axios / Comunicacion Frontend-Backend</h3>
       <p><span class="label">Archivo:</span> <code>frontend/src/api/axiosConfig.js</code></p>
       <p>Configura <code>baseURL: 'http://localhost:3001/api'</code> y <code>withCredentials: true</code> para enviar cookies al backend.</p>
+    </div>
+
+    <div class="card">
+      <h3>11. Tabla de Usuarios del Administrador</h3>
+      <p><span class="label">Ruta React:</span> <code>/admin/users</code>, declarada en <code>frontend/src/App.jsx</code>.</p>
+      <p><span class="label">Componente:</span> <code>frontend/src/pages/admin/GestionUsuarios.jsx</code>.</p>
+      <p><span class="label">Endpoint:</span> <code>GET /api/admin/users</code>, definido en <code>backend/src/routes/admin.routes.js</code>.</p>
+      <p><span class="label">Consulta:</span> <code>adminController.listUsers</code> lee <code>IDUsuario, UserName, NombreCompleto, email, rol, activo</code> desde <code>Usuario</code>.</p>
+      <p>La tabla pinta el badge de estado con el campo <code>activo</code>. Si <code>activo = 1</code> muestra "Activo"; si <code>activo = 0</code> muestra "Desactivado". Los botones dinamicos usan:</p>
+      <ul>
+        <li><code>PATCH /api/admin/users/:id/toggle</code> para promover a administrador.</li>
+        <li><code>DELETE /api/admin/users/:id</code> para borrado logico.</li>
+        <li><code>PATCH /api/admin/users/:id/restore</code> para restaurar.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>12. Secuencia de Registro de Nuevo Usuario</h3>
+      <p><span class="label">Pantalla:</span> <code>frontend/src/pages/Platform.jsx</code>, componente <code>LoginPage</code>, pestana <code>register</code>.</p>
+      <p><span class="label">Endpoint:</span> <code>POST /api/register</code>, definido en <code>backend/src/routes/auth.routes.js</code>.</p>
+      <p><span class="label">Controlador:</span> <code>backend/src/controllers/authController.js</code>, funcion <code>register</code>.</p>
+      <ol>
+        <li>React captura <code>UserName</code>, <code>NombreCompleto</code>, <code>email</code>, <code>password</code>, <code>fechanac</code>, <code>genero</code> y opcionalmente foto.</li>
+        <li>Si hay imagen, <code>readImageFile</code> la convierte a base64 y se envia como <code>fotorutaData</code>.</li>
+        <li>El backend valida campos con <code>validate</code> y revisa duplicados con <code>SELECT IDUsuario FROM Usuario WHERE email = ? OR UserName = ?</code>.</li>
+        <li>La foto se guarda con <code>saveDataUrlImage</code> en <code>frontend/public/storage/perfiles</code>; la ruta relativa queda en <code>Usuario.fotoruta</code>.</li>
+        <li>La contrasena se cifra con <code>bcrypt.hashSync(..., 10)</code>.</li>
+        <li>Se ejecuta <code>INSERT INTO Usuario</code> con rol por defecto <code>'user'</code>, nivel inicial <code>IDNivel = 1</code> y racha en cero.</li>
+        <li>Luego se consulta el usuario creado, se llama <code>signIn(res, users[0])</code> y se responde <code>201</code> con usuario limpio y redirect.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>13. Ubicacion de Filtros</h3>
+      <ul>
+        <li><span class="label">Dashboard usuario:</span> <code>frontend/src/pages/Platform.jsx</code>, componente <code>DashboardPage</code>. Usa query params como <code>search</code>, <code>origin</code>, <code>sort</code> y actualiza con <code>setSearchParams</code>.</li>
+        <li><span class="label">Marketplace:</span> <code>frontend/src/pages/marketplace/Marketplace.jsx</code> y <code>FilterBar.jsx</code>. Filtros: busqueda, categoria, precio y orden. Backend: <code>marketplaceController.listMarketplace</code>.</li>
+        <li><span class="label">Moderacion de mazos:</span> <code>frontend/src/pages/admin/ModeracionMazos.jsx</code>. Filtros: <code>search</code>, <code>autor</code>, <code>estado</code> y <code>coleccion</code>. Backend: <code>adminController.listDecks</code>.</li>
+        <li><span class="label">Reporte admin ventas:</span> <code>frontend/src/pages/Platform.jsx</code>, componente <code>AdminVentasPage</code>. Filtros: usuario, orden, fecha inicio y fecha fin. Backend: <code>adminController.salesReport</code>.</li>
+        <li><span class="label">Reporte creador:</span> <code>frontend/src/pages/reports/UserStats.jsx</code>. Filtros: busqueda de mazo, tipo, categoria, ingresos minimos y fechas.</li>
+        <li><span class="label">Reporte progreso:</span> <code>frontend/src/pages/Report.jsx</code>. Filtros: ano, mes y dia.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>14. Donde estan los PDFs / Vistas Imprimibles</h3>
+      <p>No se guardan archivos PDF fisicos en una carpeta del proyecto. Se generan desde el navegador con <code>window.print()</code> y la opcion "Guardar como PDF".</p>
+      <ul>
+        <li><code>frontend/src/pages/Report.jsx</code>: contiene <code>PrintableReport</code> para progreso del usuario.</li>
+        <li><code>frontend/src/pages/reports/UserStats.jsx</code>: contiene la version imprimible del reporte de creador.</li>
+        <li><code>frontend/src/pages/Platform.jsx</code>: contiene <code>AdminPrintLayout</code> para ventas administrativas.</li>
+        <li><code>scratch/guia-examen-tecnico-learningcards.html</code>: esta guia tambien se convierte a PDF con Ctrl + P.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>15. Archivos de Almacenamiento / Imagenes Subidas</h3>
+      <p><span class="label">Configuracion:</span> <code>backend/src/config/appConfig.js</code>, variable <code>storagePath</code>.</p>
+      <p><span class="label">Guardado:</span> <code>backend/src/utils/fileUpload.js</code>, funcion <code>saveDataUrlImage</code>.</p>
+      <p><span class="label">Ruta publica:</span> <code>/storage</code>, servida por <code>backend/src/middleware/security.js</code>.</p>
+      <p>Las fotos de perfil se guardan fisicamente en <code>frontend/public/storage/perfiles</code>, y en MySQL solo se almacena la ruta relativa, por ejemplo <code>perfiles/archivo.png</code>.</p>
     </div>
 
     <h2>Seccion 2: Simulacion de Preguntas Capciosas</h2>
@@ -257,7 +326,7 @@
 
     <div class="card">
       <h3>7. ¿El pago es PayPal real?</h3>
-      <p class="answer">No. En esta version academica el flujo es un pago simulado con tarjeta. Lo tecnicamente importante es que el backend valida datos, evita compras duplicadas y registra la compra junto con la clonacion del mazo.</p>
+      <p class="answer">Usa PayPal Sandbox desde <code>frontend/src/components/checkout/PaypalCheckout.jsx</code>. No cobra dinero real, pero si ejecuta el flujo tecnico de Smart Buttons: crea orden, captura aprobacion y envia <code>orderId</code>, <code>payerId</code> y <code>captureId</code> al backend. El backend registra la compra en <code>confirmPayment</code>.</p>
     </div>
 
     <div class="card">
@@ -273,6 +342,20 @@
     <div class="card">
       <h3>10. ¿El PDF se genera en backend?</h3>
       <p class="answer">No como archivo binario. El backend compila los datos y el frontend renderiza una vista imprimible. La descarga se realiza con <code>window.print()</code>, permitiendo guardar como PDF desde el navegador.</p>
+    </div>
+    <div class="card">
+      <h3>11. Â¿Que pasa exactamente despues de registrar un usuario?</h3>
+      <p class="answer">El formulario de React envia <code>POST /api/register</code>. El backend valida, revisa duplicados, guarda la foto si existe, cifra la contrasena con bcrypt, inserta en <code>Usuario</code>, consulta el registro creado, genera la cookie JWT con <code>signIn</code> y devuelve el usuario limpio al frontend.</p>
+    </div>
+
+    <div class="card">
+      <h3>12. Â¿Donde se pintan las tablas del administrador?</h3>
+      <p class="answer">La tabla de usuarios esta en <code>frontend/src/pages/admin/GestionUsuarios.jsx</code>. La tabla de mazos esta en <code>frontend/src/pages/admin/ModeracionMazos.jsx</code>. Ambas consumen endpoints protegidos por <code>requireAdmin</code> en <code>backend/src/routes/admin.routes.js</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>13. Â¿Como ubico rapidamente los filtros?</h3>
+      <p class="answer">Busca <code>setSearchParams</code>, <code>useSearchParams</code> o estados llamados <code>filters</code>. En admin mazos estan en <code>ModeracionMazos.jsx</code>; en marketplace en <code>FilterBar.jsx</code>; en ventas admin en <code>AdminVentasPage</code>; en reportes de usuario y creador en <code>Report.jsx</code> y <code>UserStats.jsx</code>.</p>
     </div>
   </main>
 </body>

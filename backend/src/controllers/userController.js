@@ -55,7 +55,10 @@ export const dashboard = async (req, res, next) => {
          FROM Publicacion p
          JOIN Mazo m ON m.IDMazo = p.fk_id_mazo
          JOIN Usuario u ON u.IDUsuario = m.IDUsuario
-        WHERE p.publico = 1 AND m.IDUsuario != ?
+        WHERE p.publico = 1
+          AND m.enColeccion = 1
+          AND u.activo = 1
+          AND m.IDUsuario != ?
         ORDER BY p.num_compras DESC
         LIMIT 3`,
       [req.usuario.IDUsuario],
