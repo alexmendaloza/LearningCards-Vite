@@ -362,9 +362,11 @@ export const getProfile = (req, res) => {
 export const updateProfile = async (req, res, next) => {
   try {
     const errors = validate({
-      UserName: ['required'],
+      UserName: ['required', 'max:50', 'username'],
+      NombreCompleto: ['required', 'max:100', 'name'],
       email: ['required', 'email'],
-      NombreCompleto: ['required', 'max:255'],
+      fechanac: ['required'],
+      genero: ['required'],
     }, req.body);
     if (hasErrors(res, errors)) return;
 

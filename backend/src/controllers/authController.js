@@ -134,8 +134,8 @@ export const adminLogin = async (req, res, next) => {
 export const register = async (req, res, next) => {
   try {
     const errors = validate({
-      UserName: ['required', 'max:50'],
-      NombreCompleto: ['required', 'max:100'],
+      UserName: ['required', 'max:50', 'username'],
+      NombreCompleto: ['required', 'max:100', 'name'],
       email: ['required', 'email'],
       password: ['required', 'min:6'],
       fechanac: ['required'],

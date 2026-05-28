@@ -31,7 +31,7 @@ const normalizeCardOptions = (card) => {
  */
 export const createDeck = async (req, res, next) => {
   try {
-    const errors = validate({ titulo: ['required', 'max:100'], descripcion: ['max:255'] }, req.body);
+    const errors = validate({ titulo: ['required', 'max:100'], descripcion: ['max:250'] }, req.body);
     if (hasErrors(res, errors)) return;
 
     const [result] = await pool.query(
@@ -73,7 +73,7 @@ export const getDeck = async (req, res, next) => {
  */
 export const updateDeck = async (req, res, next) => {
   try {
-    const errors = validate({ titulo: ['required', 'max:100'], descripcion: ['max:255'] }, req.body);
+    const errors = validate({ titulo: ['required', 'max:100'], descripcion: ['max:250'] }, req.body);
     if (hasErrors(res, errors)) return;
     const [result] = await pool.query(
       'UPDATE Mazo SET titulo = ?, descripcion = ? WHERE IDMazo = ? AND IDUsuario = ?',

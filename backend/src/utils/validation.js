@@ -17,6 +17,12 @@ export const validate = (rules, body) => {
       if (check.startsWith('min:') && value && String(value).length < Number(check.split(':')[1])) {
         errors[field] = `Minimo ${check.split(':')[1]} caracteres.`;
       }
+      if (check === 'username' && value && !/^[a-zA-Z0-9_]+$/.test(String(value))) {
+        errors[field] = 'El nombre de usuario solo puede contener letras, numeros y guiones bajos.';
+      }
+      if (check === 'name' && value && !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/.test(String(value).trim())) {
+        errors[field] = 'El nombre completo solo puede contener letras y espacios.';
+      }
     }
   }
 

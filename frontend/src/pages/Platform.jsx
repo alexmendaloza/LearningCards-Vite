@@ -555,7 +555,7 @@ const Field = ({ label, value, onChange, type = 'text', required = false, placeh
 );
 
 // Área de texto reutilizable para contenido más largo o descriptivo.
-const TextArea = ({ label, value, onChange, placeholder = '', required = false, ...props }) => (
+const TextArea = ({ label, value, onChange, placeholder = '', required = false, error = '', errorClassName = 'text-red-500 text-xs mt-1 block', ...props }) => (
   <label className="block">
     <span className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-700">{label}</span>
     <textarea
@@ -566,11 +566,12 @@ const TextArea = ({ label, value, onChange, placeholder = '', required = false, 
       className="min-h-28 w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400"
       {...props}
     />
+    {error && <span className={errorClassName}>{error}</span>}
   </label>
 );
 
 // Selector reutilizable para catálogos o listas de opciones.
-const Select = ({ label, value, onChange, options, required = false, ...props }) => (
+const Select = ({ label, value, onChange, options, required = false, error = '', errorClassName = 'text-red-500 text-xs mt-1 block', ...props }) => (
   <label className="block">
     <span className="auth-label mb-1 block text-xs font-black uppercase tracking-wider">{label}</span>
     <select required={required} value={value ?? ''} onChange={(event) => onChange(event.target.value)} className="w-full bg-white rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-indigo-400" {...props}>
@@ -578,6 +579,7 @@ const Select = ({ label, value, onChange, options, required = false, ...props })
         ? <option key={option[0]} value={option[0]}>{option[1]}</option>
         : <option key={option} value={option}>{option}</option>)}
     </select>
+    {error && <span className={errorClassName}>{error}</span>}
   </label>
 );
 
@@ -966,7 +968,27 @@ export const MazoFormPage = () => {
   const [cards, setCards] = useState([]);
   const [cardModal, setCardModal] = useState(null);
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const validateDeckForm = () => {
+    const errors = {};
+    const title = String(deck.titulo || '').trim();
+    const description = String(deck.descripcion || '');
+
+    if (!title) {
+      errors.titulo = 'El titulo es obligatorio.';
+    } else if (title.length > 100) {
+      errors.titulo = 'El titulo no puede exceder 100 caracteres.';
+    }
+
+    if (description.length > 250) {
+      errors.descripcion = 'La descripcion no puede exceder 250 caracteres.';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const parseOptions = (value) => {
     if (Array.isArray(value)) return value;
@@ -1026,6 +1048,10 @@ export const MazoFormPage = () => {
   const saveDeck = async (event) => {
     event.preventDefault();
     setError('');
+    if (!validateDeckForm()) {
+      setError('Revisa los datos del mazo antes de guardarlo.');
+      return;
+    }
     try {
       if (editing) {
         await api.put(`/mazos/${id}`, deck);
@@ -1093,9 +1119,22 @@ export const MazoFormPage = () => {
         </div>
         <ErrorBox message={error} />
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-lg">
-          <Field label="Titulo" value={deck.titulo} onChange={(value) => setDeck({ ...deck, titulo: value })} required />
+          <Field
+            label="Titulo"
+            value={deck.titulo}
+            onChange={(value) => setDeck({ ...deck, titulo: value })}
+            required
+            maxLength={100}
+            error={formErrors.titulo}
+          />
           <div className="mt-3">
-            <TextArea label="Descripcion" value={deck.descripcion} onChange={(value) => setDeck({ ...deck, descripcion: value })} />
+            <TextArea
+              label="Descripcion"
+              value={deck.descripcion}
+              onChange={(value) => setDeck({ ...deck, descripcion: value })}
+              maxLength={250}
+              error={formErrors.descripcion}
+            />
           </div>
         </div>
       </form>
@@ -1146,8 +1185,8 @@ export const MazoFormPage = () => {
                   <button onClick={() => deleteCard(card.IDTarjeta)} className="rounded-lg bg-red-500 p-2 text-sm text-white">Eliminar</button>
                 </div>
               </div>
-            </div>
-          )) : (
+            );
+          }) : (
             <div className="rounded-2xl bg-white p-10 text-center shadow-lg">
               <p className="text-gray-500">Aun no hay tarjetas</p>
             </div>
@@ -1354,6 +1393,35 @@ export const ProfilePage = ({ onAuth }) => {
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+
+  const usernamePattern = /^[a-zA-Z0-9_]+$/;
+  const namePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/;
+
+  const validateProfileForm = () => {
+    const errors = {};
+    const username = String(form.UserName || '').trim();
+    const fullName = String(form.NombreCompleto || '').trim();
+
+    if (!username) {
+      errors.UserName = 'El nombre de usuario es obligatorio.';
+    } else if (username.length > 50) {
+      errors.UserName = 'El nombre de usuario no puede exceder 50 caracteres.';
+    } else if (!usernamePattern.test(username)) {
+      errors.UserName = 'El nombre de usuario solo puede contener letras, numeros y guiones bajos.';
+    }
+
+    if (!fullName) {
+      errors.NombreCompleto = 'El nombre completo es obligatorio.';
+    } else if (fullName.length > 100) {
+      errors.NombreCompleto = 'El nombre completo no puede exceder 100 caracteres.';
+    } else if (!namePattern.test(fullName)) {
+      errors.NombreCompleto = 'El nombre completo solo puede contener letras y espacios.';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   useEffect(() => {
     if (data?.usuario) {
@@ -1372,13 +1440,25 @@ export const ProfilePage = ({ onAuth }) => {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (!validateProfileForm()) {
+      setSubmitError('Revisa los campos del formulario antes de guardar.');
+      return;
+    }
     try {
       const { data: payload } = await api.put('/user/configuracion', form);
       onAuth(payload.usuario);
       setMessage('Perfil actualizado correctamente.');
       setSubmitError('');
+      setFormErrors({});
     } catch (err) {
-      setSubmitError(err.response?.data?.message || 'No fue posible actualizar el perfil.');
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors && typeof apiErrors === 'object') {
+        setFormErrors(apiErrors);
+        setSubmitError(err.response?.data?.message || 'No fue posible actualizar el perfil.');
+      } else {
+        setFormErrors({});
+        setSubmitError(err.response?.data?.message || 'No fue posible actualizar el perfil.');
+      }
     }
   };
 
@@ -1387,7 +1467,10 @@ export const ProfilePage = ({ onAuth }) => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <PageTitle title="Configuracion de Cuenta" subtitle="Administra tu informacion personal y presencia en la plataforma." />
+      <div className="mb-8">
+        <h1 className="text-3xl font-black tracking-tight text-gray-800">Configuracion de Cuenta</h1>
+        <p className="text-gray-500">Administra tu informacion personal y presencia en la plataforma.</p>
+      </div>
       {message && <div className="mb-6"><Alert>{message}</Alert></div>}
       <ErrorBox message={submitError} />
       <form onSubmit={submit} className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
@@ -1409,11 +1492,11 @@ export const ProfilePage = ({ onAuth }) => {
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
-            <Field label="Nombre de Usuario" value={form.UserName} onChange={(value) => setForm({ ...form, UserName: value })} />
-            <Field label="Nombre Completo" value={form.NombreCompleto} onChange={(value) => setForm({ ...form, NombreCompleto: value })} />
-            <Field label="Correo Electronico" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} />
-            <Field label="Fecha de Nacimiento" type="date" value={form.fechanac} onChange={(value) => setForm({ ...form, fechanac: value })} />
-            <Select label="Genero" value={form.genero} onChange={(value) => setForm({ ...form, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} />
+            <Field label="Nombre de Usuario" value={form.UserName} onChange={(value) => setForm({ ...form, UserName: value })} error={formErrors.UserName} maxLength={50} />
+            <Field label="Nombre Completo" value={form.NombreCompleto} onChange={(value) => setForm({ ...form, NombreCompleto: value })} error={formErrors.NombreCompleto} maxLength={100} pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+" />
+            <Field label="Correo Electronico" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} error={formErrors.email} />
+            <Field label="Fecha de Nacimiento" type="date" value={form.fechanac} onChange={(value) => setForm({ ...form, fechanac: value })} error={formErrors.fechanac} />
+            <Select label="Genero" value={form.genero} onChange={(value) => setForm({ ...form, genero: value })} options={[['M', 'Masculino'], ['F', 'Femenino'], ['O', 'Otro']]} error={formErrors.genero} />
           </div>
         </div>
         <div className="flex justify-end gap-4 border-t border-gray-100 bg-gray-50 p-8">
