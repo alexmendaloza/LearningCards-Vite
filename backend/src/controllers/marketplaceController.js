@@ -192,6 +192,9 @@ export const confirmPayment = async (req, res, next) => {
  */
 export const ratePublication = async (req, res, next) => {
   try {
+    const errors = validate({ comentario: ['max:250'] }, req.body);
+    if (hasErrors(res, errors)) return;
+
     const puntuacion = Number(req.body.puntuacion);
     if (!Number.isInteger(puntuacion) || puntuacion < 1 || puntuacion > 5) {
       return res.status(422).json({ message: 'La puntuacion debe estar entre 1 y 5.' });

@@ -186,6 +186,7 @@ export const MarketplaceDetailPage = () => {
   const { loading, error, data } = useResource(async () => (await api.get(`/user/marketplace/${id}`)).data, id, refresh);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState('');
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState(null);
 
@@ -218,6 +219,10 @@ export const MarketplaceDetailPage = () => {
 
   const sendRating = async (event) => {
     event.preventDefault();
+    if (comment.length > 250) {
+      setCommentError('El comentario no puede exceder 250 caracteres.');
+      return;
+    }
     await api.post(`/user/marketplace/${id}/valorar`, { puntuacion: rating, comentario: comment });
     setMessage('Gracias por tu valoracion.');
     setRefresh((value) => value + 1);
@@ -301,6 +306,7 @@ export const MarketplaceDetailPage = () => {
               valoraciones={valoraciones}
               rating={rating}
               comment={comment}
+              commentError={commentError}
               setRating={setRating}
               setComment={setComment}
               sendRating={sendRating}
@@ -338,7 +344,7 @@ export const MarketplaceDetailPage = () => {
   );
 };
 
-const RatingsPanel = ({ publicacion, valoraciones, rating, comment, setRating, setComment, sendRating, hasRating }) => (
+const RatingsPanel = ({ publicacion, valoraciones, rating, comment, commentError, setRating, setComment, sendRating, hasRating }) => (
   <section className="ratings-panel marketplace-detail-panel rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
     <h2 className="mb-5 flex items-center gap-2 text-lg font-bold"><MessageSquare className="h-5 w-5 text-amber-500" /> Valoraciones y comentarios</h2>
 
@@ -374,8 +380,20 @@ const RatingsPanel = ({ publicacion, valoraciones, rating, comment, setRating, s
           </button>
         ))}
       </div>
-      <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows="3" placeholder="Escribe un comentario (opcional)..." className="mb-4 w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-coral-300" />
-      <button disabled={!rating} className="marketplace-liquid-btn rounded-xl px-5 py-2 text-sm font-bold text-white disabled:opacity-50">{hasRating ? 'Actualizar valoracion' : 'Enviar valoracion'}</button>
+      <textarea
+        value={comment}
+        onChange={(event) => {
+          const nextComment = event.target.value;
+          setComment(nextComment);
+          setCommentError(nextComment.length > 250 ? 'El comentario no puede exceder 250 caracteres.' : '');
+        }}
+        maxLength={250}
+        rows="3"
+        placeholder="Escribe un comentario (opcional)..."
+        className="mb-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-coral-300"
+      />
+      {commentError ? <p className="mb-3 text-sm font-semibold text-red-600">{commentError}</p> : <p className="mb-3 text-sm text-gray-400">Máximo 250 caracteres.</p>}
+      <button disabled={!rating || Boolean(commentError)} className="marketplace-liquid-btn rounded-xl px-5 py-2 text-sm font-bold text-white disabled:opacity-50">{hasRating ? 'Actualizar valoracion' : 'Enviar valoracion'}</button>
     </form>
 
     <div className="space-y-4">
@@ -393,7 +411,7 @@ const RatingsPanel = ({ publicacion, valoraciones, rating, comment, setRating, s
 );
 
 const PurchasePanel = ({ publicacion, tarjetas, yaAdquirido, esPropio, onBuy, onAcquire, onDashboard }) => (
-  <section className="marketplace-purchase-panel sticky top-24 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+  <section className="marketplace-purchase-panel sticky top-24 z-20 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
     <div className="mb-5 text-center">
       {Number(publicacion.pago) ? (
         <>
